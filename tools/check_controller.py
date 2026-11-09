@@ -146,11 +146,12 @@ def main():
             assert page.locator('[data-action=controller-remote-power]').get_attribute('aria-pressed') == 'false'
             page.locator('.controller-return').click(force=True)
             page.locator('#start-form button[type=submit]').click(force=True)
-            open_settings(); assert page.locator('.more-menu-content [data-action=controller]').is_disabled()
-            page.locator('.more-menu > summary').click(force=True)
+            def cancel_switch(dialog): dialog.dismiss()
+            page.once('dialog', cancel_switch)
+            page.locator('.course-selector [data-action=controller]').click(force=True)
             assert page.locator('.controller-panel').count() == 0
             assert page.locator('[data-piece]').count() > 0
-            passed('정비 복귀 시 회전 제거·원래 배터리, 정비 진행 중 조종기 진입 차단')
+            passed('정비 복귀 시 회전 제거·원래 배터리, 교육 전환 취소 시 정비 유지')
 
             assert not errors and not external and not page.evaluate('window.qaCsp'), {'errors': errors, 'external': external, 'csp': page.evaluate('window.qaCsp')}
             passed('JavaScript 오류·외부 요청·보안 정책 위반 없음')

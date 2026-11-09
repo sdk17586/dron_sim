@@ -1,0 +1,69 @@
+.minimal-header .header-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 7px 12px; border: 1px solid #cdd8c4; border-radius: 7px; background: #fff; color: #415e37; font-size: 12px; white-space: nowrap; }
+.header-action .icon { width: 15px; height: 15px; }
+.minimal-header .restart-visible { background: #eef3e7; border-color: #b6c9a5; }
+.minimal-header nav { gap: 9px; }
+.course-selector { margin-bottom: 18px; }
+.course-picker-heading { margin: 0 0 15px; }
+.course-picker-heading h1 { font-size: 22px; letter-spacing: -.6px; }
+.course-picker-heading p { margin-top: 5px; color: #72816a; font-size: 12px; }
+.course-selector nav { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.course-card { display: flex; align-items: center; gap: 14px; text-align: left; min-height: 83px; border: 1px solid #cdd9c3; border-radius: 11px; padding: 17px 20px; color: #455d3d; background: white; margin: 0; }
+.course-card[aria-pressed=true] { border-color: #74985c; background: #eaf2e2; box-shadow: inset 3px 0 #648d4a; }
+.course-card:hover { border-color: #74985c; background: #f1f6e9; }
+.course-card > .icon { width: 25px; height: 25px; flex-shrink: 0; }
+.course-card > .icon:last-child { margin-left: auto; width: 19px; height: 19px; }
+.course-card strong { display: block; font-size: 17px; font-weight: 600; }
+.course-card small { display: block; margin-top: 4px; color: #708464; font-size: 12px; line-height: 1.7; }
+.compact-courses nav { display: flex; gap: 8px; }
+.compact-courses .course-card { min-height: 39px; padding: 8px 15px; border-radius: 7px; gap: 8px; }
+.compact-courses .course-card strong { font-size: 12px; }
+.compact-courses .course-card > .icon { width: 17px; height: 17px; margin: 0; }
+.task-guide { display: flex; align-items: center; justify-content: space-between; gap: 25px; border: 1px solid #d6e1cc; border-radius: 11px; padding: 18px 22px; margin-bottom: 18px; background: #fff; }
+.guide-caption { display: block; font-size: 10px; color: #6d855e; margin-bottom: 6px; letter-spacing: .5px; }
+.task-copy { flex: 1; min-width: 0; }
+.task-copy h2 { font-size: 19px; line-height: 1.6; letter-spacing: -.4px; }
+.task-copy p { color: #63755a; font-size: 12px; margin-top: 5px; line-height: 1.8; }
+.task-copy .interaction-status { height: 20px; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; color: #819273; font-size: 10px; }
+.guide-progress { display: inline-block; margin-top: 7px; font-size: 10px; color: #809172; }
+.guide-next { flex: 0 1 245px; min-width: 0; border-left: 1px solid #dfe7d6; padding-left: 22px; }
+.guide-next strong { display: block; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.guide-locate { margin-top: 7px; background: #e9f1e1; border: 1px solid #c6d7b8; padding: 5px 10px; border-radius: 5px; color: #476b38; font-size: 11px; min-height: 30px; }
+.remaining-help { display: inline-block; margin: 7px 0 0 8px; border: 0; background: transparent; color: #536d43; font-size: 11px; text-decoration: underline; text-underline-offset: 3px; padding: 5px 0; }
+.guide-complete { background: #edf5e5; border-color: #a5be8e; }
+.guide-source { box-shadow: 0 0 0 3px #719b4b99 !important; }
+.guide-destination { outline: 2px dashed #729c50; outline-offset: 4px; }
+.two-buttons.guide-source { border-radius: 8px; }
+.learning-help-dialog { width: min(680px,calc(100vw - 32px)); max-height: 86vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; padding: 26px; border: 1px solid #c7d7b8; border-radius: 15px; color: #2c432f; background: #fafcf7; box-shadow: 0 20px 70px #1d332540; }
+.learning-help-dialog::backdrop { background: #1d302c66; }
+.help-dialog-heading { display: flex; justify-content: space-between; align-items: center; gap: 18px; margin-bottom: 18px; }
+.help-dialog-heading .eyebrow { margin-bottom: 5px; }
+.help-dialog-heading h2 { font-size: 22px; }
+.help-dialog-heading button { border: 1px solid #cbd9bd; background: #fff; border-radius: 6px; padding: 7px 13px; font-size: 12px; min-height: 36px; color: #526d44; }
+.help-current { border: 1px solid #d0dfc2; background: #edf4e5; border-radius: 9px; padding: 16px; margin-bottom: 16px; }
+.help-current h3 { font-size: 16px; }
+.help-current p, .help-note { color: #657b58; font-size: 12px; line-height: 1.9; margin: 8px 0; }
+.help-current .button { margin-top: 10px; font-size: 11px; min-height: 34px; padding: 6px 12px; }
+.help-phase { border: 1px solid #dbe5d1; border-radius: 8px; background: white; margin: 10px 0; padding: 12px 14px; }
+.help-phase summary { cursor: pointer; font-size: 13px; font-weight: 500; }
+.help-phase summary span:last-child { float: right; color: #809374; font-size: 11px; }
+.help-phase ol { list-style: none; padding: 0; margin-top: 10px; }
+.help-phase li { display: flex; gap: 10px; padding: 11px 0; border-top: 1px solid #edf1e7; font-size: 12px; }
+.task-state { flex-shrink: 0; color: #8a9b7d; }
+.help-phase li[data-done=true] { color: #819075; }
+.help-phase li strong { font-weight: 500; }
+.help-phase li p { margin-top: 5px; color: #657b58; line-height: 1.8; }
+.help-phase li small { display: block; color: #759064; margin-top: 5px; }
+.help-controls { margin-top: 20px; color: #617a52; font-size: 12px; }
+.help-controls summary { cursor: pointer; }
+.help-controls ul { padding-left: 18px; line-height: 1.9; margin-top: 10px; }
+.help-controls li { margin: 7px 0; }
+.is-preparing .start-panel { padding-top: 18px; }
+.is-preparing .start-panel > p { margin: 9px 0 15px; }
+.is-preparing .start-fields { margin-top: 18px; }
+.is-preparing .drone-canvas { height: clamp(360px,calc(100vh - 330px),620px); min-height: 360px; }
+.is-practicing .drone-canvas { height: clamp(340px,calc(100vh - 410px),560px); min-height: 340px; }
+.controller-grid .drone-canvas { height: clamp(380px,calc(100vh - 350px),620px); }
+.controller-completion { border: 1px solid #b6cea3; background: #edf5e4; color: #476c35; padding: 12px; border-radius: 8px; font-size: 12px; line-height: 1.9; margin-top: 14px; }
+@media (max-width:1100px) { .header-session { display: none; } .minimal-header nav { margin-left: auto; } }
+@media (max-width:900px) { .header-title { display: none; } }
+@media (max-width:650px) { .minimal-header { height: auto; min-height: 76px; padding: 12px 18px; flex-wrap: wrap; gap: 10px; } .minimal-header nav { width: 100%; justify-content: space-between; gap: 4px; } .minimal-header .header-action { padding: 6px 9px; min-height: 36px; font-size: 11px; } .quiet-button { font-size: 11px; } .course-picker-heading h1 { font-size: 20px; } .course-card { padding: 12px; min-height: 85px; gap: 8px; } .course-card > .icon:last-child { display: none; } .course-card strong { font-size: 15px; } .course-card small { font-size: 10px; } .course-card > .icon { width: 20px; height: 20px; } .task-guide { padding: 14px; gap: 14px; align-items: stretch; flex-direction: column; } .task-copy h2 { font-size: 17px; } .guide-next { border: 0; border-top: 1px solid #e0e8d8; padding: 10px 0 0; flex-basis: auto; } .guide-next .guide-caption { display: inline; margin-right: 6px; } .guide-next strong { display: inline; } .guide-locate { margin-left: 7px; } .is-preparing .drone-canvas, .is-practicing .drone-canvas, .controller-grid .drone-canvas { height: 340px; min-height: 320px; } .learning-help-dialog { padding: 18px; } .help-dialog-heading h2 { font-size: 19px; } }

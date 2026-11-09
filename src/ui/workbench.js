@@ -75,10 +75,10 @@ export function renderWorkbench(s, ui) {
 }
 
 export function renderInspector(s, ui) {
-  if (!s) return `<aside class="inspector start-panel"><span class="eyebrow">BASIC MAINTENANCE</span><h1>프로펠러 정비</h1><p>직접 부품을 옮기며<br>점검과 교체를 연습하세요.</p>
+  if (!s) return `<aside class="inspector start-panel"><span class="eyebrow">BASIC MAINTENANCE</span><h2>정비 실습 준비</h2><p>모터 네 곳을 점검하고<br>필요한 부품을 교체합니다.</p>
     <form id="start-form"><div class="start-fields"><label>훈련 회차<input name="session" maxlength="40" required value="${e(ui.session)}" autocomplete="off"></label><label>교육생 번호<input name="trainee" maxlength="40" required value="${e(ui.trainee)}" autocomplete="off"></label></div>
     <details class="practice-settings"><summary>실습 설정</summary><fieldset class="mode-picker"><legend class="sr-only">실습 방식</legend><label class="mode-choice"><input type="radio" name="mode" value="guided" ${ui.mode === 'guided' ? 'checked' : ''}>안내 실습</label><label class="mode-choice"><input type="radio" name="mode" value="independent" ${ui.mode === 'independent' ? 'checked' : ''}>독립 실습</label></fieldset></details>
-    <button class="button primary full" type="submit">실습 시작 ${icon('arrow')}</button></form><small>실명·군번 없이 번호만 입력하세요.</small>${button('조종기 먼저 살펴보기', 'controller', 'quiet-button controller-intro')}</aside>`;
+    <button class="button primary full" type="submit">실습 시작 ${icon('arrow')}</button></form><small>실명·군번 없이 번호만 입력하세요.</small></aside>`;
   if (!readyForMaintenance(s)) return `<aside class="inspector context-panel"><span class="eyebrow">01 / 준비</span><h2>배터리·전원을 확인하세요</h2><p>일자 LED가 짧을수록 잔량이 적습니다.<br>전원 차단 후 배터리를 수거함으로 옮기고, 교체 배터리를 빈 자리에 놓으세요.</p><small>프로펠러 정비 중에는 배터리를 분리해 둡니다.</small><div class="preparation-status"><span class="${s.safetyConfirmed ? 'done' : ''}">${icon(s.safetyConfirmed ? 'check' : 'power')} 전원 차단 ${s.safetyConfirmed ? '확인됨' : '확인'}</span><span class="${!s.battery ? 'done' : ''}">${icon(!s.battery ? 'check' : 'battery')} 배터리 ${s.battery ? '장착됨' : '분리됨'}</span></div></aside>`;
   const p = motorProfile(ui.selected), m = s.motors[ui.selected];
   const pending = PROFILE.motors.filter(p => !s.motors[p.id].verdict);

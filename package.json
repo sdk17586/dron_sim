@@ -1,6 +1,6 @@
 {
   "name": "aerolab-maintenance-training",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "엔진 없이 실행하는 드론 기초 정비 교육 시제품"

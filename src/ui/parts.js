@@ -19,7 +19,7 @@ export function renderRepairPoints(s, ui) {
   if (ui.controllerMode) return `<button class="model-power controller-aircraft-power" data-anchor="power" data-action="controller-aircraft-power" aria-label="기체 ${s.power ? '끄기' : '켜기'}" aria-pressed="${s.power}">${icon('power')}<span class="point-caption">기체 전원 ${s.power ? '켜짐' : '꺼짐'}</span></button>${renderBatteryGauge(installedBattery(s))}`;
   if (!s || s.status !== 'active') return '';
   const pack = installedBattery(s);
-  const power = `<button class="model-power ${s.safetyConfirmed ? 'confirmed' : ''}" data-anchor="power" data-action="confirm-power" aria-label="전원 차단 확인" title="전원 차단 확인">${icon(s.safetyConfirmed ? 'check' : 'power')}</button>`;
+  const power = `<button class="model-power ${s.safetyConfirmed ? 'confirmed' : ''}" data-anchor="power" data-action="${s.power ? 'power' : 'confirm-power'}" aria-label="${s.power ? '전원 끄기' : '전원 차단 확인'}" title="${s.power ? '전원 끄기' : '전원 차단 확인'}">${icon(s.safetyConfirmed ? 'check' : 'power')}</button>`;
   const battery = `<button class="repair-point battery-point ${pack ? '' : 'empty-part'}" data-anchor="battery" data-drop="${data({ kind: 'battery-slot' })}" ${pack ? `data-piece="${data({ kind: 'battery', batteryId: pack.id })}"` : ''} aria-label="${pack ? '장착된 배터리 집기' : '빈 배터리 자리'}" title="${pack ? `${pack.name} · ${pack.charge}% → 수거함` : '배터리를 이 자리에 놓으세요'}">${partArt('battery', pack?.charge ?? 0)}<span class="point-caption">${pack ? `배터리 ${pack.charge}%` : '배터리 장착 자리'}</span></button>`;
   const controls = power + battery + renderBatteryGauge(pack);
   if (!readyForMaintenance(s)) return controls;

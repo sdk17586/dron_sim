@@ -1,6 +1,4 @@
-import { PROFILE } from './content/aircraft-profiles.js';
-import { SCENARIO } from './content/scenarios.js';
-import { createState, transition, stage, buildResult, readyForMaintenance } from './domain/state.js';
+import { createState, transition, buildResult, readyForMaintenance } from './domain/state.js';
 import { ResultRepository } from './storage/result-repository.js';
 import { exportCSV, previewImport, MAX_CSV_BYTES } from './storage/csv.js';
 import { renderWorkbench, renderInspector } from './ui/workbench.js';
@@ -10,9 +8,11 @@ import { renderResult, renderOperations } from './ui/results.js';
 import { escapeHTML as e, icon, button } from './ui/shared.js';
 import { installedBattery } from './domain/battery.js';
 import { previewBatteryGauge } from './ui/battery-indicator.js';
-import { createControllerState, createControllerAircraft, controllerTransition, rotationDemand, connectionLabel } from './domain/controller.js';
+import { createControllerState, createControllerAircraft, controllerTransition, rotationDemand, connectionLabel, sticksNeutral } from './domain/controller.js';
 import { renderController, updateController, installControllerInput } from './ui/controller.js';
 import { updateFlatRotorPreview, stopRotorPreviews } from './ui/rotor-preview.js';
+import { maintenanceGuide, controllerGuide } from './domain/learning-guide.js';
+import { renderLearningHeader, renderCourseSelector, renderTaskGuide, renderLearningHelp, updateTaskGuide, applyLearningHighlights } from './ui/learning.js';
 
 const app = document.querySelector('#app');
 let storage;
@@ -22,17 +22,21 @@ let state = null, result = null, saved = false, saveError = '', started = 0;
 let feedback = null;
 const ui = { route: 'training', selected: 'front-left', zoomed: false, tool: 'hand', kitId: 'A1',
   session: '훈련-01', trainee: '001', mode: 'guided', filter: '', selectedRecords: new Set(), importPreview: null,
-  viewMode: '3d', topView: false, exploded: false, rendererError: '',
+  viewMode: '3d', topView: false, exploded: false, rendererError: '', helpOpen: false,
   compatible3d: new URLSearchParams(location.search).get('compatible3d') !== '0' };
 let viewport = null, ViewportClass = null, loadingViewport = false, interactions = null;
 let controller = createControllerState(), controllerAircraft = createControllerAircraft(), controllerInput = null;
 const sceneState = () => ui.route === 'controller' ? controllerAircraft : state;
 const sceneUI = () => ui.route === 'controller' ? { ...ui, controllerMode: true, zoomed: false, exploded: false } : ui;
+const currentGuide = () => ui.route === 'controller' ? controllerGuide(controller) : ui.route === 'training' && state && (!result || result.status === 'completed') ? maintenanceGuide(state, ui) : null;
 function updateControllerDisplay() {
   if (ui.route !== 'controller') return;
   updateController(app, controller);
   const level = rotationDemand(controller);
   viewport?.setRotorPreview(level); updateFlatRotorPreview(app, level);
+  if (sticksNeutral(controller)) {
+    const guide = currentGuide(); updateTaskGuide(app, guide); applyLearningHighlights(app, guide, ui);
+  }
 }
 function stopController() {
   controllerInput?.cancel(false); controller = createControllerState();
@@ -72,10 +76,12 @@ function syncViewport() {
     });
     viewport.attach(host); viewport.sync(sceneState(), sceneUI());
     if (ui.route === 'controller') viewport.setRotorPreview(rotationDemand(controller));
+    applyLearningHighlights(app, currentGuide(), ui);
   } catch { fallback3d(); }
 }
 
 function render() {
+  const wasHelpOpen = document.querySelector('#learning-help')?.open || false;
   interactions?.clear();
   stopRotorPreviews(app);
   controllerInput?.cancel(false);
@@ -94,19 +100,23 @@ function render() {
     saved = false;
     saveError = stored.error || '이 결과가 저장 목록에서 삭제되었습니다. 다시 저장하거나 파일로 보관할 수 있습니다.';
   }
-  const current = state ? stage(state) : 0;
   const pack = state ? installedBattery(state) : null;
   const settingsOpen = document.querySelector('.more-menu')?.open || false;
-  app.innerHTML = `<div class="app-shell minimal-shell"><header class="minimal-header"><a href="#" class="minimal-brand" data-action="training">${icon('rotor')}<strong>AEROLAB</strong></a><span class="header-title">${ui.route === 'controller' ? '조종기 작동 확인' : '프로펠러 정비'}</span><span class="header-session">${state && !result ? e(state.meta.trainee) + ' · ' : ''}${stored.error ? '저장 확인 필요' : '기초 정비 실습'}</span><nav aria-label="주요 메뉴">${button(ui.route === 'operations' ? '실습으로' : '훈련 기록', ui.route === 'operations' ? 'training' : 'operations', 'quiet-button')}
-    <details class="more-menu" ${settingsOpen ? 'open' : ''}><summary aria-label="추가 설정">···</summary><div class="more-menu-content"><label>화면<select data-input="view-mode" aria-label="화면 방식"><option value="3d" ${ui.viewMode === '3d' ? 'selected' : ''}>3D</option><option value="2d" ${ui.viewMode === '2d' ? 'selected' : ''}>2D</option></select></label>${ui.viewMode === '3d' && ui.route !== 'controller' ? `<label class="structure-option"><input type="checkbox" data-input="exploded" ${ui.exploded ? 'checked' : ''}>구조 벌려 보기</label>` : ''}${state && !result && ui.route === 'training' ? `<div class="battery-practice"><label for="battery-charge">잔량 연습 <output id="battery-charge-value">${pack ? pack.charge + '%' : '—'}</output></label><input id="battery-charge" type="range" data-input="battery-charge" min="0" max="100" step="1" value="${pack?.charge ?? 0}" aria-label="연습용 배터리 잔량" ${pack ? '' : 'disabled'}><small>${pack ? '실제 방전 속도가 아닌 연습용 조절입니다.' : '배터리를 장착하면 조절할 수 있습니다.'}</small></div>${button('다시 시작', 'restart', 'quiet-button')}` : ''}${ui.route !== 'controller' ? button('조종기 작동 확인', 'controller', 'quiet-button', state?.status === 'active' ? 'disabled title="정비 완료 후 사용할 수 있습니다"' : '') : ''}</div></details></nav></header>
-    <main id="main" tabindex="-1">${ui.route === 'operations' ? renderOperations(stored.records, ui, stored) : ui.route === 'controller' ? `<div class="workshop-heading"><span>연결 상태 · 입력 반응 확인</span><p>별도로 준비된 교육 기체입니다. 정비 결과는 유지됩니다.</p></div><div class="training-grid controller-grid">${renderWorkbench(controllerAircraft, sceneUI())}${renderController()}</div>` : result ? renderResult(result, saved, saveError) : `<div class="workshop-heading"><span>${state ? `0${current + 1} / ${SCENARIO.steps[current]}` : '직접 해보는 드론 정비'}</span><p id="interaction-hint">${state ? '부품을 끌어 놓거나, 클릭해 집고 놓으세요. 취소: Esc' : '관찰하고, 교체하고, 다시 확인하세요.'}</p></div><div class="training-grid ${state ? 'is-practicing' : 'is-preparing'}">${renderWorkbench(state, ui)}${renderInspector(state, ui)}</div>`}
-    <div class="feedback ${feedback?.kind || ''}" role="status" ${feedback ? '' : 'hidden'}>${icon(feedback?.kind === 'success' ? 'check' : 'info')}<span>${e(feedback?.message || '')}</span>${button('×', 'dismiss-feedback', 'dismiss', 'aria-label="안내 닫기"')}</div></main></div>`;
+  const guide = currentGuide();
+  app.innerHTML = `<div class="app-shell minimal-shell">${renderLearningHeader(ui, state, result, pack, settingsOpen, stored.error)}
+    <main id="main" tabindex="-1">${ui.route === 'operations' ? renderOperations(stored.records, ui, stored) : `${renderCourseSelector(ui, state, result)}${ui.route === 'controller' ? `<div id="task-guide-host">${renderTaskGuide(guide)}</div><div class="training-grid controller-grid">${renderWorkbench(controllerAircraft, sceneUI())}${renderController()}</div>` : result ? renderResult(result, saved, saveError) : `${state ? `<div id="task-guide-host">${renderTaskGuide(guide)}</div>` : ''}<div class="training-grid ${state ? 'is-practicing' : 'is-preparing'}">${renderWorkbench(state, ui)}${renderInspector(state, ui)}</div>`}`}
+    <div class="feedback ${feedback?.kind || ''}" role="status" ${feedback ? '' : 'hidden'}>${icon(feedback?.kind === 'success' ? 'check' : 'info')}<span>${e(feedback?.message || '')}</span>${button('×', 'dismiss-feedback', 'dismiss', 'aria-label="안내 닫기"')}</div></main>${renderLearningHelp(guide, ui, result)}</div>`;
   const inspector = document.querySelector('.inspector');
   if (inspector) inspector.scrollTop = panelScroll;
   syncViewport();
   const flat = document.querySelector('.flat-stage');
   if (flat) positionFlatPoints(flat, ui);
   updateControllerDisplay();
+  applyLearningHighlights(app, guide, ui);
+  const help = document.querySelector('#learning-help');
+  help?.addEventListener('cancel', event => { event.preventDefault(); ui.helpOpen = false; render(); });
+  if (ui.helpOpen && help) { help.showModal(); return; }
+  if (wasHelpOpen || focusAction === 'close-help') { app.querySelector('header [data-action="open-help"]')?.focus({ preventScroll: true }); return; }
   if (focus) document.getElementById(focus)?.focus({ preventScroll: true });
   else if (focusAction) {
     const buttons = [...app.querySelectorAll('[data-action]')];
@@ -152,7 +162,7 @@ function allowLeave() {
 function clearAttempt() {
   stopController();
   state = null; result = null; saved = false; saveError = ''; feedback = null;
-  Object.assign(ui, { selected: 'front-left', zoomed: false, tool: 'hand', kitId: 'A1', topView: false, exploded: false });
+  Object.assign(ui, { selected: 'front-left', zoomed: false, tool: 'hand', kitId: 'A1', topView: false, exploded: false, helpOpen: false });
 }
 function download(text, name, type = 'text/csv;charset=utf-8') {
   const blob = new Blob([text], { type }), url = URL.createObjectURL(blob);
@@ -182,10 +192,24 @@ app.addEventListener('click', event => {
   event.preventDefault();
   const action = target.dataset.action;
   try {
+    if (action === 'open-help' || action === 'close-help') { ui.helpOpen = action === 'open-help'; render(); return; }
+    if (action === 'locate-task') {
+      const task = currentGuide()?.current; if (!task) return;
+      ui.helpOpen = false;
+      if (task.motorId) selectMotor(task.motorId);
+      else {
+        if (['power', 'battery'].includes(task.target.kind)) { ui.zoomed = false; ui.topView = false; if (viewport) viewport.cameraKey = ''; }
+        render();
+      }
+      const source = app.querySelector('.guide-source');
+      (source?.matches('button,input,select') ? source : source?.querySelector('button,input,select'))?.focus();
+      return;
+    }
+    if (action === 'controller-restart') { stopController(); controllerAircraft = createControllerAircraft(); ui.helpOpen = false; feedback = null; render(); announce('조종기 교육을 처음부터 시작합니다.'); return; }
     if (action === 'controller') {
-      if (state?.status === 'active') return notify('정비를 마친 다음 조종기 작동 확인을 시작하세요.', 'warning');
+      if (state?.status === 'active') { if (!allowLeave()) return; clearAttempt(); }
       stopController(); controllerAircraft = createControllerAircraft();
-      ui.route = 'controller'; ui.zoomed = false; ui.topView = false; feedback = null;
+      ui.route = 'controller'; ui.zoomed = false; ui.topView = false; ui.helpOpen = false; feedback = null;
       if (viewport) viewport.cameraKey = '';
       document.querySelector('.more-menu')?.removeAttribute('open'); render(); return;
     }
@@ -195,6 +219,7 @@ app.addEventListener('click', event => {
       if (ui.route === action) return;
       if (!allowLeave()) return;
       stopController();
+      ui.helpOpen = false;
       if (state?.status !== 'active' && !result) clearAttempt();
       ui.route = action; feedback = null; render(); return;
     }
@@ -289,6 +314,7 @@ app.addEventListener('change', async event => {
   render();
 });
 window.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && ui.helpOpen) { event.preventDefault(); ui.helpOpen = false; render(); return; }
   if (event.key === 'Escape' && ui.route === 'controller') { event.preventDefault(); controllerInput?.cancel(false); actController({ type: 'STOP' }); return; }
   if (event.key === 'Escape' && ui.zoomed && !interactions?.holding) { ui.zoomed = false; render(); }
 });

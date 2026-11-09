@@ -5,6 +5,7 @@ import { createState } from './state.js';
 export const createControllerState = () => ({
   aircraftPower: false, remotePower: false, connected: false,
   sticks: { left: { x: 0, y: 0 }, right: { x: 0, y: 0 } },
+  practice: { aircraft: false, remote: false, link: false, left: false, right: false, stop: false },
 });
 export function createControllerAircraft() {
   const aircraft = createState({ session: '작동 확인', trainee: 'preview' });
@@ -28,19 +29,20 @@ export function connectionLabel(s) {
 }
 export function controllerTransition(s, action) {
   switch (action.type) {
-    case 'AIRCRAFT_POWER': return { ...s, aircraftPower: !s.aircraftPower, connected: false, sticks: centered() };
-    case 'REMOTE_POWER': return { ...s, remotePower: !s.remotePower, connected: false, sticks: centered() };
+    case 'AIRCRAFT_POWER': return { ...s, aircraftPower: !s.aircraftPower, connected: false, sticks: centered(), practice: { ...s.practice, aircraft: s.practice.aircraft || !s.aircraftPower } };
+    case 'REMOTE_POWER': return { ...s, remotePower: !s.remotePower, connected: false, sticks: centered(), practice: { ...s.practice, remote: s.practice.remote || !s.remotePower } };
     case 'LINK':
       if (s.connected) return { ...s, connected: false, sticks: centered() };
       if (!s.aircraftPower || !s.remotePower || !sticksNeutral(s)) return s;
-      return { ...s, connected: true, sticks: centered() };
+      return { ...s, connected: true, sticks: centered(), practice: { ...s.practice, link: true } };
     case 'STICK': {
       if (!['left', 'right'].includes(action.side) || !Number.isFinite(action.x) || !Number.isFinite(action.y)) return s;
       const length = Math.max(1, Math.hypot(action.x, action.y));
-      return { ...s, sticks: { ...s.sticks, [action.side]: { x: action.x / length, y: action.y / length } } };
+      const moved = s.connected && s.aircraftPower && s.remotePower && Math.hypot(action.x, action.y) > .08;
+      return { ...s, sticks: { ...s.sticks, [action.side]: { x: action.x / length, y: action.y / length } }, practice: { ...s.practice, [action.side]: s.practice[action.side] || moved } };
     }
     case 'CENTER': return { ...s, sticks: centered() };
-    case 'STOP': return { ...s, connected: false, sticks: centered() };
+    case 'STOP': return { ...s, connected: false, sticks: centered(), practice: { ...s.practice, stop: s.practice.stop || (s.connected && s.practice.left && s.practice.right) } };
     case 'RESET': return createControllerState();
     default: return s;
   }

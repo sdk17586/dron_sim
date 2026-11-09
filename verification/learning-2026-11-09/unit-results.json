@@ -1,0 +1,32 @@
+[
+  {
+    "suite": "suite",
+    "exitCode": 0,
+    "stdout": "ALL PASS · 22 passed · 0 failed\nPASS T01 배터리 없는 전원 차단\nPASS T02 안전 조건 전 분해 금지·원본 불변\nPASS T03 전원 켜짐 배터리 분리 차단\nPASS T04 고정 나사 제거 전 날개 분리 차단\nPASS T05 날개 하나 교체는 미완료\nPASS T06 잘못된 표식·혼합 포장·기존 나사 차단\nPASS T07 정상 교체와 부품 위치 일관성\nPASS T08 체결 누락 판정\nPASS T09 재분리 시 확인 무효화\nPASS T10 다른 모터 미완료 검사\nPASS T11 조립만으로 통과 금지\nPASS T12 정상 완료와 종료 뒤 입력 불변\nPASS T13 같은 오조작 연타 중복 집계 없음\nPASS T14 독립 실습도 동일 판정\nPASS T15 새 시도 식별자·초기화 분리\nPASS T16 저장 재조회·중복 저장 제외\nPASS T18 저장 실패·손상 데이터 덮어쓰기 방지\nPASS T19 CSV 취합·중복·충돌\nPASS T20 CSV 특수문자·한글·수식·앞자리 0 왕복\nPASS T21 선택한 결과만 삭제·다른 앱 보존\nPASS T25 500건 한도·파일 크기 거절\nPASS 무작위 입력 1000회에도 부품 불변조건\n",
+    "stderr": ""
+  },
+  {
+    "suite": "placement",
+    "exitCode": 0,
+    "stdout": "PASS 전원 켜짐 상태의 배터리 이동 거부\nPASS 안전 확인 전 드라이버 작업 거부\nPASS 고정 나사가 있는 날개 이동 거부\nPASS 드라이버 분리 뒤 실제 날개 이동과 잘못된 놓기 취소\nPASS 표식·부품 종류·번호 불일치 거부\nPASS 새 나사는 놓기와 드라이버 체결을 구분\nPASS 오래된 날개 선택·빈 나사 작업에서 부품 생성 방지\nPASS 전체 놓기 절차 완료·재작업 시 최종 확인 무효화\nALL PASS · 8 placement checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "battery",
+    "exitCode": 0,
+    "stdout": "PASS 기존 20%·교체용 100%, 실습 사이 상태 분리\nPASS LED 길이는 잔량에 비례, 0%는 비어 있고 색상만으로 구분하지 않음\nPASS 기존 배터리 제거 후 충전된 배터리 장착, 이전 잔량 보존\nPASS 장착된 배터리 위에 중복 장착 거부·입력 상태 불변\nPASS 전원이 켜진 상태의 배터리 교체 거부\nPASS 잔량 0%는 전원 켜기 차단, 연습 중 0% 도달 시 전원 꺼짐\nPASS 분리 배터리 재장착은 자체 잔량 유지, 잘못된 ID·장소 거부\nPASS 잔량은 장착한 배터리의 0~100 정수만 변경\nPASS 오래된 배터리 선택으로 교체한 배터리 제거 방지\nPASS 1000회 교체·잔량·전원 입력에도 배터리 중복·분실 없음\nALL PASS · 10 battery checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "controller",
+    "exitCode": 0,
+    "stdout": "PASS 처음에는 양쪽 전원·연결·회전이 모두 꺼짐\nPASS 양쪽 전원이 있어야 연결 가능, 미연결 입력은 회전하지 않음\nPASS 스틱이 움직인 상태에서는 연결 거부, 중앙 복귀 후 연결\nPASS 두 스틱 모두 반응하며 범위 밖 입력은 원 안으로 제한\nPASS 작은 중앙 흔들림은 회전하지 않으며 입력 크기에 따라 증가\nPASS 기체·조종기 어느 쪽을 꺼도 즉시 정지·연결 해제, 다시 켜도 자동 연결 안 함\nPASS 정지·연결 해제·초기화는 스틱을 중앙에 두며 이전 상태 불변\nPASS 잘못된 스틱·숫자 입력은 거부\nPASS 작동 확인 기체는 정상 날개·100% 배터리, 정비 상태·평가와 분리\nPASS 5000회 임의 입력에서 전원·연결·회전 불변 조건 유지\nALL PASS · 10 controller checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "guidance",
+    "exitCode": 0,
+    "stdout": "PASS 전원·차단 확인·배터리 분리 순서와 현재 작업 안내\nPASS 도움말 조회는 상태·오류·도움말 집계를 변경하지 않으며 미판단 고장 정답을 노출하지 않음\nPASS 선택한 모터의 나사 분리·날개 분리·새 부품·체결을 정확히 추적\nPASS 3/4와 4/4를 구분하고, 남은 모터 판단 후 최종 확인으로 전환\nPASS 네 모터 판단 이후에도 새 나사 체결이 빠지면 정확한 나사를 안내\nPASS 잘못된 표식 포장과 소진한 새 부품의 재작업 안내\nPASS 최종 확인 세 개 뒤에도 완료 버튼을 눌러야 남은 작업이 0개\nPASS 조종기 미연결 입력·조기 정지는 교육 수행으로 기록하지 않음\nPASS 조종기 전원·연결·좌우 스틱·정지 확인과 재시작을 구분\nALL PASS · 9 guidance checks\n",
+    "stderr": ""
+  }
+]
