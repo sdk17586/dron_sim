@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-06",
+  "passed": 13,
+  "checks": [
+    "별도 정상 기체·회전 0%로 시작, 정비 부품 조작 없음",
+    "조종기만 켜거나 미연결 상태에서 조작해도 회전 차단",
+    "양쪽 전원·중앙 스틱 조건에서 연결, 상태·배터리 표시",
+    "실제 마우스 드래그로 네 프로펠러 애니메이션, 바깥에서 놓아도 정지",
+    "오른쪽 스틱·대각선 키 입력 반응, 모든 키를 놓으면 중앙 복귀",
+    "창 초점 이탈·포인터 취소 시 입력 초기화·회전 정지",
+    "어느 쪽 전원을 꺼도 정지·연결 해제, 다시 켠 후 명시적으로 재연결",
+    "2D·3D 모두 동일하게 회전·정지, 전환 시 연결 유지·입력 중앙 복귀",
+    "Esc·정지 버튼은 회전 중단과 연결 해제를 함께 수행",
+    "동작 줄이기 환경에서는 정지 도식·수치, 일반 환경에서는 회전 반응",
+    "1366·1920·390px에서 조종기·스틱 가로 넘침 없음",
+    "정비 복귀 시 회전 제거·원래 배터리, 정비 진행 중 조종기 진입 차단",
+    "JavaScript 오류·외부 요청·보안 정책 위반 없음"
+  ],
+  "motionSamples": [
+    {
+      "time": 20065.800000190735,
+      "matrix": "matrix(1, 0, 0, 1, 0, 0)"
+    },
+    {
+      "time": 20203.199999809265,
+      "matrix": "matrix(-0.126372, 0.991983, -0.991983, -0.126372, 0, 0)"
+    }
+  ],
+  "widths": [
+    {
+      "width": 1366,
+      "scrollWidth": 1366
+    },
+    {
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "cspViolations": [],
+  "realHardwareConnection": false,
+  "flightModel": false,
+  "focusLossCheck": "synthetic window blur",
+  "pointerCancelCheck": "dispatched pointercancel"
+}

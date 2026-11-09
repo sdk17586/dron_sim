@@ -1,0 +1,38 @@
+[
+  {
+    "url": "http://127.0.0.1:8000/",
+    "status": 200,
+    "type": "text/html",
+    "cacheControl": "no-store"
+  },
+  {
+    "url": "http://127.0.0.1:8000/src/ui/controller.css",
+    "status": 200,
+    "type": "text/css",
+    "cacheControl": "no-store"
+  },
+  {
+    "url": "http://127.0.0.1:8000/src/domain/controller.js",
+    "status": 200,
+    "type": "text/javascript",
+    "cacheControl": "no-store"
+  },
+  {
+    "url": "http://192.168.0.4:8000/",
+    "status": 200,
+    "type": "text/html",
+    "cacheControl": "no-store"
+  },
+  {
+    "url": "http://192.168.0.4:8000/src/ui/controller.css",
+    "status": 200,
+    "type": "text/css",
+    "cacheControl": "no-store"
+  },
+  {
+    "url": "http://192.168.0.4:8000/src/domain/controller.js",
+    "status": 200,
+    "type": "text/javascript",
+    "cacheControl": "no-store"
+  }
+]

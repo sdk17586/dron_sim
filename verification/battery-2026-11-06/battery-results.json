@@ -1,0 +1,55 @@
+{
+  "date": "2026-11-06",
+  "passed": 9,
+  "checks": [
+    "초기 잔량: 기체 20%·교체용 100%, 일자 LED·숫자 일치",
+    "실제 드래그: 장착된 배터리 위 중복 삽입 차단",
+    "실제 드래그: 기존 배터리 분리·보관, LED 꺼짐·빈 자리 표시",
+    "실제 드래그: 충전 배터리 장착·100% 표시, 기존 배터리 보존",
+    "잔량 연습: 75→50→20→0%, 실시간 미리보기·확정·3D LED 비례 축소",
+    "키보드: 보관 배터리 집기·재장착, 배터리별 잔량·초점 유지",
+    "2D↔3D: LED·잔량 변경·배터리 교체 상태 일치",
+    "1366·1920·390px: 배터리 두 개 보관 시 가로 넘침·분실 없음",
+    "JavaScript 오류·외부 요청·보안 정책 위반 없음"
+  ],
+  "levels": [
+    {
+      "charge": 75,
+      "barWidth": "75",
+      "color": "#71ad50"
+    },
+    {
+      "charge": 50,
+      "barWidth": "50",
+      "color": "#c99a3c"
+    },
+    {
+      "charge": 20,
+      "barWidth": "20",
+      "color": "#cf674b"
+    },
+    {
+      "charge": 0,
+      "barWidth": "0",
+      "color": "#cf674b"
+    }
+  ],
+  "widths": [
+    {
+      "width": 1366,
+      "scrollWidth": 1366
+    },
+    {
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "width": 390,
+      "scrollWidth": 390
+    }
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "cspViolations": [],
+  "webglHardwareVerified": false
+}

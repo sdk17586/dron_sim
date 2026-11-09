@@ -1,0 +1,9 @@
+{
+  "url": "http://192.168.0.4:8000/",
+  "blades": "8",
+  "screws": "8",
+  "distinctFaceColors": 304,
+  "visibleLines": true,
+  "cspViolations": [],
+  "status": 200
+}

@@ -1,0 +1,2 @@
+﻿schemaVersion,attemptId,session,trainee,scenarioId,contentVersion,profileVersion,mode,startedAt,endedAt,durationSeconds,status,hints,errors,events
+1,example-attempt-001,예시 회차,'001,propeller-replacement-v1,1.0.0,2026-10-30.1,guided,2026-10-30T00:00:00.000Z,2026-10-30T00:01:00.000Z,60,abandoned,0,[],[]

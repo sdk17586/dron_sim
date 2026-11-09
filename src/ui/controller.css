@@ -1,0 +1,39 @@
+.controller-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 30px; }
+.controller-grid .drone-canvas { height: clamp(440px, calc(100vh - 210px), 680px); }
+.controller-panel { padding: 12px 0; min-width: 0; }
+.controller-panel h1 { font-size: 23px; letter-spacing: -.6px; }
+.controller-panel > p { font-size: 12px; color: #75846d; line-height: 1.8; margin: 9px 0 20px; }
+.controller-panel > small { display: block; font-size: 10px; color: #7a8673; line-height: 1.8; }
+.controller-panel .controller-help { font-size: 11px; margin: 15px 0 8px; }
+.controller-intro { display: block; margin: 16px 0 0; padding-left: 0; }
+.controller-return { margin-top: 14px; padding-left: 0; }
+.remote-body { padding: 18px 20px 15px; background: linear-gradient(145deg,#e5e9e1,#cdd6c8); border: 1px solid #bac7b5; border-radius: 20px 20px 34px 34px; box-shadow: 0 12px 25px #22382409, inset 0 1px 0 #fff; }
+.remote-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; color: #697d60; font-size: 9px; letter-spacing: .8px; }
+.remote-power { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #eaf0e3; border: 1px solid #bdcbb4; color: #788970; }
+.remote-power .icon { width: 16px; height: 16px; }
+.remote-power[aria-pressed=true] { color: #ecf7df; background: #4d7040; border-color: #4d7040; }
+.remote-screen { padding: 16px 14px 12px; background: #24382e; color: #b4c5af; border-radius: 10px; border: 4px solid #b6c2b0; }
+.remote-link { display: flex; align-items: center; gap: 7px; font-size: 12px; margin-bottom: 15px; }
+.link-dot { width: 6px; height: 6px; border-radius: 50%; background: #a0a388; flex-shrink: 0; }
+.is-connected .link-dot { background: #b5d68d; box-shadow: 0 0 8px #b5d68d55; }
+.is-connected .remote-link { color: #d7edc1; }
+.remote-readings { display: flex; justify-content: space-between; font-size: 9px; gap: 10px; }
+.remote-readings span { display: block; }
+.remote-readings b { display: block; color: #e1ead8; font-size: 13px; font-weight: 500; margin-top: 5px; font-variant-numeric: tabular-nums; }
+.remote-link-button { width: 100%; margin-top: 15px; padding: 6px; min-height: 31px; border: 1px solid #647c58; background: #375239; color: #d6e6c8; border-radius: 5px; font-size: 11px; }
+.remote-link-button:disabled { opacity: .4; cursor: default; }
+.joysticks { display: flex; justify-content: space-between; gap: 16px; padding-top: 18px; }
+.stick-unit { display: flex; flex-direction: column; align-items: center; gap: 7px; font-size: 10px; color: #687b60; min-width: 0; }
+.stick-unit > output { font-size: 9px; white-space: nowrap; font-variant-numeric: tabular-nums; min-height: 16px; }
+.joystick { position: relative; width: 112px; height: 112px; border-radius: 50%; padding: 0; background: radial-gradient(circle,#778770,#a5b49b 68%,#c0ccb7 69%); border: 1px solid #9ead94; box-shadow: inset 0 3px 9px #283b2520,0 1px 0 #eef3e8; touch-action: none; cursor: grab; user-select: none; }
+.joystick:active { cursor: grabbing; }
+.stick-cross::before, .stick-cross::after { content: ''; position: absolute; background: #d1ddc655; top: 12px; bottom: 12px; left: 50%; width: 1px; }
+.stick-cross::after { transform: rotate(90deg); }
+.stick-knob { position: absolute; left: calc(50% - 18px); top: calc(50% - 18px); width: 36px; height: 36px; border: 4px solid #42553d; border-radius: 50%; background: repeating-radial-gradient(circle,#657b58 0 2px,#4f6446 3px 4px); box-shadow: 0 3px 5px #21341f33; pointer-events: none; }
+.remote-stop { width: 100%; min-height: 33px; margin-top: 10px; border: 1px solid #c4c4ad; background: #e5e7d8; border-radius: 6px 6px 15px 15px; color: #81664d; font-size: 11px; }
+.controller-aircraft-power { width: 36px; height: 36px; }
+.controller-aircraft-power[aria-pressed=true] { background: #557647; color: white; }
+.controller-aircraft-power .point-caption { white-space: nowrap; }
+.rotor-preview-layer { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: hidden; }
+@media (max-width: 1000px) { .controller-grid { grid-template-columns: minmax(0,1fr) 310px; gap: 20px; } .remote-body { padding-left: 15px; padding-right: 15px; } .joystick { width: 104px; height: 104px; } }
+@media (max-width: 800px) { .controller-grid { grid-template-columns: minmax(0,1fr); gap: 10px; } .controller-grid .drone-canvas { height: 360px; min-height: 320px; } .controller-panel { width: 100%; max-width: 400px; justify-self: center; } .controller-panel > .eyebrow { display: none; } .controller-panel h1 { font-size: 20px; } .remote-body { padding-left: 24px; padding-right: 24px; } .joysticks { justify-content: space-around; } .controller-panel > p { margin-bottom: 12px; } }

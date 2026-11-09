@@ -1,0 +1,195 @@
+/* The workshop keeps navigation, the aircraft, and the current task in view. */
+:root { --paper: #f6f7f3; --ink: #25392e; --muted: #6b7869; }
+.minimal-shell { display: flex; flex-direction: column; min-height: 100vh; }
+.minimal-header { height: 76px; padding: 0 36px; display: flex; align-items: center; gap: 30px; border-bottom: 1px solid var(--line); background: #fff; }
+.minimal-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; letter-spacing: 1.7px; font-size: 15px; }
+.minimal-brand .icon { width: 27px; height: 27px; color: #42634a; }
+.header-title { border-left: 1px solid var(--line); padding-left: 28px; font-size: 14px; }
+.header-session { margin-left: auto; color: var(--muted); font-size: 12px; }
+.minimal-header nav { display: flex; align-items: center; gap: 16px; }
+.quiet-button { border: 0; border-radius: 6px; background: transparent; color: #65765e; padding: 8px 10px; font-size: 13px; min-height: 38px; }
+.quiet-button:hover { background: #f1f5eb; }
+.more-menu { position: relative; }
+.more-menu > summary { display: grid; place-items: center; cursor: pointer; list-style: none; width: 36px; height: 38px; font-size: 24px; border-radius: 5px; }
+.more-menu > summary::-webkit-details-marker { display: none; }
+.more-menu[open] > summary, .more-menu > summary:hover { background: #eef3e8; }
+.more-menu-content { position: absolute; right: 0; top: 46px; width: 208px; padding: 18px; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 36px #20332115; z-index: 20; }
+.more-menu-content label { font-size: 12px; display: block; }
+.more-menu-content select { font-size: 13px; min-height: 36px; }
+.more-menu-content .structure-option { display: flex; gap: 8px; margin: 16px 0 8px; align-items: center; }
+.more-menu-content .quiet-button { padding-left: 0; }
+.minimal-shell main { width: 100%; max-width: 1600px; margin: 0 auto; padding: 24px 36px 28px; }
+.workshop-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; font-size: 12px; color: #74816e; min-height: 20px; }
+.workshop-heading > span { color: #425c3e; }
+.workshop-heading p { font-size: 12px; }
+.training-grid { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 32px; align-items: start; }
+.training-grid.is-preparing { grid-template-columns: minmax(0, 1fr) 280px; }
+.workbench { border: 0; border-radius: 14px; background: none; min-width: 0; overflow: visible; }
+.drone-canvas, .three-stage, .flat-stage { height: clamp(400px, calc(100vh - 300px), 660px); min-height: 400px; margin: 0; border-radius: 14px; background: #f1f4ec; overflow: hidden; }
+.is-preparing .drone-canvas { height: clamp(460px, calc(100vh - 180px), 760px); }
+.drone-viewport { border-radius: 14px; }
+.drone-canvas .drone-svg { width: 100%; height: 100%; max-height: none; min-height: 0; }
+.canvas-tools { position: absolute; bottom: 14px; left: 14px; z-index: 3; }
+.camera-home { display: grid; place-items: center; width: 35px; height: 35px; border: 1px solid #dbe3d3; background: #fbfcf8df; border-radius: 8px; color: #69805d; }
+.camera-home .icon { width: 16px; height: 16px; }
+.canvas-help { position: absolute; bottom: 21px; left: 62px; font-size: 11px; color: #819176; pointer-events: none; }
+.model-note { position: absolute; bottom: 21px; right: 18px; color: #8c9883; font-size: 10px; pointer-events: none; }
+.inspector { border: 0; border-radius: 0; background: none; padding: 28px 0 0; max-height: none; overflow: visible; }
+.eyebrow { display: block; color: #7c8d70; letter-spacing: 1.3px; font-size: 10px; margin-bottom: 14px; }
+.start-panel { padding-top: 42px; }
+.start-panel h1 { font-size: 28px; letter-spacing: -1px; margin-bottom: 14px; }
+.inspector > p { color: #718066; line-height: 1.9; font-size: 14px; margin: 13px 0 24px; }
+.inspector h2 { font-size: 20px; line-height: 1.6; }
+.start-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 30px; }
+.start-fields input { background: transparent; font-size: 13px; }
+.inspector .start-fields label { font-size: 12px; }
+.practice-settings { margin: 0 0 18px; color: #718266; font-size: 12px; }
+.practice-settings summary { cursor: pointer; }
+.practice-settings fieldset { display: flex; gap: 12px; margin: 10px 0 0; }
+.practice-settings .mode-choice { border: 0; padding: 4px 0; background: none; font-size: 12px; align-items: center; }
+.inspector > small { display: block; font-size: 11px; line-height: 1.9; color: #7d8c72; margin-top: 18px; }
+.button { border-radius: 7px; }
+.two-buttons { margin-top: 20px; }
+.two-buttons > .button { min-height: 42px; font-size: 13px; }
+.motor-mark { display: inline-block; font-size: 11px; color: #7d8b72; margin-top: 4px; }
+.preparation-status { display: flex; flex-direction: column; gap: 10px; color: #8e9c84; font-size: 12px; margin-top: 28px; }
+.preparation-status > span { display: flex; align-items: center; gap: 8px; }
+.preparation-status .icon { width: 15px; height: 15px; }
+.preparation-status .done { color: #426b38; }
+.inspector .final-checks { border: 0; padding: 0; margin: 24px 0; }
+.inspector label.final-check-label { display: flex; gap: 9px; align-items: flex-start; font-weight: 400; margin: 12px 0; color: #5c7252; font-size: 13px; cursor: pointer; }
+.final-check-label input { margin: 5px 0 0; accent-color: #426539; width: 16px; height: 16px; flex-shrink: 0; }
+.parts-dock { display: flex; align-items: center; gap: 18px; margin-top: 17px; border-top: 1px solid #dfe6d8; padding-top: 16px; }
+.dock-tools { padding-right: 15px; border-right: 1px solid #dfe6d8; }
+.new-parts { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.kit-choice { font-size: 10px; color: #73856a; flex: 0 0 138px; }
+.kit-choice select { background: transparent; border: 0; border-bottom: 1px solid #ced9c5; border-radius: 0; padding: 6px 16px 6px 0; font-size: 12px; min-height: 35px; margin-top: 3px; }
+.inventory-pieces { display: flex; gap: 4px; }
+.inventory-piece { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; width: 67px; min-height: 91px; padding: 2px 4px 5px; border: 1px solid transparent; background: transparent; border-radius: 9px; color: #435e44; cursor: grab; touch-action: none; user-select: none; }
+.part-art { display: block; width: 57px; height: 48px; pointer-events: none; }
+.inventory-piece > span { font-size: 11px; }
+.inventory-piece small { font-size: 9px; color: #8c9b81; line-height: 1.3; }
+.inventory-piece:hover:not(:disabled) { background: #eaf0e3; border-color: #cfddc2; }
+.inventory-piece:active { cursor: grabbing; }
+.inventory-piece.used-piece { opacity: .28; }
+.discard-tray { min-height: 92px; width: 146px; flex-shrink: 0; border: 1px dashed #bfceb1; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; color: #879779; text-align: center; padding: 10px; }
+.discard-tray .icon { width: 18px; height: 18px; margin-bottom: 2px; }
+.discard-tray strong { font-size: 11px; font-weight: 500; }
+.discard-tray span, .discard-tray small { font-size: 9px; line-height: 1.8; }
+.dock-brief { margin-right: auto; font-size: 12px; color: #7a8a6f; padding: 14px 0; line-height: 1.9; }
+.preparation-dock .discard-tray { width: 180px; }
+.repair-points, .flat-points { position: absolute; inset: 0; pointer-events: none; }
+.three-motor-label { width: 26px; height: 26px; font-size: 10px; border-color: #becdb2; box-shadow: none; background: #fbfdf8eb; }
+.three-motor-label[data-inspection=done]::after, .three-motor-label[data-inspection=repair]::after { position: absolute; right: -7px; bottom: -5px; width: 13px; height: 13px; display: grid; place-items: center; border-radius: 50%; background: #edf4e5; color: #426b38; border: 1px solid #a9bd98; font-size: 9px; content: '✓'; }
+.three-motor-label[data-inspection=repair]::after { content: '!'; color: #92602d; background: #fff5e4; border-color: #c9ab79; }
+.remaining-task { margin-top: 16px; }
+.remaining-task > p { color: #586e4f; font-size: 12px; line-height: 1.9; overflow-wrap: anywhere; }
+.next-motor { margin-top: 10px; padding: 8px 12px; background: #eaf1e2; border: 1px solid #ccdabe; }
+.repair-point, .model-power { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; touch-action: none; user-select: none; display: grid; place-items: center; padding: 0; border: 1px solid #d0dcc4; border-radius: 50%; background: #f7faf2e6; color: #506b44; box-shadow: 0 2px 8px #3446330a; cursor: grab; }
+.repair-point { width: 48px; height: 48px; }
+.repair-point .part-art { width: 42px; height: 36px; }
+.screw-point { width: 34px; height: 34px; cursor: pointer; }
+.screw-point .part-art { width: 30px; height: 28px; }
+.model-power { width: 32px; height: 32px; cursor: pointer; }
+.model-power .icon { width: 17px; height: 17px; }
+.model-power.confirmed { background: #e2ecd7; border-color: #8eac76; }
+.battery-point { border-radius: 9px; width: 57px; height: 43px; }
+.battery-point .part-art { width: 47px; height: 40px; }
+.repair-point.empty-part { background: #f2f5ed9e; border-style: dashed; border-color: #8da57b; }
+.empty-part .part-art { opacity: .25; }
+.repair-point.unfastened { color: #ac7a40; border-color: #cfac73; background: #fcf4e8; }
+.part-number-badge { position: absolute; right: -3px; top: -4px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #f4f7ee; border: 1px solid #becdb2; color: #687f57; font-size: 9px; pointer-events: none; }
+.point-caption { display: none; position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); white-space: nowrap; color: #536c47; background: #f9fcf4f5; border: 1px solid #dce6d2; border-radius: 5px; padding: 3px 7px; font-size: 10px; pointer-events: none; }
+.repair-point:hover .point-caption, .repair-point:focus-visible .point-caption { display: block; }
+.picked-piece { outline: 2px solid #5e8549; outline-offset: 3px; background: #e6efdbee; }
+[data-holding=driver] .screw-point, [data-holding=blade] .blade-point.empty-part, [data-holding=screw] .screw-point.empty-part, [data-holding=mounted-blade] .discard-tray, [data-holding=battery] .discard-tray { box-shadow: 0 0 0 4px #9fb98c35; border-color: #759d5b; }
+.drop-hover { outline: 2px solid #618e46; outline-offset: 4px; background: #e1ecd5e6; }
+.part-ghost { position: fixed; top: 0; left: 0; width: 64px; height: 58px; z-index: 100; pointer-events: none; display: grid; place-items: center; color: #43643b; background: #fafdf3e8; border: 1px solid #a2b98e; border-radius: 10px; box-shadow: 0 5px 18px #2d432725; }
+.battery-gauge { position: absolute; width: 96px; transform: translate(-50%, -100%); padding-bottom: 12px; pointer-events: none; text-align: center; }
+.battery-gauge > svg { display: block; width: 100%; height: 6px; border-radius: 2px; }
+.battery-gauge-label { display: inline-block; font-size: 10px; color: #536b48; background: #f1f4ecd9; border-radius: 3px; padding: 1px 4px; margin-top: 3px; }
+.battery-stock { flex-shrink: 0; border-right: 1px solid #dfe6d8; padding-right: 12px; }
+.battery-pack-piece { width: 72px; }
+.stored-batteries { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; width: 100%; }
+.stored-batteries .battery-pack-piece { width: 94px; min-height: 42px; display: grid; grid-template-columns: 30px 1fr; grid-template-rows: 18px 16px; column-gap: 3px; padding: 4px; }
+.stored-batteries .part-art { width: 31px; height: 30px; grid-row: 1 / 3; }
+.stored-batteries .inventory-piece span { font-size: 10px; }
+.stored-batteries .inventory-piece small { font-size: 10px; }
+.tray-drop-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 100%; border-radius: 5px; }
+[data-holding=battery-pack] .battery-point.empty-part { box-shadow: 0 0 0 4px #9fb98c35; border-color: #759d5b; }
+.battery-practice { border-top: 1px solid #e2e8db; padding-top: 13px; margin-top: 12px; }
+.battery-practice > label { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; }
+.battery-practice input[type=range] { width: 100%; min-height: 26px; padding: 0; margin: 7px 0 0; border: 0; accent-color: #64894c; cursor: pointer; }
+.battery-practice small { display: block; font-size: 10px; color: #87967c; }
+.feedback { left: 36px; right: auto; max-width: min(620px, calc(100vw - 72px)); bottom: 20px; font-size: 12px; padding: 10px 14px; }
+.minimal-shell .result-card { margin-top: 28px; }
+[tabindex]:focus-visible, summary:focus-visible { outline: 3px solid #8caa6e; outline-offset: 3px; }
+[hidden] { display: none !important; }
+@media (max-width: 1250px) {
+  .minimal-header { padding: 0 24px; }
+  .minimal-shell main { padding: 22px 24px; }
+  .training-grid, .training-grid.is-preparing { grid-template-columns: minmax(0, 1fr) 220px; gap: 24px; }
+  .parts-dock { gap: 10px; }
+  .dock-tools { padding-right: 9px; }
+  .new-parts { flex-wrap: wrap; gap: 0; }
+  .kit-choice { flex-basis: 100%; }
+  .kit-choice select { display: inline-block; width: auto; margin-left: 9px; padding-right: 7px; font-size: 11px; }
+  .inventory-piece { width: 59px; min-height: 78px; }
+  .inventory-piece .part-art { height: 40px; }
+  .discard-tray { width: 120px; }
+}
+@media (max-width: 800px) {
+  .minimal-header { height: 64px; padding: 0 18px; gap: 16px; }
+  .header-title { padding-left: 16px; font-size: 12px; }
+  .header-session { display: none; }
+  .minimal-header nav { margin-left: auto; gap: 4px; }
+  .minimal-shell main { padding: 18px; }
+  .training-grid, .training-grid.is-preparing { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .inspector { padding: 0 4px; }
+  .is-preparing .inspector { grid-row: 1; }
+  .start-panel { max-width: 430px; }
+  .start-panel > p { display: none; }
+  .start-panel h1 { font-size: 24px; margin-bottom: 0; }
+  .start-panel .eyebrow { margin-bottom: 4px; }
+  .start-fields { margin-top: 16px; }
+  .start-panel form .button.full { margin-top: 0; }
+  .start-panel > small { margin-top: 10px; }
+  .workshop-heading { align-items: flex-start; flex-direction: column; gap: 3px; font-size: 11px; }
+  .workshop-heading p { font-size: 11px; }
+  .drone-canvas, .three-stage, .flat-stage, .is-preparing .drone-canvas { height: 380px; min-height: 340px; }
+  .context-panel { padding: 18px 4px 0; border-top: 1px solid #dfe6d8; }
+  .context-panel > p { margin: 8px 0 12px; font-size: 13px; }
+  .context-panel h2 { font-size: 18px; }
+  .context-panel > small { margin-top: 8px; }
+  .eyebrow { margin-bottom: 5px; }
+  .preparation-status { margin-top: 12px; flex-direction: row; flex-wrap: wrap; }
+  .two-buttons { margin-top: 12px; max-width: 320px; }
+  .inventory-piece { width: 57px; }
+  .parts-dock { flex-wrap: wrap; }
+  .discard-tray { margin-left: auto; }
+  .new-parts { flex: 1; }
+  .feedback { left: 18px; right: 18px; max-width: none; }
+}
+@media (max-width: 520px) {
+  .header-title { display: none; }
+  .parts-dock { gap: 10px; }
+  .new-parts { order: 3; flex-basis: 100%; border-top: 1px solid #e0e7d8; padding-top: 8px; align-items: center; }
+  .kit-choice { flex-basis: 118px; }
+  .kit-choice select { display: block; margin-left: 0; }
+  .inventory-pieces { flex: 1; justify-content: space-between; gap: 0; }
+  .inventory-piece { width: 45px; min-height: 76px; }
+  .inventory-piece .part-art { width: 44px; }
+  .inventory-piece > span { font-size: 10px; }
+  .tool-piece { width: 66px; }
+  .discard-tray { width: 172px; min-height: 72px; }
+  .discard-tray .icon { display: none; }
+  .preparation-dock .discard-tray { width: 140px; }
+  .dock-brief { font-size: 10px; }
+  .canvas-help { font-size: 10px; }
+  .model-note { display: none; }
+  .battery-stock { padding-right: 6px; }
+  .battery-stock .battery-pack-piece { width: 62px; }
+  .preparation-dock .dock-brief { flex: 1; min-width: 140px; }
+  .preparation-dock .discard-tray { width: 100%; }
+  .battery-gauge { width: 80px; }
+}

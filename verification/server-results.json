@@ -1,0 +1,14 @@
+{
+  "original": {
+    "staticFiles": true,
+    "head": true,
+    "accessRules": true,
+    "portConflict": true
+  },
+  "relocatedUnicodePath": {
+    "staticFiles": true,
+    "head": true,
+    "accessRules": true,
+    "portConflict": true
+  }
+}

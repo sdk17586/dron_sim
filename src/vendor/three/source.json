@@ -1,0 +1,7 @@
+{
+  "package": "three",
+  "version": "0.181.2",
+  "tarball": "https://registry.npmjs.org/three/-/three-0.181.2.tgz",
+  "integrity": "sha512-k/CjiZ80bYss6Qs7/ex1TBlPD11whT9oKfT8oTGiHa34W4JRd1NiH/Tr1DbHWQ2/vMUypxksLnF2CfmlmM5XFQ==",
+  "localChange": "OrbitControls, SVGRenderer and Projector imports rewritten to local three.module.min.js; SVGRenderer writes presentation attributes instead of inline style attributes to comply with the app CSP, clearing previous attributes when reusing pooled paths"
+}

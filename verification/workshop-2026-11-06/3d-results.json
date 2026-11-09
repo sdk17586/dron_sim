@@ -1,0 +1,61 @@
+{
+  "date": "2026-11-06",
+  "renderer": "Three.js 0.181.2 SVGRenderer (compatible 3D)",
+  "passed": 18,
+  "checks": [
+    "3D 기체: 4개 모터, 날개 8개, 나사 8개 표시",
+    "브라우저 실제 색상: 면·격자 표시 정상, CSP 위반 없음",
+    "키보드 회전: 실제 3D 투영 결과 변경",
+    "마우스 드래그: 회전 확인",
+    "휠 이벤트: 확대 확인",
+    "3D 기체 직접 클릭: 모터 선택 확인",
+    "실제 드래그: 배터리를 수거함에 놓아 분리",
+    "잘못된 위치에 놓기: 부품·3D 상태 보존",
+    "키보드 집기·Esc 취소: 선택·카메라 유지",
+    "고정된 날개 드래그: 분리 차단·안내",
+    "표식이 다른 부품 드래그: 장착 차단·원본 보존",
+    "실제 드래그: 나사·날개 분리 → 새 부품 장착 → 드라이버 체결",
+    "접힌 설정의 구조 보기: 부품 개수 유지",
+    "2D↔3D 전환: 조작 지점·렌더러·실습 상태 유지",
+    "반응형: 1366·1920·390px 가로 넘침 없음",
+    "회전·부품 교체·화면 전환 후에도 색상·선 표시 정상",
+    "JavaScript 오류·외부 요청 없음",
+    "WebGL 사용 불가: 2D 전환·실습 시작 정상"
+  ],
+  "browserColors": {
+    "initial": {
+      "distinctFaceColors": 304,
+      "sampleFaceColors": [
+        "rgb(42, 69, 53)",
+        "rgb(35, 58, 45)",
+        "rgb(38, 62, 48)",
+        "rgb(175, 190, 167)",
+        "rgb(65, 89, 71)",
+        "rgb(164, 180, 159)",
+        "rgb(225, 179, 112)",
+        "rgb(199, 159, 99)"
+      ],
+      "facesMatch": true,
+      "linesVisible": true,
+      "inlineStyles": 0
+    },
+    "afterInteraction": {
+      "distinctFaceColors": 192,
+      "sampleFaceColors": [
+        "rgb(42, 69, 53)",
+        "rgb(35, 58, 45)",
+        "rgb(38, 62, 48)",
+        "rgb(175, 190, 167)",
+        "rgb(164, 180, 159)",
+        "rgb(225, 179, 112)",
+        "rgb(65, 89, 71)",
+        "rgb(199, 159, 99)"
+      ],
+      "facesMatch": true,
+      "linesVisible": true,
+      "inlineStyles": 0
+    }
+  },
+  "cspViolations": [],
+  "webglHardwareVerified": false
+}
