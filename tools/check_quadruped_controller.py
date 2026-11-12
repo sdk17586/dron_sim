@@ -10,6 +10,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--url', default='http://127.0.0.1:8000')
     parser.add_argument('--output', default='verification/robot-controller-2026-11-12')
+    parser.add_argument('--compatible', action='store_true')
     args = parser.parse_args()
     output = Path(args.output); output.mkdir(parents=True, exist_ok=True)
     checks = []
@@ -35,7 +36,7 @@ def main():
                 page.wait_for_function('([axis,original])=>document.querySelector(".robot-3d-canvas").dataset[axis]!==original', arg=[axis, original], polling=50)
             def enable():
                 click('robot-controller-power'); click('robot-controller-remote'); click('robot-controller-link'); click('robot-controller-estop')
-            page.goto(args.url)
+            page.goto(args.url + ('/?compatible3d=1' if args.compatible else '/'))
             baseline = page.evaluate('JSON.stringify(localStorage)')
             assert page.locator('.course-home .course-card').count() == 2
             click('robot'); assert page.locator('.course-selector [data-action=robot-controller]').is_visible()
@@ -57,9 +58,11 @@ def main():
             assert page.locator('.robot-controller-panel').get_attribute('data-estop') == 'false'
             passed('미연결 스틱·비상 정지 해제 차단, 전원→연결→중립 상태에서 비상 정지 해제')
             (output/'robot-console-initial.svg').write_text(canvas.evaluate('(e)=>e.outerHTML'))
-            original = canvas.get_attribute('data-drive-z'); original_shape = canvas.inner_html()
+            is_svg = canvas.evaluate('(e)=>e.tagName.toLowerCase()') == 'svg'
+            visible_shape = lambda: canvas.inner_html() if is_svg else canvas.screenshot(timeout=10000)
+            original = canvas.get_attribute('data-drive-z'); original_shape = visible_shape()
             pointer('left', 0, 1); wait_move('driveZ', original)
-            assert canvas.inner_html() != original_shape and int(canvas.get_attribute('data-motion-frame') or 0) > 0, canvas.evaluate('(e)=>({...e.dataset})')
+            assert visible_shape() != original_shape and int(canvas.get_attribute('data-motion-frame') or 0) > 0, canvas.evaluate('(e)=>({...e.dataset})')
             page.mouse.move(5, 5, steps=1); page.mouse.up()
             stopped = pose(); page.wait_for_timeout(250)
             assert pose() == stopped and canvas.get_attribute('data-driving') == 'false'

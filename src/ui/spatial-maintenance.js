@@ -65,9 +65,9 @@ export function configureRobotWorkshop(v,s,ui) {
   w.reset(Boolean(ui.immersiveMode && s.status==='active'),(piece,target)=>placeRobotPart(s,piece,target).feedback.kind==='success');
   if (!w.active) return;
   const guide=robotGuide({...s,moduleChoice:ui.robotModule},ui.robotSelected), id=guide.current?.id || '';
-  w.bind('robot-estop',v.stop,{label:s.estop?'본체 비상 정지 해제':'본체 비상 정지 누르기',action:{action:'robot-estop'},press:new THREE.Vector3(0,-.05,0),radius:.2,current:['robot-estop','robot-release-stop','robot-final-stop'].includes(id)});
-  w.bind('robot-power',v.powerButton,{label:s.power?'본체 주 전원 끄기':'본체 주 전원 켜기',action:{action:'robot-power'},press:new THREE.Vector3(0,-.03,0),radius:.15,current:['robot-power-off','robot-test-power','robot-final-power'].includes(id)});
-  w.bind('robot-battery',v.battery,{label:s.battery?'본체 배터리 · 집어서 분리':'빈 배터리 장착부',anchor:point(v.body,0,2.55,.96),radius:.4,
+  w.bind('robot-estop',v.stop,{label:s.estop?'본체 비상 정지 해제':'본체 비상 정지 누르기',action:{action:'robot-estop'},press:new THREE.Vector3(0,v.portedRig?-.012:-.05,0),radius:v.portedRig?.09:.2,current:['robot-estop','robot-release-stop','robot-final-stop'].includes(id)});
+  w.bind('robot-power',v.powerButton,{label:s.power?'본체 주 전원 끄기':'본체 주 전원 켜기',action:{action:'robot-power'},press:new THREE.Vector3(0,v.portedRig?-.01:-.03,0),radius:v.portedRig?.085:.15,current:['robot-power-off','robot-test-power','robot-final-power'].includes(id)});
+  w.bind('robot-battery',v.battery,{label:s.battery?'본체 배터리 · 집어서 분리':'빈 배터리 장착부',anchor:v.portedRig?point(v.battery,0,.18,0):point(v.body,0,2.55,.96),radius:.4,
     piece:s.battery?{kind:'robot-battery'}:null,drop:{kind:'robot-battery-slot'},current:id==='robot-battery-out'});
   if (!s.supported) {
     w.stock('robot-stand','stand',-2,{label:'정비 받침대',piece:{kind:'robot-support'},current:id==='robot-support'});
@@ -75,24 +75,28 @@ export function configureRobotWorkshop(v,s,ui) {
   }
   for (const p of ROBOT_LEGS) {
     const m=v.legs.get(p.id), l=s.legs[p.id];
-    w.bind(`leg-${p.id}`,m.knee,{label:`${p.short}번 ${p.name} 관절 · 가까이 보기`,caption:p.short,action:{action:'robot-select-leg',leg:p.id},anchor:point(m.knee,p.x*.35,0,0),radius:.35,
+    w.bind(`leg-${p.id}`,m.knee,{label:`${p.short}번 ${p.name} 관절 · 가까이 보기`,caption:p.short,action:{action:'robot-select-leg',leg:p.id},anchor:m.service?()=>m.service.anchor():point(m.knee,p.x*.35,0,0),radius:.35,
       current:id.startsWith('robot-inspect-') && guide.current.legId===p.id && (!ui.robotZoomed || ui.robotSelected!==p.id || !l.inspected)});
-    if (!robotDiagnosed(s) || ui.robotSelected!==p.id || l.verdict!=='replace') continue;
-    w.bind(`module-${p.id}`,m.cartridge,{label:l.present?'관절 모듈 · 집어서 분리':'빈 관절 모듈 장착부',anchor:point(m.knee,p.x*.2,0,0),radius:.28,priority:2,
+    if (!robotDiagnosed(s) || ui.robotSelected!==p.id || l.verdict!=='replace' || (m.service && !ui.robotZoomed)) continue;
+    w.bind(`module-${p.id}`,m.cartridge,{label:l.present?'관절 모듈 · 집어서 분리':'빈 관절 모듈 장착부',anchor:m.service?()=>m.service.anchor():point(m.knee,p.x*.2,0,0),radius:m.service?.14:.28,priority:2,
+      ...(m.service?{pullAxis:()=>m.service.axis(),seat:()=>m.service.seat()}:{}),
       piece:l.present&&l.source==='original'?{kind:'robot-mounted-module',legId:p.id}:null,drop:{kind:'robot-module-slot',legId:p.id},current:id.startsWith('robot-remove-')});
-    w.bind(`connector-${p.id}`,m.connector,{label:l.connected?'관절 커넥터 분리':'관절 커넥터 연결',action:{action:'robot-connector'},press:new THREE.Vector3(p.x*(l.connected ? .2 : -.2),0,0),radius:.12,priority:5,current:id.startsWith('robot-disconnect-')||id.startsWith('robot-connect-')});
-    for (const i of [0,1]) w.bind(`bolt-${p.id}-${i}`,m.bolts[i],{label:`관절 볼트 ${i+1} · 공구로 ${l.source==='new'?'체결':'분리'}`,anchor:point(m.knee,p.x*.43,.22,(i===0?-1:1)*.16),radius:.1,priority:6,
-      drop:{kind:'robot-bolt',legId:p.id,index:i},turn:m.bolts[i],toolAxis:new THREE.Vector3(p.x,0,0),turnOffset:new THREE.Vector3(p.x*(l.source==='new'?-.1:.14),0,0)});
+    w.bind(`connector-${p.id}`,m.connector,{label:l.connected?'관절 커넥터 분리':'관절 커넥터 연결',action:{action:'robot-connector'},press:new THREE.Vector3(p.x*(l.connected ? 1 : -1)*(m.service?.075:.2),0,0),radius:m.service?.055:.12,cueRadius:m.service?.075:undefined,priority:5,current:id.startsWith('robot-disconnect-')||id.startsWith('robot-connect-')});
+    for (const i of [0,1]) if (l.bolts[i] || l.source==='new') w.bind(`bolt-${p.id}-${i}`,m.bolts[i],{label:`관절 볼트 ${i+1} · 공구로 ${l.source==='new'?'체결':'분리'}`,anchor:v.portedRig?point(m.bolts[i]):point(m.knee,p.x*.43,.22,(i===0?-1:1)*.16),radius:.1,priority:6,
+      drop:{kind:'robot-bolt',legId:p.id,index:i},turn:m.bolts[i],toolAxis:m.service?()=>m.service.axis():new THREE.Vector3(p.x,0,0),turnOffset:new THREE.Vector3(p.x*(l.source==='new'?-1:1)*(m.service?.033:.14),0,0),...(m.service?{radius:.045,cueRadius:.065}:{} )});
   }
   if (robotDiagnosed(s)&&!robotAssembled(s)) {
     w.stock('robot-driver','driver',-3,{label:'육각 공구',piece:{kind:'robot-driver'},current:id.startsWith('robot-unbolt-')||id.startsWith('robot-fasten-')});
-    if (s.spareAvailable) w.stock('robot-spare','module',-.8,{label:`새 모듈 ${ui.robotModule}`,piece:{kind:'robot-module',moduleId:ui.robotModule},current:id.startsWith('robot-install-')&&ui.robotModule==='QJ-01'});
+    if (s.spareAvailable) {
+      const model=v.portedRig?.spareModule();
+      w.stock('robot-spare','module',-.8,{...(model?{model,anchor:point(model,0,.02,0)}:{}),label:`새 모듈 ${ui.robotModule}`,piece:{kind:'robot-module',moduleId:ui.robotModule},current:id.startsWith('robot-install-')&&ui.robotModule==='QJ-01'});
+    }
   }
   if (!s.battery) w.stock('robot-stored-battery','battery',1.2,{label:'분리한 배터리',piece:{kind:'robot-stored-battery'},current:id==='robot-battery-in'});
   const tray=w.stock('robot-discard','tray',3,{label:'분리 부품 수거함',drop:{kind:'robot-discard'}});
   const fault=s.legs[s.targetLeg];
   for(const i of [0,1]) if(fault.source==='new'||!fault.bolts[i]){const bolt=w.art('screw');bolt.scale.setScalar(.5);bolt.position.set(i===0?-.4:.4,.15,.2);tray.object.add(bolt);}
-  if (!fault.present || fault.source==='new') { const module=w.art('module','#8e8e76');module.scale.setScalar(.6);module.position.set(0,.18,0);tray.object.add(module); }
+  if (!fault.present || fault.source==='new') { const module=v.portedRig?.spareModule({damaged:true}) || w.art('module','#8e8e76');module.scale.multiplyScalar(.6);module.position.set(0,.18,0);tray.object.add(module); }
   w.update();
 }
 

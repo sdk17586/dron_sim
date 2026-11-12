@@ -1,0 +1,28 @@
+{
+  "passed": 5,
+  "checks": [
+    "WebGL에서 원본 Go2 상세 GLB 로드·출력과 소개 화면 캡처",
+    "URDF 관절과 정비 조작점 위치 일치·실제 관절 회전·모듈 분리·분리 후 스페어 표시 유지",
+    "별도 호환 뷰포트 해제 후 기존 상세 모델의 자원·표시 유지",
+    "자동 시연에서도 새 Go2 모델 사용과 화면 캡처",
+    "GLB 로드 실패 시 안내와 대체 모델 제공, 외부 요청·JavaScript 오류 없음"
+  ],
+  "mapping": {
+    "source": "unitree-go2",
+    "alignment": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "original": 0.72,
+    "animated": 0.5599999999999999,
+    "hidden": true,
+    "spareVisible": true,
+    "modules": "3",
+    "triangles": "2005"
+  },
+  "errors": [],
+  "external": [],
+  "webgl": "SwiftShader software renderer"
+}

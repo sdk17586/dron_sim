@@ -9,7 +9,7 @@ export function renderShowcase() {
   return `<section class="showcase" aria-label="자동 시연" data-showcase-state="loading">
     <div class="showcase-heading"><div><span class="showcase-eyebrow">AEROLAB / LIVE DEMONSTRATION</span><h1 tabindex="-1">직접 고치고, 다시 움직이다.</h1></div><button class="showcase-exit" data-showcase="exit">시연 나가기 ↗</button></div>
     <div class="showcase-stage immersive-stage"><div class="showcase-viewport" id="showcase-viewport"><span class="three-loading">시연 장면을 준비하고 있습니다…</span></div>
-      <div class="showcase-topline"><span class="showcase-live"><i></i><span data-showcase-mode>자동 시연 중</span></span><span>Q-TRAIN <span class="showcase-muted">/ 가상 교육 모델</span></span></div>
+      <div class="showcase-topline"><span class="showcase-live"><i></i><span data-showcase-mode>자동 시연 중</span></span><span>Q-TRAIN <span class="showcase-muted">/ Go2 외형 기반</span></span></div>
       <ol class="showcase-chapters" aria-label="시연 순서">${SHOWCASE_STAGES.map((s, i) => `<li data-chapter="${i}"><span>0${i + 1}</span>${s}</li>`).join('')}</ol>
       <div class="showcase-scan" hidden aria-hidden="true"><span></span></div>
       <div class="showcase-callout" hidden><span data-callout-label></span><strong data-callout-title></strong></div>
@@ -120,7 +120,7 @@ export class Showcase {
   tick(now) {
     if (this.disposed) return;
     const delta = Math.min(100, this.previous ? now - this.previous : 0); this.previous = now;
-    if (this.running && !this.manual && !document.hidden && !this.completed) {
+    if (this.running && !this.manual && !document.hidden && !this.completed && this.view.canvas.dataset.modelStatus !== 'loading') {
       this.elapsed += delta;
       if (this.status === 'ready') this.execute();
       else if (this.status === 'hold') {

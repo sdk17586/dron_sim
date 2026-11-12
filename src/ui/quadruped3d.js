@@ -4,6 +4,7 @@ import { createRenderer3D, showRenderBackend } from './renderer3d.js';
 import { ROBOT_LEGS } from '../domain/quadruped.js';
 import { configureRobotWorkshop } from './spatial-maintenance.js';
 import { CameraTravel, addStudioFinish } from './presentation3d.js';
+import { loadGo2 } from './go2-model.js';
 
 // Shared depth-buffered rendering, with SVG available as a compatibility fallback.
 export class QuadrupedViewport {
@@ -27,6 +28,15 @@ export class QuadrupedViewport {
     this.materials = new Set(); this.geometries = new Set(); this.legs = new Map();
     this.body = new THREE.Group(); this.scene.add(this.body);
     this.build();
+    this.canvas.dataset.modelStatus = 'loading';
+    this.modelReady = loadGo2(this).then(() => {
+      if (this.disposed) return;
+      this.canvas.dataset.modelStatus = 'ready'; this.draw();
+    }).catch(error => {
+      if (this.disposed) return;
+      this.canvas.dataset.modelStatus = 'fallback'; this.canvas.dataset.modelSource = 'procedural';
+      this.canvas.dataset.modelError = error.message; this.draw();
+    });
     this.studio = addStudioFinish(this);
     this.travel = new CameraTravel(this);
     this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); onUnavailable?.(); });
@@ -155,13 +165,20 @@ export class QuadrupedViewport {
     this.controls.maxDistance = ui.robotControllerMode ? 28 : 18;
     this.canvas.setAttribute('aria-label', ui.robotControllerMode ? '사족보행 로봇 조종 연습장 3D 모델. 스틱으로 이동·회전합니다. 빈 곳을 끌어 시점을 회전하고 휠로 확대합니다.' : '사족보행 로봇 3D 모델. 끌어 회전, 휠로 확대, 방향키로 회전합니다. 다리 번호를 눌러 점검하세요.');
     this.battery.visible = state.battery; this.stands.visible = state.supported; this.powerLight.visible = state.power;
-    this.stop.position.y=state.estop?2.55:2.59;
+    this.stop.position.y = this.portedRig ? this.go2StopY - (state.estop ? .012 : 0) : state.estop ? 2.55 : 2.59;
     for (const p of ROBOT_LEGS) {
       const model = this.legs.get(p.id), l = state.legs[p.id];
       model.cartridge.visible = l.present; model.crack.visible = l.condition === 'damaged';
-      model.cover.material = l.source === 'new' ? this.newModuleMaterial || (this.newModuleMaterial = this.mat('#689d78')) : this.originalModuleMaterial || (this.originalModuleMaterial = model.cover.material);
-      model.connector.visible = true; model.connector.position.x = p.x*(l.connected?.25:.5);
-      model.bolts.forEach((b, i) => { b.visible = l.bolts[i] || l.source === 'new'; b.position.x = p.x*(l.bolts[i]?.43:.54); b.rotation.set(0,0,Math.PI/2); });
+      if (!this.portedRig) model.cover.material = l.source === 'new' ? this.newModuleMaterial || (this.newModuleMaterial = this.mat('#689d78')) : this.originalModuleMaterial || (this.originalModuleMaterial = model.cover.material);
+      if (!model.service) {
+        model.connector.visible = true;
+        model.connector.position.x = p.x * (l.connected ? .25 : .5);
+        model.bolts.forEach((b, i) => {
+          b.visible = l.bolts[i] || l.source === 'new';
+          b.position.x = p.x * (l.bolts[i] ? .43 : .54);
+          b.rotation.set(0,0,Math.PI/2);
+        });
+      }
       model.ring.visible = !ui.previewMode && !ui.robotControllerMode && ui.robotSelected === p.id;
       this.labels.querySelector(`[data-leg="${p.id}"]`).setAttribute('aria-pressed', String(ui.robotSelected === p.id));
     }
@@ -171,7 +188,7 @@ export class QuadrupedViewport {
       this.cameraKey = key;
       const model = this.legs.get(ui.robotSelected);
       const target = ui.robotZoomed ? model.knee.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 1.2, 0);
-      const offset = ui.robotControllerMode ? new THREE.Vector3(-10, 7, -11) : ui.robotZoomed ? new THREE.Vector3(model.group.position.x < 0 ? -3.5 : 3.5, 1.5, -2.4) : new THREE.Vector3(-6, 4.1, -6.8);
+      const offset = ui.robotControllerMode ? new THREE.Vector3(-10, 7, -11) : ui.robotZoomed ? new THREE.Vector3(model.group.position.x < 0 ? -3.5 : 3.5, 1.5, -2.4) : this.portedRig ? new THREE.Vector3(-4.8,3.2,-5.2) : new THREE.Vector3(-6, 4.1, -6.8);
       this.controls.target.copy(target); this.camera.position.copy(target).add(offset.multiplyScalar(this.camera.aspect < 1 ? 1.15 : 1)); this.controls.update();
       if (animate) {
         const destination = this.camera.position.clone();
@@ -221,6 +238,7 @@ export class QuadrupedViewport {
   }
   draw() {
     if (!this.host?.isConnected) return;
+    this.portedRig?.update();
     this.workshop?.update();
     this.renderer.render(this.scene, this.camera);
     if (this.labels) for (const p of ROBOT_LEGS) {
@@ -229,8 +247,16 @@ export class QuadrupedViewport {
       b.style.left = `${(v.x + 1) * .5 * this.width}px`; b.style.top = `${(1 - v.y) * .5 * this.height}px`;
       b.hidden = this.ui?.immersiveMode || this.ui?.previewMode || this.ui?.robotControllerMode || Math.abs(v.x) > .97 || Math.abs(v.y) > .97 || v.z > 1;
     }
-    this.canvas.dataset.ready = 'true';
+    this.canvas.dataset.ready = String(this.canvas.dataset.modelStatus !== 'loading');
+    this.canvas.dataset.modelTriangles = String(this.renderer.info?.render?.triangles ?? this.renderer.info?.render?.faces ?? 0);
+    if (this.host) {
+      let note = this.host.querySelector('.robot-asset-note');
+      if (this.canvas.dataset.modelStatus !== 'ready') {
+        if (!note) { note = document.createElement('span'); note.className = 'robot-asset-note'; note.setAttribute('role','status'); this.host.append(note); }
+        note.textContent = this.canvas.dataset.modelStatus === 'loading' ? 'Go2 모델을 불러오고 있습니다…' : '모델을 불러오지 못해 간단한 대체 모델로 표시합니다.';
+      } else note?.remove();
+    }
   }
   detach() { this.travel?.cancel(); this.workshop?.detach(); this.stopMotion(); this.observer.disconnect(); this.controls.enabled = false; this.host = null; this.canvas.remove(); this.labels?.remove(); }
-  dispose() { this.travel?.dispose(); this.studio?.dispose(); this.workshop?.dispose(); this.detach(); this.controls.dispose(); this.renderer.dispose?.(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
+  dispose() { this.disposed = true; this.travel?.dispose(); this.studio?.dispose(); this.workshop?.dispose(); this.detach(); this.controls.dispose(); this.renderer.dispose?.(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
 }

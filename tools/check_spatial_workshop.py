@@ -9,14 +9,16 @@ from playwright.sync_api import sync_playwright
 def main(argv=None):
     parser=argparse.ArgumentParser();parser.add_argument('--output',default='verification/spatial-workshop-2026-11-12');parser.add_argument('--url',default='http://127.0.0.1:8000');parser.add_argument('--screenshots',action='store_true')
     parser.add_argument('--compatible',action='store_true')
+    parser.add_argument('--webgl',action='store_true')
     args=parser.parse_args(argv);base=args.url.rstrip('/');output=Path(args.output);output.mkdir(parents=True,exist_ok=True)
     checks=[]
     def passed(label):checks.append(label);print('PASS',label,flush=True)
     with sync_playwright() as p:
-        browser=p.chromium.launch(headless=True,args=['--no-sandbox','--disable-gpu','--disable-dev-shm-usage'])
+        browser=p.chromium.launch(headless=True,args=['--no-sandbox','--disable-dev-shm-usage']+
+            (['--use-angle=swiftshader','--enable-unsafe-swiftshader'] if args.webgl else ['--disable-gpu']))
         try:
             context=browser.new_context(viewport={'width':1366,'height':1100},accept_downloads=True)
-            page=context.new_page();page.set_default_timeout(12000);errors=[];external=[]
+            page=context.new_page();page.set_default_timeout(30000 if args.webgl else 12000);errors=[];external=[]
             page.on('pageerror',lambda err:errors.append(str(err)))
             context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(base+'/') else (external.append(r.request.url),r.abort()))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>qaCsp.push(e.effectiveDirective));")
@@ -47,7 +49,9 @@ def main(argv=None):
                 x,y=xy(source);tx,ty=xy(dest)
                 page.mouse.move(x,y);page.mouse.down();page.mouse.move(tx,ty,steps=1);page.mouse.up();settle()
             page.goto(base+('/?compatible3d=1' if args.compatible else '/'));click('robot');page.locator('#robot-start-form button').click(force=True)
-            canvas().wait_for();capture('robot-workbench')
+            canvas().wait_for()
+            if args.webgl: assert canvas().get_attribute('data-render-backend')=='webgl'
+            capture('robot-workbench')
             assert page.locator('.robot-controls,.robot-dock,.robot-joint-detail,.robot-battery').count()==0
             assert page.locator('.immersive-stage [data-current-task]').count()==1
             mesh('robot-estop');assert task()=='robot-power-off'
@@ -164,7 +168,11 @@ def main(argv=None):
             assert unavailable.locator('.parts-dock,.detail-stage').count()==0
             unavailable.close()
             passed('3D 모듈을 불러오지 못해도 반복 오류 없이 다시 불러오기 안내·현재 과제 보존')
-            (output/'browser-results.json').write_text(json.dumps({'passed':len(checks),'checks':checks,'widths':widths,'pageErrors':errors,'externalRequests':external,'cspViolations':page.evaluate('qaCsp'),'screenshots':False},ensure_ascii=False,indent=2))
+            (output/'browser-results.json').write_text(json.dumps({'passed':len(checks),'checks':checks,'widths':widths,'pageErrors':errors,'externalRequests':external,'cspViolations':page.evaluate('qaCsp'),'screenshots':args.screenshots,'requestedBackend':'webgl' if args.webgl else 'compatible' if args.compatible else 'default'},ensure_ascii=False,indent=2))
+        except Exception:
+            print('BROWSER ERRORS',errors,flush=True)
+            print('SCENE',page.locator('.robot-3d-canvas').evaluate_all('(nodes)=>nodes.map(e=>({...e.dataset}))'),flush=True)
+            raise
         finally:browser.close()
 
 

@@ -1,0 +1,74 @@
+{
+  "passed": 5,
+  "checks": [
+    "네 관절의 덮개·작은 볼트가 실제 모듈에 밀착, 큰 고리 제거·선택한 수리 관절만 커넥터 표시",
+    "몸체 이동·회전·보행 중 덮개와 볼트의 관절 상대 위치 유지, 전체 보기에서는 커넥터 숨김",
+    "분리 시 관절 축 방향으로 빠짐·안쪽 장착부 표시, 취소 시 원래 모듈·상태 복원",
+    "장착 도중 취소하면 빈 관절 유지·장착 완료 이벤트 없음",
+    "새 모듈의 방향·크기 정렬 후 관절 축을 따라 장착, 마지막 프레임이 실제 장착 위치와 일치"
+  ],
+  "fitted": {
+    "backend": "webgl",
+    "source": "unitree-go2",
+    "joints": [
+      {
+        "id": "front-left",
+        "coverAttached": true,
+        "ring": false,
+        "span": 0.1517240916927829,
+        "plug": true,
+        "seamGap": 0.016000000000000014
+      },
+      {
+        "id": "front-right",
+        "coverAttached": true,
+        "ring": false,
+        "span": 0.15172409169278295,
+        "plug": false,
+        "seamGap": 0.016000000000000014
+      },
+      {
+        "id": "rear-left",
+        "coverAttached": true,
+        "ring": false,
+        "span": 0.15172409169278286,
+        "plug": false,
+        "seamGap": 0.016000000000000014
+      },
+      {
+        "id": "rear-right",
+        "coverAttached": true,
+        "ring": false,
+        "span": 0.15172409169278311,
+        "plug": false,
+        "seamGap": 0.016000000000000014
+      }
+    ]
+  },
+  "movement": {
+    "gaps": [
+      8.680580583802615e-17,
+      5.721958498152797e-17,
+      5.721958498152797e-17,
+      6.118474768417962e-17
+    ],
+    "hidden": true
+  },
+  "extraction": {
+    "axial": 0.25,
+    "side": 0,
+    "recess": true,
+    "present": true,
+    "damagedGhost": true,
+    "healthySpare": true,
+    "restored": true
+  },
+  "insertion": {
+    "position": 0,
+    "rotation": 4.2146848510894035e-08,
+    "scale": 0,
+    "samples": 7,
+    "lateral": 0
+  },
+  "errors": []
+}

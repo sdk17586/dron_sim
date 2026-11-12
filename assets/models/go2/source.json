@@ -1,0 +1,73 @@
+{
+  "name": "Unitree Go2",
+  "repository": "https://github.com/unitreerobotics/unitree_ros",
+  "commit": "725b59b6de39a26c425632120c89f23c49a36f1e",
+  "license": "BSD-3-Clause",
+  "files": [
+    {
+      "path": "LICENSE",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/LICENSE",
+      "sha256": "84aac59fd3246e3ddc49d1387644e8fcf43b0def4f0b9fe687f372e90446df2d"
+    },
+    {
+      "path": "robots/go2_description/urdf/go2_description.urdf",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/urdf/go2_description.urdf",
+      "sha256": "7d19fe48e2e689ee1a032ab99f2a4a8b671d87e73de48d3e65811682a5b48b9e"
+    },
+    {
+      "path": "robots/go2_description/dae/base.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/base.dae",
+      "sha256": "e52bebbb5c7ff1f6aedee620c9b5b349f6e965360ecc63a9bb743eeff2d0be64"
+    },
+    {
+      "path": "robots/go2_description/dae/hip.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/hip.dae",
+      "sha256": "8735e10617afe252cef0844c1d139d15bc6d4c653660d742fea9fe05c2704d8f"
+    },
+    {
+      "path": "robots/go2_description/dae/thigh.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/thigh.dae",
+      "sha256": "a622381ae308897ff143b8bbf02f075457c342b22984205040424a5a983246fa"
+    },
+    {
+      "path": "robots/go2_description/dae/thigh_mirror.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/thigh_mirror.dae",
+      "sha256": "c7bae0b0565c2aa4b7cc15a538d795e9153e0f10c821cc18429e92693172bdc6"
+    },
+    {
+      "path": "robots/go2_description/dae/calf.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/calf.dae",
+      "sha256": "29872fa1a435b92bc2b395fdfa7f0aee26101db3c494681896bd4ef24ee7883c"
+    },
+    {
+      "path": "robots/go2_description/dae/calf_mirror.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/calf_mirror.dae",
+      "sha256": "79c66be7ed06760bd5001c067a1fb0ac517f639d8b1a5f89be471903b3f359e1"
+    },
+    {
+      "path": "robots/go2_description/dae/foot.dae",
+      "url": "https://raw.githubusercontent.com/unitreerobotics/unitree_ros/725b59b6de39a26c425632120c89f23c49a36f1e/robots/go2_description/dae/foot.dae",
+      "sha256": "ffbd95fd641866ce9bd277aa249b92dafc9148d70131fa2c52709a35ce5b710b"
+    }
+  ],
+  "generated": [
+    {
+      "file": "go2-detail.glb",
+      "triangles": 396999,
+      "bytes": 4804780,
+      "sha256": "7ffbbcffa061ae0ff4eae644b1dab4c563f8c34b1c91a69741e8697df7450508"
+    },
+    {
+      "file": "go2-compatible.glb",
+      "triangles": 1593,
+      "bytes": 52696,
+      "sha256": "03d74e218a76c995751474ac0648eaef5fce5e6c27e63e9fd7de9e7221e091e7"
+    }
+  ],
+  "changes": [
+    "URDF link hierarchy and visual origins retained; ROS frame converted by the viewer",
+    "Detailed geometry retained; compatible mesh clustered by material; no textures or network dependencies",
+    "Distal thigh faces separated as fictional removable teaching module",
+    "Presentation stance and gait are not a Unitree controller or service procedure"
+  ]
+}
