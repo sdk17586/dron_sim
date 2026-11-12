@@ -24,6 +24,7 @@ import { chooseRenderBackend } from './ui/renderer3d.js';
 import { createIMUState, imuTransition } from './domain/imu.js';
 import { renderIMU, updateIMU } from './ui/imu.js';
 import { CourseCompletionNotice } from './ui/course-completion.js';
+import { Showcase, renderShowcase } from './ui/showcase.js';
 
 const app = document.querySelector('#app');
 let storage;
@@ -54,6 +55,30 @@ const sceneUI = () => ui.route === 'imu' ? { ...ui, imuMode: true, imuState: imu
 const currentGuide = () => ['controller', 'imu'].includes(ui.route) ? controllerCourseGuide(controller, imu, ui.route) : ui.route === 'robot-controller' ? robotControllerGuide(robotController) : ui.route === 'robot' ? (robot.status === 'active' || robot.status === 'completed' ? robotGuide({ ...robot, moduleChoice: ui.robotModule }, ui.robotSelected) : null) : ui.route === 'training' && state && (!result || result.status === 'completed') ? maintenanceGuide(state, ui) : null;
 const guideVoice = new GuideVoice({ storage, onChange: status => updateVoiceControls(app, status) });
 const completionNotice = new CourseCompletionNotice();
+let showcase = null, showcaseRepaired = false;
+function closeShowcase() {
+  showcase?.dispose(); showcase = null; ui.route = 'home'; render();
+  app.querySelector('[data-action="showcase"]')?.focus();
+}
+function syncShowcase() {
+  if (ui.route !== 'showcase') return;
+  if (renderBackend === null) {
+    choosingRenderBackend ||= chooseRenderBackend().then(backend => {
+      renderBackend = backend; choosingRenderBackend = null; syncShowcase();
+    });
+    return;
+  }
+  const root = app.querySelector('.showcase');
+  if (root && !showcase) {
+    try {
+      showcase = new Showcase(root, { compatible: renderBackend === 'svg', onExit: closeShowcase, repaired: showcaseRepaired,
+        onUnavailable: () => { renderBackend = 'svg'; showcase?.dispose(); showcase = null; render(); } });
+    } catch (error) {
+      root.innerHTML = '<p>3D 시연을 준비하지 못했습니다. 새로고침 후 다시 시도하세요.</p><button data-action="home">교육 선택으로</button>';
+      console.error(error);
+    }
+  }
+}
 function syncCompletionNotice(guide = currentGuide()) {
   let completion = null;
   if (ui.route === 'training' && result?.status === 'completed') completion = { key: `drone:${result.attemptId}`, course: '드론 정비 교육' };
@@ -276,6 +301,8 @@ function syncViewport() {
 }
 
 function render() {
+  if (ui.route === 'showcase' && showcase?.root.isConnected) return;
+  if (showcase) { showcase.dispose(); showcase = null; }
   const wasHelpOpen = document.querySelector('#learning-help')?.open || false;
   interactions?.clear();
   stopRotorPreviews(app);
@@ -305,7 +332,8 @@ function render() {
   const settingsOpen = document.querySelector('.more-menu')?.open || false;
   const guide = currentGuide();
   let content;
-  if (ui.route === 'home') content = renderCourseSelector(ui, state, result);
+  if (ui.route === 'showcase') content = renderShowcase();
+  else if (ui.route === 'home') content = renderCourseSelector(ui, state, result);
   else if (ui.route === 'operations') content = renderOperations(stored.records, ui, stored);
   else {
     content = renderCourseSelector(ui);
@@ -326,6 +354,7 @@ function render() {
   const inspector = document.querySelector('.inspector');
   if (inspector) inspector.scrollTop = panelScroll;
   syncViewport();
+  syncShowcase();
   const flat = document.querySelector('.flat-stage');
   if (flat) positionFlatPoints(flat, ui);
   updateControllerDisplay();
@@ -434,6 +463,13 @@ function runAction(target) {
   if (!target || target.disabled) return;
   const action = target.dataset.action;
   try {
+    if (action === 'showcase' || action === 'showcase-repaired') {
+      if (!allowLeave()) return;
+      stopController(); guideVoice.suspend();
+      showcaseRepaired = action === 'showcase-repaired';
+      ui.route = 'showcase'; ui.helpOpen = false; feedback = null;
+      window.scrollTo(0, 0); render(); return;
+    }
     if (action === 'voice-toggle') { guideVoice.setEnabled(!guideVoice.enabled); return; }
     if (action === 'voice-repeat') { guideVoice.read(); return; }
     const entrances = { home: 'home', 'intro-drone': 'drone-intro', robot: 'robot-intro', controller: 'controller-intro', 'robot-controller': 'robot-controller-intro' };
@@ -640,6 +676,7 @@ window.addEventListener('blur', () => guideVoice.suspend());
 window.addEventListener('focus', () => { if (!document.hidden) guideVoice.resume(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) guideVoice.suspend(); else if (document.hasFocus()) guideVoice.resume(); });
 window.addEventListener('pagehide', () => guideVoice.stop());
+window.addEventListener('pagehide', () => showcase?.dispose());
 window.addEventListener('pagehide', () => { clearInterval(imuTimer); imuTimer = null; stopController(); viewport?.dispose(); viewport = null; clearTimeout(robotTestTimer); robotViewport?.dispose(); robotViewport = null; });
 window.addEventListener('blur', () => pauseIMU('창 초점을 벗어나 측정을 멈췄습니다.'));
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseIMU('다른 탭으로 이동하여 측정을 멈췄습니다.'); });

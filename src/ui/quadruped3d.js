@@ -3,6 +3,7 @@ import { OrbitControls } from '../vendor/three/OrbitControls.js';
 import { createRenderer3D, showRenderBackend } from './renderer3d.js';
 import { ROBOT_LEGS } from '../domain/quadruped.js';
 import { configureRobotWorkshop } from './spatial-maintenance.js';
+import { CameraTravel, addStudioFinish } from './presentation3d.js';
 
 // Shared depth-buffered rendering, with SVG available as a compatibility fallback.
 export class QuadrupedViewport {
@@ -26,6 +27,8 @@ export class QuadrupedViewport {
     this.materials = new Set(); this.geometries = new Set(); this.legs = new Map();
     this.body = new THREE.Group(); this.scene.add(this.body);
     this.build();
+    this.studio = addStudioFinish(this);
+    this.travel = new CameraTravel(this);
     this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); onUnavailable?.(); });
     this.observer = new ResizeObserver(() => this.resize());
     this.canvas.addEventListener('keydown', event => {
@@ -44,7 +47,12 @@ export class QuadrupedViewport {
       this.controls.update(); this.draw();
     });
   }
-  mat(color) { const m = new THREE.MeshLambertMaterial({ color }); this.materials.add(m); return m; }
+  mat(color) {
+    const m = this.renderer.isWebGLRenderer
+      ? new THREE.MeshStandardMaterial({ color, metalness: .24, roughness: .46 })
+      : new THREE.MeshLambertMaterial({ color });
+    this.materials.add(m); return m;
+  }
   mesh(geometry, material, parent, position = [0, 0, 0]) {
     this.geometries.add(geometry); const m = new THREE.Mesh(geometry, material);
     m.position.set(...position); parent.add(m); return m;
@@ -159,11 +167,17 @@ export class QuadrupedViewport {
     }
     const key = `${Boolean(ui.robotControllerMode)}:${ui.robotZoomed}:${ui.robotSelected}`;
     if (this.cameraKey !== key) {
+      const from = this.camera.position.clone(), look = this.controls.target.clone(), animate = this.cameraKey && ui.presentationMode;
       this.cameraKey = key;
       const model = this.legs.get(ui.robotSelected);
       const target = ui.robotZoomed ? model.knee.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 1.2, 0);
       const offset = ui.robotControllerMode ? new THREE.Vector3(-10, 7, -11) : ui.robotZoomed ? new THREE.Vector3(model.group.position.x < 0 ? -3.5 : 3.5, 1.5, -2.4) : new THREE.Vector3(-6, 4.1, -6.8);
       this.controls.target.copy(target); this.camera.position.copy(target).add(offset.multiplyScalar(this.camera.aspect < 1 ? 1.15 : 1)); this.controls.update();
+      if (animate) {
+        const destination = this.camera.position.clone();
+        this.camera.position.copy(from); this.controls.target.copy(look);
+        this.travel.move(target, destination, 850);
+      }
     }
     this.canvas.dataset.modules = String(ROBOT_LEGS.filter(p => state.legs[p.id].present).length);
     this.canvas.dataset.damaged = String(ROBOT_LEGS.filter(p => state.legs[p.id].condition === 'damaged').length);
@@ -217,6 +231,6 @@ export class QuadrupedViewport {
     }
     this.canvas.dataset.ready = 'true';
   }
-  detach() { this.workshop?.detach(); this.stopMotion(); this.observer.disconnect(); this.controls.enabled = false; this.host = null; this.canvas.remove(); this.labels?.remove(); }
-  dispose() { this.workshop?.dispose(); this.detach(); this.controls.dispose(); this.renderer.dispose?.(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
+  detach() { this.travel?.cancel(); this.workshop?.detach(); this.stopMotion(); this.observer.disconnect(); this.controls.enabled = false; this.host = null; this.canvas.remove(); this.labels?.remove(); }
+  dispose() { this.travel?.dispose(); this.studio?.dispose(); this.workshop?.dispose(); this.detach(); this.controls.dispose(); this.renderer.dispose?.(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
 }

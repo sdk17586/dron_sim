@@ -211,6 +211,7 @@ export class Workshop3D {
     },40);
   }
   listen() {
+    this.lifecycle = new AbortController();
     this.canvas.addEventListener('pointerdown', event => {
       if (!this.active || event.button !== 0) return;
       const entry = this.hit(event); if (!entry && !this.held) return;
@@ -243,9 +244,9 @@ export class Workshop3D {
     this.canvas.addEventListener('keydown', event => {
       if (event.key === 'Escape' && (this.held || this.busy)) { event.preventDefault(); event.stopImmediatePropagation(); this.cancel(); this.draw(); }
     },true);
-    window.addEventListener('blur',() => { this.cancel(); this.draw(); });
-    document.addEventListener('visibilitychange',() => { if (document.hidden) { this.cancel(); this.draw(); } });
+    window.addEventListener('blur',() => { this.cancel(); this.draw(); }, { signal: this.lifecycle.signal });
+    document.addEventListener('visibilitychange',() => { if (document.hidden) { this.cancel(); this.draw(); } }, { signal: this.lifecycle.signal });
   }
   detach() { this.cancel(); this.active = false; this.canvas.dataset.workshop = 'false'; this.bench.visible = false; this.ring.visible = false; this.markers.clear(); this.layer?.remove(); this.tooltip?.remove();this.tooltip=null; }
-  dispose() { this.detach(); this.bench.removeFromParent(); this.proxies.removeFromParent(); this.markers.removeFromParent(); this.ring.removeFromParent(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
+  dispose() { this.lifecycle?.abort(); this.detach(); this.bench.removeFromParent(); this.proxies.removeFromParent(); this.markers.removeFromParent(); this.ring.removeFromParent(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
 }

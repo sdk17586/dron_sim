@@ -1,0 +1,80 @@
+[
+  {
+    "suite": "suite",
+    "exitCode": 0,
+    "stdout": "ALL PASS · 22 passed · 0 failed\nPASS T01 배터리 없는 전원 차단\nPASS T02 안전 조건 전 분해 금지·원본 불변\nPASS T03 전원 켜짐 배터리 분리 차단\nPASS T04 고정 나사 제거 전 날개 분리 차단\nPASS T05 날개 하나 교체는 미완료\nPASS T06 잘못된 표식·혼합 포장·기존 나사 차단\nPASS T07 정상 교체와 부품 위치 일관성\nPASS T08 체결 누락 판정\nPASS T09 재분리 시 확인 무효화\nPASS T10 다른 모터 미완료 검사\nPASS T11 조립만으로 통과 금지\nPASS T12 정상 완료와 종료 뒤 입력 불변\nPASS T13 같은 오조작 연타 중복 집계 없음\nPASS T14 독립 실습도 동일 판정\nPASS T15 새 시도 식별자·초기화 분리\nPASS T16 저장 재조회·중복 저장 제외\nPASS T18 저장 실패·손상 데이터 덮어쓰기 방지\nPASS T19 CSV 취합·중복·충돌\nPASS T20 CSV 특수문자·한글·수식·앞자리 0 왕복\nPASS T21 선택한 결과만 삭제·다른 앱 보존\nPASS T25 500건 한도·파일 크기 거절\nPASS 무작위 입력 1000회에도 부품 불변조건\n",
+    "stderr": ""
+  },
+  {
+    "suite": "placement",
+    "exitCode": 0,
+    "stdout": "PASS 전원 켜짐 상태의 배터리 이동 거부\nPASS 안전 확인 전 드라이버 작업 거부\nPASS 고정 나사가 있는 날개 이동 거부\nPASS 드라이버 분리 뒤 실제 날개 이동과 잘못된 놓기 취소\nPASS 표식·부품 종류·번호 불일치 거부\nPASS 새 나사는 놓기와 드라이버 체결을 구분\nPASS 오래된 날개 선택·빈 나사 작업에서 부품 생성 방지\nPASS 전체 놓기 절차 완료·재작업 시 최종 확인 무효화\nALL PASS · 8 placement checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "battery",
+    "exitCode": 0,
+    "stdout": "PASS 기존 20%·교체용 100%, 실습 사이 상태 분리\nPASS LED 길이는 잔량에 비례, 0%는 비어 있고 색상만으로 구분하지 않음\nPASS 기존 배터리 제거 후 충전된 배터리 장착, 이전 잔량 보존\nPASS 장착된 배터리 위에 중복 장착 거부·입력 상태 불변\nPASS 전원이 켜진 상태의 배터리 교체 거부\nPASS 잔량 0%는 전원 켜기 차단, 연습 중 0% 도달 시 전원 꺼짐\nPASS 분리 배터리 재장착은 자체 잔량 유지, 잘못된 ID·장소 거부\nPASS 잔량은 장착한 배터리의 0~100 정수만 변경\nPASS 오래된 배터리 선택으로 교체한 배터리 제거 방지\nPASS 1000회 교체·잔량·전원 입력에도 배터리 중복·분실 없음\nALL PASS · 10 battery checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "controller",
+    "exitCode": 0,
+    "stdout": "PASS 처음에는 양쪽 전원·연결·회전이 모두 꺼짐\nPASS 양쪽 전원이 있어야 연결 가능, 미연결 입력은 회전하지 않음\nPASS 스틱이 움직인 상태에서는 연결 거부, 중앙 복귀 후 연결\nPASS 두 스틱 모두 반응하며 범위 밖 입력은 원 안으로 제한\nPASS 작은 중앙 흔들림은 회전하지 않으며 입력 크기에 따라 증가\nPASS 기체·조종기 어느 쪽을 꺼도 즉시 정지·연결 해제, 다시 켜도 자동 연결 안 함\nPASS 정지·연결 해제·초기화는 스틱을 중앙에 두며 이전 상태 불변\nPASS 잘못된 스틱·숫자 입력은 거부\nPASS 작동 확인 기체는 정상 날개·100% 배터리, 정비 상태·평가와 분리\nPASS 5000회 임의 입력에서 전원·연결·회전 불변 조건 유지\nALL PASS · 10 controller checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "guidance",
+    "exitCode": 0,
+    "stdout": "PASS 전원·차단 확인·배터리 분리 순서와 현재 작업 안내\nPASS 도움말 조회는 상태·오류·도움말 집계를 변경하지 않으며 미판단 고장 정답을 노출하지 않음\nPASS 선택한 모터의 나사 분리·날개 분리·새 부품·체결을 정확히 추적\nPASS 3/4와 4/4를 구분하고, 남은 모터 판단 후 최종 확인으로 전환\nPASS 네 모터 판단 이후에도 새 나사 체결이 빠지면 정확한 나사를 안내\nPASS 잘못된 표식 포장과 소진한 새 부품의 재작업 안내\nPASS 최종 확인 세 개 뒤에도 완료 버튼을 눌러야 남은 작업이 0개\nPASS 조종기 미연결 입력·조기 정지는 교육 수행으로 기록하지 않음\nPASS 조종기 전원·연결·좌우 스틱·정지 확인과 재시작을 구분\nALL PASS · 9 guidance checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "quadruped",
+    "exitCode": 0,
+    "stdout": "PASS 재시작은 직전 고장 다리를 제외하며 모든 다리에 과제를 생성\nPASS 전원·비상 정지·받침대·배터리 중 하나라도 빠지면 분해 차단, 원본 보존\nPASS 관찰 전 판단·잘못된 판단 차단, 도움말은 상태·고장 정답을 변경하지 않음\nPASS 커넥터·두 볼트 분리 전 모듈 제거 차단\nPASS 다른 규격·잘못된 자리·원래 모듈 재사용을 허용하지 않음\nPASS 새 모듈을 놓기만 하면 시험 불가, 두 볼트·커넥터 별도 확인\nPASS 네 다리 점검을 빠뜨리면 전원 복구·관절 시험 차단\nPASS 모든 고장 위치에서 교체·관절 시험·전원 차단 후 완료 가능\nPASS 시험 중 비상 정지·창 이탈·전원 차단은 성공으로 기록하지 않음\nPASS 알 수 없는 다리·볼트 번호는 부품 상태나 공통 객체를 변경하지 않음\nPASS 완료·중단 결과가 기존 저장소·CSV 형식과 호환\nALL PASS · 11 quadruped checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "quadruped-controller",
+    "exitCode": 0,
+    "stdout": "PASS 전원·연결 꺼짐과 비상 정지로 시작하며 여덟 과제를 안내\nPASS 양쪽 전원과 스틱 중립을 확인한 뒤 연결, 연결 직후 움직임은 차단\nPASS 미연결·비상 정지 입력으로 이동이나 회전 수행을 채울 수 없음\nPASS 앞·뒤·좌·우 실제 위치 변화와 놓았을 때 정지\nPASS 좌우 회전 후 이동 기준은 로봇 앞이며 오른쪽 수직 입력은 무시\nPASS 입력 정규화·중앙 무시·지연 시간 제한·잘못된 입력 거부\nPASS 연습장 경계 밖으로 벗어나지 않으며 반대 방향 이동으로 복귀\nPASS 전원 차단·창 이탈은 연결 해제와 비상 정지, 자동 재개 안 함\nPASS Esc 비상 정지는 항상 걸리며 다시 누른다고 해제되지 않음\nPASS 입력만으로 완료되지 않고 이동·회전·동작 정지·비상 정지까지 필요\nPASS 상태 갱신과 도움말 조회는 이전 상태를 변경하지 않음\nPASS 5000회 임의 입력에서 전원·연결·정지·위치 범위 유지\nALL PASS · 12 quadruped controller checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "quadruped-guidance",
+    "exitCode": 0,
+    "stdout": "PASS 안전 준비의 현재 작업·다음 작업·진행 단계를 순서대로 안내\nPASS 손상 다리를 먼저 찾아도 네 다리 판단이 끝날 때까지 점검을 우선 안내\nPASS 모든 고장 위치에서 안내한 작업만 따라 준비·점검·교체·시험·완료 가능\nALL PASS · 3 robot guidance checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "imu",
+    "exitCode": 0,
+    "stdout": "PASS 작업대·전원·연결 없이는 측정 불가\nPASS 배터리 50% 미만은 연결과 보정 시작 차단\nPASS 목표 자세에서 3초 정지해야 측정 완료·중복 방지\nPASS 틀린 자세·회전·화면 지연은 정지 시간을 적립하지 않음\nPASS 정지·재개는 완료 자세 유지·현재 측정 초기화\nPASS 전원 차단은 연결·보정 초기화, 자동 재개 없음\nPASS 여섯 자세 후 바른 자세·결과 확인까지 완료해야 교육 종료\nPASS 중력 기준 자세 판별은 카메라·기체 수평 회전에 독립\nPASS 전이 입력 상태·완료 목록을 변경하지 않음\nALL PASS · 9 IMU checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "controller-course",
+    "exitCode": 0,
+    "stdout": "PASS 시작부터 조종기와 IMU 작업을 하나의 도움말·남은 작업으로 안내\nPASS 조종기만 마치면 이어하기를 안내하며 전체 완료로 인정하지 않음\nPASS 전원 차단·스틱 움직임 중 전환 차단과 정확한 복구 위치 안내\nPASS IMU 측정만 마쳐도 미완료, 결과 확인 후에만 통합 교육 완료\nPASS 단계별 진행·도움말 조회가 입력 상태를 변경하지 않음\nALL PASS · 5 controller course checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "renderer3d",
+    "exitCode": 0,
+    "stdout": "PASS 호환 표시를 명시하면 그래픽 검사를 건너뜀\nPASS 그래픽 검사에 필요한 브라우저 기능이 없으면 호환 3D\nPASS 깊이 검사 성공 시 WebGL 선택·검사 자원 해제\nPASS 그래픽 미지원·검사 오류는 호환 3D로 복구\nPASS 응답 없는 검사는 제한 시간 후 정리하고 호환 표시 선택\nALL PASS · 5 renderer checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "guide-voice",
+    "exitCode": 0,
+    "stdout": "PASS 현재 제목·설명·조작 대상을 한국어로 읽고 기기의 한국어 음성을 우선 선택\nPASS 도움말·반복 화면 갱신은 중복 재생하지 않고 작업/내용/회차 변경만 새로 재생\nPASS 새 작업·다시 듣기는 이전 음성을 취소하고 지연된 이전 콜백을 무시\nPASS 음성 끄기는 즉시 취소·설정 보존, 다음 작업도 조용하며 켜면 현재 작업부터 재생\nPASS 화면 이탈·교육 완료 시 취소하고 새 교육에 다시 진입하면 현재 안내 재생\nPASS 초점 이탈 후 상태 변경·음성 버튼으로 재생하지 않으며 복귀만으로 재개하지 않음\nPASS 재생 차단 오류 안내·직접 재시도와 비동기 한국어 음성 목록 로딩\nPASS 음성 API 미지원·저장 차단·재생 예외가 교육을 중단하지 않음\nALL PASS · 8 guide voice checks\n",
+    "stderr": ""
+  },
+  {
+    "suite": "showcase",
+    "exitCode": 0,
+    "stdout": "ALL PASS · 6 showcase checks: real maintenance sequence, repair invariants, safe completion, input preservation, fresh attempts, premature completion rejection\n",
+    "stderr": ""
+  }
+]

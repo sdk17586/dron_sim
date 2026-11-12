@@ -9,6 +9,7 @@ import { rotorPreviewMarkup, applyRotorMotion } from './rotor-preview.js';
 import { motorStatus, motorStatusLabel } from './motor-status.js';
 import { configureDroneWorkshop } from './spatial-maintenance.js';
 import { configureIMU } from './imu3d.js';
+import { addStudioFinish } from './presentation3d.js';
 
 const pointFor = p => new THREE.Vector3((p.x - 380) / 72, 1.04, (p.y - 294) / 76);
 
@@ -85,6 +86,7 @@ export class DroneViewport {
     const fill = new THREE.DirectionalLight(0xcbded5, 1.5 * lightScale); fill.position.set(5, 4, 6); this.scene.add(fill);
     this.drone = new THREE.Group(); this.scene.add(this.drone);
     this.buildModel();
+    this.studio = addStudioFinish(this, { shadow: false });
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     this.canvas.addEventListener('pointerdown', event => {
@@ -378,6 +380,7 @@ export class DroneViewport {
     this.canvas.dataset.triangles = String(this.renderer.info?.render?.triangles ?? this.renderer.info?.render?.faces ?? 0);
   }
   dispose() {
+    this.studio?.dispose();
     this.imuInteraction?.dispose();
     this.workshop?.dispose();
     this.detach(); this.controls.dispose(); this.renderer.dispose?.();
