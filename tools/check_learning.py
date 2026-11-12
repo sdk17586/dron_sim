@@ -28,7 +28,6 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>window.qaCsp.push(e.effectiveDirective));")
             page.goto(args.url)
-            page.locator('.drone-3d-canvas[data-ready=true]').wait_for()
             def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             def help_open(): page.locator('header [data-action=open-help]').click(force=True)
@@ -52,10 +51,27 @@ def main():
                 page.mouse.move(b['x']+b['width']/2+dx,b['y']+b['height']/2+dy,steps=1)
             courses = page.locator('.course-picker .course-card')
             assert courses.count() == 2 and all(c.is_visible() for c in courses.all())
-            assert '정비 교육' in courses.nth(0).inner_text() and '조종기 교육' in courses.nth(1).inner_text()
-            passed('첫 화면에 정비 교육·조종기 교육 두 개의 명확한 진입 카드')
+            assert '드론 정비 교육' in courses.nth(0).inner_text() and '사족보행 로봇 정비' in courses.nth(1).inner_text()
+            assert page.locator('#drone-viewport,#robot-viewport').count() == 0
+            passed('첫 화면의 두 장비 선택과 장비 미표시')
 
-            click('controller'); assert task() == 'aircraft'
+            before = record_text()
+            courses.nth(0).focus(); page.keyboard.press('Enter')
+            preview = page.locator('.drone-3d-canvas[data-ready=true]'); preview.wait_for()
+            assert page.locator('.course-objectives li').count() >= 3
+            assert page.locator('[data-current-task],[data-piece]').count() == 0
+            shape = preview.inner_html(); preview.focus(); page.keyboard.press('ArrowLeft')
+            assert preview.inner_html() != shape and record_text() == before
+            click('home'); click('robot')
+            page.locator('.robot-3d-canvas[data-ready=true]').wait_for()
+            assert page.locator('#robot-start-form button[type=submit]').is_visible()
+            assert page.locator('.robot-controls,.robot-leg-selector,[data-current-task],[data-piece]').count() == 0
+            assert record_text() == before
+            click('home'); click('intro-drone'); click('controller')
+            assert page.locator('.course-objectives li').count() == 3
+            assert page.locator('.controller-panel,[data-current-task]').count() == 0 and record_text() == before
+            passed('드론·로봇·조종기 소개에서 설명·3D 미리보기 제공, 실습 시작 전 조작·기록 없음')
+            click('controller-start'); assert task() == 'aircraft'
             assert page.locator('header [data-action=controller-restart]').is_visible()
             click('locate-task')
             assert page.evaluate("document.activeElement.dataset.action") == 'controller-aircraft-power'
@@ -78,11 +94,12 @@ def main():
             passed('스틱 DOM 유지·진행 갱신, 도움말 Tab 초점 유지·Esc 닫기·연결 보존')
             right = page.locator('[data-stick=right]')
             drag(right,right,dy=-35); assert task() == 'right'; page.mouse.up(); assert task() == 'stop'
-            click('controller-stop'); assert task() == 'controller-complete'
+            click('controller-stop'); assert task() == 'controller-imu-next'
             assert page.locator('.controller-completion').is_visible()
+            assert not page.locator('.guide-complete').count()
             click('controller-restart'); assert task() == 'aircraft'
             assert page.locator('.controller-completion').is_hidden()
-            passed('좌우 스틱·정지까지 해야 조종기 교육 완료, 보이는 다시 시작으로 초기화')
+            passed('좌우 스틱·정지 후 IMU 이어하기 안내·전체 완료 전 구분, 보이는 다시 시작으로 초기화')
 
             page.locator('.course-selector [data-action=training]').click(force=True)
             page.locator('#start-form [name=session]').fill('도움말 검증')
@@ -146,7 +163,8 @@ def main():
             assert page.locator('.controller-panel').count() == 0 and record_text() == before
             page.once('dialog',lambda d:d.accept())
             page.locator('.course-selector [data-action=controller]').click(force=True)
-            assert page.locator('.controller-panel').count() == 1 and record_text() != before
+            assert page.locator('[data-action=controller-start]').count() == 1 and record_text() != before
+            click('controller-start'); assert page.locator('.controller-panel').count() == 1
             page.locator('.controller-return').click(force=True); page.locator('#start-form').wait_for()
             assert page.locator('[data-action=controller]').is_visible()
             passed('교육 전환·재시작 확인 취소 시 진행 보존, 전환 승인 시 중단 결과 보관')
@@ -166,7 +184,7 @@ def main():
             passed('보이는 재시작 승인 후 새 실습, 1366·1920·390px에서 메뉴·도움말 가로 넘침 없음')
             assert not errors and not external and not page.evaluate('window.qaCsp'), {'errors':errors,'external':external,'csp':page.evaluate('window.qaCsp')}
             passed('JavaScript 오류·외부 요청·보안 정책 위반 없음')
-            result={'date':'2026-11-09','passed':len(report),'checks':report,'widths':widths,'pageErrors':errors,'externalRequests':external,'cspViolations':page.evaluate('window.qaCsp'),'screenshots':False}
+            result={'date':'2026-11-12','passed':len(report),'checks':report,'widths':widths,'pageErrors':errors,'externalRequests':external,'cspViolations':page.evaluate('window.qaCsp'),'screenshots':False}
             (output/'learning-results.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
             print(json.dumps(result,ensure_ascii=False,indent=2))
         finally:

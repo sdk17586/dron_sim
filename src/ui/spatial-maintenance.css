@@ -1,0 +1,49 @@
+.spatial-workbench { width: 100%; min-width: 0; }
+.render-mode-note { position: absolute; right: 14px; bottom: 46px; padding: 3px 6px; border-radius: 4px; background: #f4f8eee6; color: #69806a; font-size: 10px; pointer-events: none; }
+.scene-load-error { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: min(440px,85%); padding: 20px; border: 1px solid #c8d7c1; border-radius: 10px; background: #fafcf4; text-align: center; }
+.scene-load-error .button { margin-top: 12px; }
+.immersive-stage { position: relative; width: 100%; height: clamp(560px,calc(100vh - 190px),900px); min-height: 560px; overflow: hidden; border: 1px solid #d3dfcf; border-radius: 16px; background: #edf2ee; }
+.immersive-stage > .drone-viewport, .immersive-stage > .robot-viewport { position: absolute; inset: 0; width: 100%; height: 100%; }
+.spatial-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.spatial-task-cue { position: absolute; width: 34px; height: 34px; transform: translate(-50%,-50%); border: 2px solid #2563eb; border-radius: 50%; background: #3b82f614; pointer-events: none; animation: spatial-task-pulse 2s ease-in-out infinite; }
+.spatial-task-cue[hidden] { display: none; }
+@keyframes spatial-task-pulse { 0%,100% { opacity: .6; box-shadow: 0 0 0 2px #3b82f61a; } 50% { opacity: 1; box-shadow: 0 0 0 9px #3b82f633,0 0 18px #3b82f64d; } }
+@media (prefers-reduced-motion: reduce) { .spatial-task-cue { animation: none; opacity: 1; box-shadow: 0 0 0 3px #3b82f633; } }
+.spatial-hit { position: absolute; transform: translate(-50%,-50%); width: 26px; height: 26px; padding: 0; border: 0; opacity: 0; pointer-events: none; font-size: 11px; }
+.spatial-hit:focus-visible { opacity: 1; width: auto; min-width: 32px; max-width: 220px; height: auto; min-height: 32px; padding: 6px 10px; border-radius: 6px; background: #f7fbef; color: #37553e; box-shadow: 0 0 0 3px #8caf73; }
+.spatial-caption { position: absolute; transform: translate(-50%,0); white-space: nowrap; padding: 2px 5px; border-radius: 4px; font-size: 10px; color: #46624b; background: #f4f8eede; pointer-events: none; }
+.spatial-tooltip { position: absolute; transform: translate(-50%,-100%); padding: 7px 10px; border-radius: 6px; border: 1px solid #b8cdb1; background: #fbfdf4f2; color: #37573e; font-size: 12px; pointer-events: none; white-space: normal; max-width: 230px; z-index: 4; }
+.scene-context { position: absolute; top: 16px; right: 16px; width: min(260px,calc(100% - 32px)); padding: 15px; border: 1px solid #c8d7c1; border-radius: 10px; background: #fafcf4ef; color: #36523c; box-shadow: 0 5px 25px #2037260b; z-index: 3; }
+.scene-context h2 { font-size: 16px; line-height: 1.7; }
+.scene-context p { margin-top: 6px; color: #6a7e63; font-size: 12px; line-height: 1.8; }
+.scene-context .two-buttons { margin-top: 10px; }
+.scene-context .button { min-height: 36px; padding: 7px 10px; font-size: 12px; }
+.scene-context .full { margin-top: 8px; }
+.scene-context .final-check-label { display: flex; align-items: center; gap: 8px; font-size: 12px; margin: 10px 0; }
+.scene-context input { width: 16px; height: 16px; min-height: 0; accent-color: #42684b; }
+.scene-stock-choice { position: absolute; bottom: 130px; left: 16px; max-width: calc(100% - 32px); padding: 9px 12px; border-radius: 8px; background: #f9fcf1eb; border: 1px solid #d2dfc9; z-index: 3; }
+.scene-stock-choice label { font-size: 10px; color: #6a8061; }
+.scene-stock-choice select { display: block; min-height: 29px; margin-top: 4px; padding: 4px 22px 4px 5px; border: 0; background: transparent; color: #3d6144; font-size: 12px; }
+.scene-camera-tools { position: absolute; left: 14px; bottom: 14px; z-index: 3; }
+.scene-camera-tools button { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 6px 9px; border: 1px solid #becfb6; border-radius: 6px; background: #f7fbefec; color: #506e48; font-size: 11px; }
+.scene-camera-tools .icon { width: 15px; height: 15px; }
+.scene-instructions { position: absolute; bottom: 18px; right: 16px; left: 120px; color: #6d8265; font-size: 10px; text-align: right; pointer-events: none; }
+.immersive-stage:has([data-holding3d]:not([data-holding3d=""])) .scene-context { opacity: .15; pointer-events: none; }
+@media (max-width:650px) { .immersive-stage { min-height: 600px; height: 75vh; border-radius: 10px; } .scene-context { top: 12px; right: 12px; width: 205px; padding: 11px; } .scene-context h2 { font-size: 13px; } .scene-context p { font-size: 11px; } .scene-stock-choice { top: auto; bottom: 120px; left: 12px; padding: 6px 8px; } .spatial-caption { font-size: 8px; padding: 2px; } .scene-instructions { bottom: 10px; left: 100px; font-size: 9px; } }
+
+.scene-guide { position: absolute; top: 14px; left: 14px; width: min(620px,calc(100% - 310px)); z-index: 2; }
+.scene-guide .task-guide { margin: 0; padding: 12px 14px; gap: 10px; background: #fbfdf4ec; }
+.scene-guide .task-copy h2 { font-size: 16px; line-height: 1.5; }
+.scene-guide .task-copy p { font-size: 11px; line-height: 1.65; }
+.scene-guide .task-copy .interaction-status { display: none; }
+.scene-guide .guide-caption { margin-bottom: 3px; font-size: 9px; }
+.scene-guide .guide-next { flex-basis: 140px; padding-left: 12px; }
+.scene-guide .guide-next strong { font-size: 11px; }
+.scene-guide .robot-workflow { gap: 5px; padding-bottom: 8px; }
+.scene-guide .robot-workflow li { font-size: 10px; gap: 5px; }
+.scene-guide .robot-workflow li > span { width: 20px; height: 20px; font-size: 10px; }
+.scene-guide .guide-progress { margin-top: 3px; }
+.immersive-stage:has([data-holding3d]:not([data-holding3d=""])) .scene-guide { pointer-events: none; opacity: .25; }
+@media (max-width:800px) { .scene-guide { width: calc(100% - 28px); } .scene-guide .task-guide { flex-direction: row; align-items: center; } .scene-guide .guide-next { flex-basis: 125px; border: 0; padding: 0; } .scene-guide .guide-up-next { display: none; } .scene-context { top: 210px; } }
+
+.scene-held-note { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 28px); padding: 6px 12px; border: 1px solid #b2c89f; border-radius: 6px; background: #f3fae9e8; color: #476a37; font-size: 12px; pointer-events: none; }

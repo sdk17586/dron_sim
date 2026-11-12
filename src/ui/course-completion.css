@@ -1,0 +1,15 @@
+html.has-course-completion { overflow: hidden; }
+.course-completion-dialog { position: fixed; inset: 0; margin: auto; width: min(680px,calc(100vw - 40px)); max-width: none; max-height: calc(100dvh - 40px); padding: 0; overflow: auto; border: 1px solid #c2d5bd; border-radius: 24px; color: #193d2a; background: #fcfff8; box-shadow: 0 28px 100px #0b231e55; }
+.course-completion-dialog::backdrop { background: #10251fc2; }
+.course-completion-content { padding: 52px 32px 40px; text-align: center; }
+.course-completion-check { width: 100px; height: 100px; margin: 0 auto 24px; display: grid; place-items: center; border: 1px solid #b3cf9f; border-radius: 50%; color: #347c42; background: #e9f5dd; }
+.course-completion-check .icon { width: 54px; height: 54px; stroke-width: 2.5; }
+.course-completion-label { margin-bottom: 10px; color: #5d7d50; font-size: 14px; font-weight: 700; letter-spacing: .14em; }
+.course-completion-dialog h2 { font-size: clamp(28px,4vw,46px); line-height: 1.4; letter-spacing: -1.8px; color: #193d2a; }
+.course-completion-dialog #course-completion-description { display: grid; gap: 8px; margin: 22px 0 30px; font-size: 16px; line-height: 1.6; color: #657960; }
+.course-completion-dialog #course-completion-description strong { color: #345b3d; font-size: 19px; }
+.course-completion-dialog .button { min-width: 190px; min-height: 54px; padding: 12px 28px; font-size: 17px; }
+.course-completion-dialog[open] .course-completion-content { animation: course-completion-enter .22s ease-out; }
+@keyframes course-completion-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width:540px) { .course-completion-dialog { width: calc(100vw - 28px); border-radius: 18px; } .course-completion-content { padding: 34px 18px 28px; } .course-completion-check { width: 80px; height: 80px; margin-bottom: 20px; } .course-completion-check .icon { width: 44px; height: 44px; } .course-completion-dialog #course-completion-description { font-size: 14px; } .course-completion-dialog #course-completion-description strong { font-size: 16px; } }
+@media (prefers-reduced-motion:reduce) { .course-completion-dialog[open] .course-completion-content { animation: none; } }

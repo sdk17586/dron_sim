@@ -1,12 +1,14 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { OrbitControls } from '../vendor/three/OrbitControls.js';
-import { SVGRenderer } from '../vendor/three/SVGRenderer.js';
+import { createRenderer3D, showRenderBackend } from './renderer3d.js';
 import { renderRepairPoints } from './parts.js';
 import { PROFILE } from '../content/aircraft-profiles.js';
 import { SCENARIO } from '../content/scenarios.js';
 import { createBatteryPacks, installedBattery, batteryColor, chargeFraction } from '../domain/battery.js';
 import { rotorPreviewMarkup, applyRotorMotion } from './rotor-preview.js';
 import { motorStatus, motorStatusLabel } from './motor-status.js';
+import { configureDroneWorkshop } from './spatial-maintenance.js';
+import { configureIMU } from './imu3d.js';
 
 const pointFor = p => new THREE.Vector3((p.x - 380) / 72, 1.04, (p.y - 294) / 76);
 
@@ -50,13 +52,7 @@ export class DroneViewport {
     this.labels = new Map();
     this.motors = new Map();
     this.previewLevel = 0;
-    if (!renderer && compatible) renderer = new SVGRenderer();
-    if (!renderer) {
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('webgl2', { antialias: true, alpha: false, powerPreference: 'low-power' });
-      if (!context) throw new Error('WebGL 2를 사용할 수 없습니다.');
-      renderer = new THREE.WebGLRenderer({ canvas, context, antialias: true, powerPreference: 'low-power' });
-    }
+    renderer ||= createRenderer3D({ compatible });
     this.renderer = renderer;
     this.canvas = renderer.domElement;
     this.canvas.classList.add('drone-3d-canvas');
@@ -66,7 +62,7 @@ export class DroneViewport {
     this.renderer.setPixelRatio?.(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.35;
+    this.renderer.toneMappingExposure = 1;
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#f1f4ec');
     this.camera = new THREE.PerspectiveCamera(39, 1, .1, 80);
@@ -92,9 +88,11 @@ export class DroneViewport {
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     this.canvas.addEventListener('pointerdown', event => {
+      if (this.ui?.immersiveMode || this.ui?.imuMode) return;
       if (event.isPrimary) this.down = { x: event.clientX, y: event.clientY, id: event.pointerId, button: event.button };
     });
     this.canvas.addEventListener('pointerup', event => {
+      if (this.ui?.immersiveMode || this.ui?.imuMode) return;
       if (!this.down || this.down.id !== event.pointerId || this.down.button !== 0) return;
       const distance = Math.hypot(event.clientX - this.down.x, event.clientY - this.down.y);
       this.down = null;
@@ -128,7 +126,7 @@ export class DroneViewport {
       this.camera.position.copy(this.controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
       this.controls.update(); this.render();
     });
-    this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); this.onUnavailable('3D 화면 연결이 중단되어 2D 보기로 전환했습니다.'); });
+    this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); this.onUnavailable?.(); });
     this.resizeObserver = new ResizeObserver(() => this.resize());
   }
 
@@ -161,6 +159,8 @@ export class DroneViewport {
     this.materials['battery-led'] = new THREE.MeshBasicMaterial({ color: batteryColor(20) });
     this.batteryLED = this.box(1, .028, .09, this.materials['battery-led'], this.drone, [0, 1.458, -.25]);
     this.power = this.cylinder(.075, .018, dark, this.drone, [0, 1.42, .72]);
+    const powerGlyph=this.mesh(new THREE.TorusGeometry(.045,.007,4,18),metal,this.drone,[0,1.435,.72]);powerGlyph.rotation.x=-Math.PI/2;
+    this.box(.01,.008,.045,metal,this.drone,[0,1.44,.69]);
     this.powerLight = this.cylinder(.022, .02, this.material('power-on', '#b3c58c', { emissive: '#667745' }), this.drone, [0, 1.44, .72]);
     this.box(.75, .08, .34, metal, this.drone, [0, .68, -1.73]);
     const gimbal = this.mesh(roundedGeometry(.77, .48, .4, .1), dark, this.drone, [0, .39, -1.87]);
@@ -174,8 +174,8 @@ export class DroneViewport {
     ink.fillStyle = '#5e725b'; ink.font = '500 38px sans-serif'; ink.textAlign = 'center'; ink.fillText('MINI 2 SE', 256, 58);
     ink.font = '16px sans-serif'; ink.fillText('TRAINING MODEL', 256, 96);
     this.decalTexture = new THREE.CanvasTexture(decal); this.decalTexture.colorSpace = THREE.SRGBColorSpace;
-    this.decalMaterial = new THREE.MeshBasicMaterial({ map: this.decalTexture, transparent: true, depthWrite: false });
-    const decalMesh = this.mesh(new THREE.PlaneGeometry(1.08, .27), this.decalMaterial, this.drone, [0, 1.422, -.15]); decalMesh.rotation.x = -Math.PI / 2;
+    this.decalMaterial = new THREE.MeshBasicMaterial({ map: this.decalTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+    const decalMesh = this.mesh(new THREE.PlaneGeometry(1.08, .27), this.decalMaterial, this.drone, [0, 1.425, -.15]); decalMesh.rotation.x = -Math.PI / 2;
     }
     const bladeGeometry = propellerGeometry(false), damagedGeometry = propellerGeometry(true);
     const propMaterial = this.material('prop', '#34483a', { metalness: .22, roughness: .53 });
@@ -192,7 +192,7 @@ export class DroneViewport {
       this.cylinder(.23, .05, edge, group, [0, .26, 0]);
       for (let n = 0; n < 10; n++) {
         const angle = n / 10 * Math.PI * 2;
-        const vent = this.box(.04, .12, .045, bronze, group, [Math.cos(angle) * .286, .045, Math.sin(angle) * .286]); vent.rotation.y = -angle;
+        const vent = this.box(.035, .1, .025, bronze, group, [Math.cos(angle) * .327, .045, Math.sin(angle) * .327]); vent.rotation.y = -angle;
       }
       this.box(.16, .65, .21, edge, group, [0, -.5, .02]);
       this.box(.25, .08, .31, rubber, group, [0, -.85, .02]);
@@ -206,15 +206,15 @@ export class DroneViewport {
         const crack = this.box(.032, .015, .19, this.material('crack', '#b78558'), blade, [-1.3, .06, -.005]); crack.rotation.y = .4;
         blades.push({ group: blade, good, damaged, crack });
         const screwGroup = new THREE.Group(); screwGroup.rotation.y = blade.rotation.y; group.add(screwGroup);
-        this.cylinder(.069, .06, metal, screwGroup, [-.045, .386, 0]);
-        this.box(.09, .009, .015, dark, screwGroup, [-.045, .419, 0]);
-        this.box(.015, .009, .09, dark, screwGroup, [-.045, .419, 0]);
+        this.cylinder(.085, .06, metal, screwGroup, [-.15, .386, 0]);
+        this.box(.11, .009, .02, dark, screwGroup, [-.15, .419, 0]);
+        this.box(.02, .009, .11, dark, screwGroup, [-.15, .419, 0]);
         screws.push(screwGroup);
       }
       this.motors.set(profile.id, { group, ring, blades, screws });
     }
     const grid = new THREE.GridHelper(18, 36, '#c8d1be', '#dde4d5'); grid.position.y = -.09;
-    grid.material.transparent = true; grid.material.opacity = .5; this.scene.add(grid);
+    grid.material.transparent = true; grid.material.opacity = .5; grid.material.depthWrite = false; this.scene.add(grid);
     this.geometries.add(grid.geometry); this.gridMaterial = grid.material;
     // A static soft contact shadow avoids a continuously updated shadow map.
     if (this.canvas.tagName.toLowerCase() !== 'svg') {
@@ -234,6 +234,7 @@ export class DroneViewport {
       if (this.rotorLayer) applyRotorMotion(this.rotorLayer, 0);
       this.resizeObserver.disconnect(); this.host = host;
       host.replaceChildren(this.canvas);
+      showRenderBackend(host, this.canvas);
       this.rotorLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       this.rotorLayer.classList.add('rotor-preview-layer'); this.rotorLayer.setAttribute('aria-hidden', 'true');
       this.rotorLayer.innerHTML = rotorPreviewMarkup(); host.append(this.rotorLayer);
@@ -252,7 +253,7 @@ export class DroneViewport {
     this.canvas.dataset.renderer = 'threejs';
     this.controls.enabled = true; this.resize(false);
   }
-  detach() { this.resizeObserver.disconnect(); this.host = null; this.controls.enabled = false; this.canvas.remove(); if (this.rotorLayer) applyRotorMotion(this.rotorLayer, 0); this.rotorLayer?.remove(); }
+  detach() { this.imuInteraction?.deactivate(); this.workshop?.detach(); this.resizeObserver.disconnect(); this.host = null; this.controls.enabled = false; this.canvas.remove(); if (this.rotorLayer) applyRotorMotion(this.rotorLayer, 0); this.rotorLayer?.remove(); }
   resize(draw = true) {
     if (!this.host?.isConnected) return;
     const width = Math.max(1, this.host.clientWidth), height = Math.max(1, this.host.clientHeight);
@@ -267,11 +268,11 @@ export class DroneViewport {
     this.ui = ui;
     if (!ui.controllerMode) this.previewLevel = 0;
     applyRotorMotion(this.rotorLayer, this.previewLevel);
-    this.repairLayer.innerHTML = renderRepairPoints(state, ui);
+    this.repairLayer.innerHTML = ui.immersiveMode || ui.imuMode ? '' : renderRepairPoints(state, ui);
     for (const p of PROFILE.motors) {
       const model = this.motors.get(p.id), motor = state?.motors[p.id];
-      model.ring.visible = !ui.controllerMode && ui.selected === p.id;
-      this.labels.get(p.id).hidden = Boolean(ui.controllerMode);
+      model.ring.visible = !ui.controllerMode && !ui.previewMode && ui.selected === p.id;
+      this.labels.get(p.id).hidden = Boolean(ui.controllerMode || ui.previewMode);
       this.labels.get(p.id)?.setAttribute('aria-pressed', String(ui.selected === p.id));
       const label = this.labels.get(p.id), status = ui.controllerMode ? '' : motorStatus(state, p.id);
       label.dataset.inspection = status;
@@ -284,20 +285,21 @@ export class DroneViewport {
         model.blades[i].group.position.y = ui.exploded ? 1 : .29;
         model.screws[i].visible = motor?.screws[i].present ?? true;
         model.screws[i].position.y = ui.exploded ? 1.2 : 0;
-        model.screws[i].rotation.x = motor?.screws[i].secured === false ? .17 : 0;
+        model.screws[i].rotation.set(motor?.screws[i].secured === false ? .17 : 0,model.blades[i].group.rotation.y,0);
       }
     }
     this.battery.visible = state?.battery ?? true;
     this.battery.position.set(0, .68, 1.6);
     this.setBatteryIndicator(state ? installedBattery(state) : createBatteryPacks()[0], false);
     this.powerLight.visible = state?.power ?? false;
-    const key = `${ui.zoomed}:${ui.zoomed ? ui.selected : ''}:${ui.topView}`;
+    const key = `${Boolean(ui.imuMode)}:${ui.zoomed}:${ui.zoomed ? ui.selected : ''}:${ui.topView}`;
     if (this.cameraKey !== key) {
       this.cameraKey = key;
-      const target = ui.zoomed ? pointFor(PROFILE.motors.find(m => m.id === ui.selected)) : new THREE.Vector3(0, .7, 0);
+      const target = ui.imuMode ? new THREE.Vector3(0, 4.1, 0) : ui.zoomed ? pointFor(PROFILE.motors.find(m => m.id === ui.selected)) : new THREE.Vector3(0, .7, 0);
       const ratio = this.camera.aspect < 1 ? 1.25 : 1;
       const offset = ui.topView ? new THREE.Vector3(0, ui.zoomed ? 4.8 : 11.5 * ratio, .001)
-        : ui.zoomed ? new THREE.Vector3(2.6, 3.2, -3) : new THREE.Vector3(8.5 * ratio, 8 * ratio, -10 * ratio);
+        : ui.zoomed ? new THREE.Vector3(2.6, 3.8, -3.4) : new THREE.Vector3(8.5 * ratio, 8 * ratio, -10 * ratio);
+      if (ui.imuMode) offset.set(8 * ratio, 7 * ratio, -16 * ratio);
       this.controls.target.copy(target); this.camera.position.copy(target).add(offset); this.controls.update();
     }
     this.canvas.dataset.selectedMotor = ui.selected;
@@ -305,6 +307,8 @@ export class DroneViewport {
     this.canvas.dataset.screws = String([...this.motors.values()].reduce((n, m) => n + m.screws.filter(b => b.visible).length, 0));
     this.canvas.dataset.exploded = String(ui.exploded);
     this.canvas.dataset.rotorDemand = String(Math.round(this.previewLevel * 100));
+    configureDroneWorkshop(this,state,ui);
+    configureIMU(this, ui.imuMode ? ui.imuState : null);
     this.syncing = false; this.render();
   }
   setRotorPreview(level) {
@@ -331,6 +335,8 @@ export class DroneViewport {
   }
   render() {
     if (!this.host?.isConnected || this.syncing) return;
+    this.workshop?.update();
+    this.imuInteraction?.update();
     this.renderer.render(this.scene, this.camera);
     const width = this.host.clientWidth, height = this.host.clientHeight;
     this.rotorLayer.setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -345,7 +351,7 @@ export class DroneViewport {
       const label = this.labels.get(p.id); if (!label) continue;
       label.style.left = `${(position.x + 1) * .5 * width}px`;
       label.style.top = `${(-position.y + 1) * .5 * height}px`;
-      label.hidden = this.ui?.controllerMode || position.z > 1 || Math.abs(position.x) > .98 || Math.abs(position.y) > .98;
+      label.hidden = this.ui?.immersiveMode || this.ui?.controllerMode || this.ui?.previewMode || position.z > 1 || Math.abs(position.x) > .98 || Math.abs(position.y) > .98;
     }
     for (const node of this.repairLayer.querySelectorAll('[data-anchor]')) {
       const anchor = node.dataset.anchor;
@@ -372,6 +378,8 @@ export class DroneViewport {
     this.canvas.dataset.triangles = String(this.renderer.info?.render?.triangles ?? this.renderer.info?.render?.faces ?? 0);
   }
   dispose() {
+    this.imuInteraction?.dispose();
+    this.workshop?.dispose();
     this.detach(); this.controls.dispose(); this.renderer.dispose?.();
     this.geometries.forEach(g => g.dispose()); Object.values(this.materials).forEach(m => m.dispose());
     this.decalMaterial?.dispose(); this.decalTexture?.dispose(); this.shadowTexture?.dispose(); this.shadowMaterial?.dispose(); this.gridMaterial.dispose();

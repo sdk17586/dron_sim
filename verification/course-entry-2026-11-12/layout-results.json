@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-12",
+  "checks": [
+    {
+      "screen": "home",
+      "width": 1366,
+      "scrollWidth": 1366
+    },
+    {
+      "screen": "drone",
+      "width": 1366,
+      "scrollWidth": 1366
+    },
+    {
+      "screen": "robot",
+      "width": 1366,
+      "scrollWidth": 1366
+    },
+    {
+      "screen": "home",
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "screen": "drone",
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "screen": "robot",
+      "width": 1920,
+      "scrollWidth": 1920
+    },
+    {
+      "screen": "home",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "screen": "drone",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "screen": "robot",
+      "width": 390,
+      "scrollWidth": 390
+    }
+  ]
+}

@@ -1,21 +1,24 @@
 import { icon, button } from './shared.js';
 import { connectionLabel, rotationDemand, sticksNeutral } from '../domain/controller.js';
+import { controllerChecksDone, canEnterControllerIMU } from '../domain/controller-course.js';
 
 export function renderController() {
   const stick = (side, name) => `<div class="stick-unit"><span>${name}</span><button type="button" class="joystick" data-stick="${side}" aria-label="${name} 조이스틱" aria-describedby="controller-keys" aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"><span class="stick-cross" aria-hidden="true"></span><span class="stick-knob" aria-hidden="true"></span></button><output data-stick-readout="${side}" aria-live="off">중앙</output></div>`;
   return `<aside class="controller-panel" aria-label="가상 조종기"><span class="eyebrow">CONTROLLER CHECK</span><h1>조종기 작동 확인</h1><p>기체 전원 → 조종기 전원 → 연결<br>스틱을 움직여 회전 반응을 확인하세요.</p>
     <div class="remote-body"><div class="remote-top"><span>AEROLAB · 가상 조종기</span>${button(icon('power'), 'controller-remote-power', 'remote-power', 'aria-label="조종기 켜기" aria-pressed="false"')}</div>
-    <div class="remote-screen" data-controller-screen><div class="remote-link" role="status"><span class="link-dot" aria-hidden="true"></span><strong data-link-status>조종기 전원 꺼짐</strong></div><div class="remote-readings"><span>기체 전원<b data-aircraft-power>꺼짐</b></span><span>기체 배터리<b data-controller-battery>—</b></span><span>회전 표시<b><output data-rotation-level aria-live="off">0</output>%</b></span></div>${button('연결', 'controller-link', 'remote-link-button', 'disabled')}</div>
+    <div class="remote-screen" data-controller-screen><div class="remote-link" role="status"><span class="link-dot" aria-hidden="true"></span><strong data-link-status>조종기 전원 꺼짐</strong></div><div class="remote-readings"><span>기체 전원<b data-aircraft-power>꺼짐</b></span><span>기체 배터리<b data-controller-battery>—</b></span><span>회전 표시<b><output data-rotation-level aria-live="off">0</output>%</b></span></div>${button('연결', 'controller-link', 'remote-link-button', 'disabled')}${button('IMU 보정으로 이어하기 →', 'controller-imu-next', 'button primary full', 'hidden disabled')}</div>
     <div class="joysticks">${stick('left', '왼쪽')}${stick('right', '오른쪽')}</div>
     ${button('회전 정지 · Esc', 'controller-stop', 'remote-stop')}</div>
-    <p class="controller-help" id="controller-keys">스틱을 끌고 놓으면 중앙으로 돌아옵니다.<br>키보드: 스틱 선택 후 방향키 · 놓으면 정지</p><small>움직임과 회전의 관계는 간소화된 교육용 표시입니다. 실제 비행 조작 순서를 재현하지 않습니다.</small><div class="controller-completion" role="status" hidden><strong>조종기 교육 완료</strong><br>전원·연결·좌우 스틱·정지 확인을 마쳤습니다. 상단의 다시 시작으로 반복할 수 있습니다.</div></aside>`;
+    <p class="controller-help" id="controller-keys">스틱을 끌고 놓으면 중앙으로 돌아옵니다.<br>키보드: 스틱 선택 후 방향키 · 놓으면 정지</p><small>작동 확인 다음에는 IMU 보정을 진행합니다. 실제 비행 조작 순서를 재현하지 않습니다.</small><div class="controller-completion" role="status" hidden><strong>1단계 · 조종기 작동 확인 완료</strong><br>조종기 화면에서 IMU 보정으로 이어가세요. 두 단계를 모두 마치면 교육이 완료됩니다.</div></aside>`;
 }
 
 export function updateController(root, state) {
   const panel = root.querySelector('.controller-panel'); if (!panel) return;
   const level = Math.round(rotationDemand(state) * 100);
   panel.dataset.connected = String(state.connected); panel.dataset.rotation = String(level);
-  panel.querySelector('.controller-completion').hidden = !Object.values(state.practice).every(Boolean);
+  panel.querySelector('.controller-completion').hidden = !controllerChecksDone(state);
+  const next = panel.querySelector('[data-action="controller-imu-next"]');
+  next.hidden = !controllerChecksDone(state); next.disabled = !canEnterControllerIMU(state);
   const status = panel.querySelector('[data-link-status]'), label = connectionLabel(state);
   if (status.textContent !== label) status.textContent = label;
   panel.querySelector('[data-controller-screen]').classList.toggle('is-connected', state.connected);
@@ -70,6 +73,7 @@ export function installControllerInput(root, onAction) {
     y: Number(held.has('ArrowUp')) - Number(held.has('ArrowDown')) });
   root.addEventListener('keydown', event => {
     const pad = event.target.closest('[data-stick]'); if (!pad || !arrows.includes(event.key)) return;
+    if (event.repeat && !keys.has(pad.dataset.stick)) return;
     event.preventDefault(); const side = pad.dataset.stick, held = keys.get(side) || new Set();
     held.add(event.key); keys.set(side, held); sendKeys(side, held);
   });

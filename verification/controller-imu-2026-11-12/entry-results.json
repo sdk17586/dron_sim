@@ -1,0 +1,6 @@
+{
+  "power_restore_blocks_handoff": true,
+  "help_matches_restore": true,
+  "selected_course_preserves_imu_stage": true,
+  "errors": []
+}

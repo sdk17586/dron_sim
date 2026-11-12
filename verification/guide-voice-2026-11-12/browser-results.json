@@ -1,0 +1,17 @@
+{
+  "passed": 5,
+  "checks": [
+    "로봇 시작·작업 변경에 한국어 안내, 도움말 중복 읽기 없음, 다시 듣기·음소거·두 조작부 동기화",
+    "초점 이탈 즉시 취소·자동 재개 없음·다시 듣기로 재개",
+    "음소거 설정 새로고침 후 유지·드론 현재 안내와 3D 작업 변경 연동",
+    "드론·로봇 조종기 안내 변경·도움말 재렌더 중복 방지·세 화면 폭 조작 유지",
+    "음성 API 미지원 시 안내와 비활성 조작 표시·기존 교육 유지"
+  ],
+  "pageErrors": [],
+  "speechBackend": "mocked for deterministic UI verification",
+  "nativeCapability": {
+    "supported": true,
+    "koreanVoices": 0
+  },
+  "audibleOutputVerified": false
+}

@@ -1,0 +1,6 @@
+{
+  "pose_release_starts_new_clock": true,
+  "no_early_sample": true,
+  "stalled_timer_not_credited": true,
+  "normal_timer_recovers": true
+}

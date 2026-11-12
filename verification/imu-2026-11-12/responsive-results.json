@@ -1,0 +1,122 @@
+{
+  "widths": [
+    {
+      "width": 390,
+      "boxes": {
+        "#task-guide-host": {
+          "x": 31,
+          "y": -379,
+          "width": 328,
+          "height": 259.59375
+        },
+        "[data-imu-panel]": {
+          "x": 31,
+          "y": -107.40625,
+          "width": 328,
+          "height": 424.140625
+        },
+        "#drone-viewport": {
+          "x": 31,
+          "y": 328.734375,
+          "width": 328,
+          "height": 420
+        },
+        "[data-imu-body]": {
+          "x": 181.328125,
+          "y": 595.1875,
+          "width": 34,
+          "height": 34
+        }
+      }
+    },
+    {
+      "width": 800,
+      "boxes": {
+        "#task-guide-host": {
+          "x": 31,
+          "y": -388,
+          "width": 738,
+          "height": 268.578125
+        },
+        "[data-imu-panel]": {
+          "x": 200,
+          "y": -107.421875,
+          "width": 400,
+          "height": 424.140625
+        },
+        "#drone-viewport": {
+          "x": 31,
+          "y": 328.71875,
+          "width": 738,
+          "height": 420
+        },
+        "[data-imu-body]": {
+          "x": 386.953125,
+          "y": 609.03125,
+          "width": 34,
+          "height": 34
+        }
+      }
+    },
+    {
+      "width": 1366,
+      "boxes": {
+        "#task-guide-host": {
+          "x": 51,
+          "y": 172,
+          "width": 650,
+          "height": 268.578125
+        },
+        "[data-imu-panel]": {
+          "x": 1063,
+          "y": 174,
+          "width": 250,
+          "height": 449.140625
+        },
+        "#drone-viewport": {
+          "x": 37,
+          "y": 333,
+          "width": 1007,
+          "height": 483
+        },
+        "[data-imu-body]": {
+          "x": 528.046875,
+          "y": 657.921875,
+          "width": 34,
+          "height": 34
+        }
+      }
+    },
+    {
+      "width": 1920,
+      "boxes": {
+        "#task-guide-host": {
+          "x": 211,
+          "y": 172,
+          "width": 650,
+          "height": 268.578125
+        },
+        "[data-imu-panel]": {
+          "x": 1457,
+          "y": 174,
+          "width": 250,
+          "height": 449.140625
+        },
+        "#drone-viewport": {
+          "x": 197,
+          "y": 333,
+          "width": 1241,
+          "height": 483
+        },
+        "[data-imu-body]": {
+          "x": 805.046875,
+          "y": 657.921875,
+          "width": 34,
+          "height": 34
+        }
+      }
+    }
+  ],
+  "errors": [],
+  "mobile_pose_and_wrong_face": true
+}

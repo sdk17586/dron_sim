@@ -1,0 +1,101 @@
+.compact-courses nav { flex-wrap: wrap; }
+.robot-controller-grid .robot-stage { height: clamp(400px,calc(100vh - 330px),640px); }
+.robot-controller-grid.course-introduction .robot-stage { height: clamp(420px,calc(100vh - 220px),660px); }
+.robot-console-power { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 7px; padding: 9px 12px; min-height: 40px; border: 1px solid #b6c9b7; border-radius: 8px; background: #f8fbf4; color: #48634c; font-size: 12px; }
+.robot-console-power .icon { width: 17px; height: 17px; }
+.robot-console-power[aria-pressed=true] { background: #3d654a; color: #fff; }
+.robot-drive-status { position: absolute; top: 64px; left: 14px; max-width: calc(100% - 28px); padding: 5px 8px; background: #f9fcf2e8; color: #526f58; border-radius: 5px; font-size: 11px; pointer-events: none; }
+.robot-drive-hint { margin: 12px 0 0; font-size: 12px; line-height: 1.8; color: #637c69; }
+.remote-estop { width: 100%; min-height: 40px; margin-top: 9px; padding: 8px; border: 1px solid #b95c4d; border-radius: 7px; background: #b34e40; color: #fff; font-size: 12px; }
+.remote-estop[aria-pressed=true] { background: #f4e4df; color: #903f34; }
+.remote-estop:disabled { opacity: .6; }
+.robot-controller-panel .stick-unit > small { font-size: 10px; white-space: nowrap; }
+@media (max-width:800px) { .robot-controller-grid .robot-stage { height: 360px; min-height: 320px; } }
+.robot-grid { grid-template-columns: minmax(0,1fr) 270px; gap: 26px; }
+.robot-workbench { min-width: 0; }
+.robot-introduction { grid-template-columns: minmax(0,1fr) 340px; }
+.robot-introduction .robot-stage { height: clamp(420px,calc(100vh - 220px),660px); }
+.robot-controls { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+.robot-controls button, .robot-connector { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 7px 11px; border: 1px solid #c7d6c5; border-radius: 7px; background: #fff; color: #415c49; font-size: 11px; }
+.robot-controls .icon, .robot-connector .icon { width: 15px; height: 15px; }
+.robot-controls .robot-estop { color: #a8493d; border-color: #dba69c; }
+.robot-controls .robot-estop.engaged { background: #b34e40; color: #fff; border-color: #b34e40; }
+.robot-controls button:disabled { opacity: .65; }
+.robot-controls button { position: relative; }
+.robot-controls button > small { padding: 2px 5px; border-radius: 4px; background: #edf2e8; color: #6b7e65; font-size: 9px; white-space: nowrap; }
+.robot-controls .robot-estop.engaged > small { background: #ffffff26; color: #fff; }
+.robot-controls button.guide-source { padding-right: 44px; }
+.robot-controls button.guide-source::after { content: '지금'; position: absolute; right: 7px; top: 50%; transform: translateY(-50%); padding: 2px 5px; border-radius: 4px; background: #dcebd3; color: #31523a; font-size: 10px; font-weight: 600; }
+.robot-prep-steps { list-style: none; padding: 0; margin: 18px 0; }
+.robot-prep-steps li { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid transparent; border-radius: 8px; color: #82917c; }
+.robot-prep-steps li > span { display: grid; place-items: center; flex-shrink: 0; width: 25px; height: 25px; border: 1px solid #cedac7; border-radius: 50%; font-size: 11px; }
+.robot-prep-steps strong { display: block; font-size: 13px; font-weight: 500; }
+.robot-prep-steps small { display: block; margin-top: 3px; font-size: 10px; }
+.robot-prep-steps [data-prep-state=current] { background: #e8f1e3; border-color: #bed0b3; color: #36573b; }
+.robot-prep-steps [data-prep-state=current] > span { background: #42694c; border-color: #42694c; color: white; }
+.robot-prep-steps [data-prep-state=done] { color: #5a7c54; }
+.robot-dock.tray-only { justify-content: flex-end; }
+.robot-stage { height: clamp(320px,calc(100vh - 465px),500px); min-height: 320px; border-radius: 14px; background: #edf2ee; position: relative; overflow: hidden; }
+.robot-viewport { width: 100%; height: 100%; position: relative; }
+.robot-3d-canvas { width: 100%; height: 100%; display: block; touch-action: none; outline-offset: -4px; }
+.robot-model-labels { position: absolute; inset: 0; pointer-events: none; }
+.robot-model-label { position: absolute; transform: translate(-50%,-50%); pointer-events: auto; width: 30px; height: 30px; border: 1px solid #93b1a5; border-radius: 50%; color: #31544c; background: #fbfdfaf0; font-size: 10px; }
+.robot-model-label[aria-pressed=true] { background: #3f746a; color: white; }
+.robot-battery { position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 5px; border: 1px solid #b5c9bc; border-radius: 8px; padding: 2px 8px; background: #f8fcf5ec; color: #456754; font-size: 10px; touch-action: none; }
+.robot-battery .part-art { width: 36px; height: 32px; }
+.robot-battery.empty-part { border-style: dashed; }
+.robot-battery.empty-part .part-art { opacity: .3; }
+.robot-camera-home { position: absolute; bottom: 12px; left: 12px; }
+.robot-canvas-note { position: absolute; bottom: 24px; left: 57px; font-size: 10px; color: #6b8273; pointer-events: none; }
+.robot-model-note { position: absolute; bottom: 9px; right: 12px; font-size: 9px; color: #6e8274; pointer-events: none; }
+.robot-leg-selector { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-top: 9px; }
+.robot-leg-button { border: 1px solid #cad9ca; border-radius: 6px; padding: 8px 4px; background: #fff; color: #617d68; min-height: 35px; font-size: 10px; }
+.robot-leg-button[aria-pressed=true] { border-color: #639184; background: #e5efea; color: #335c51; }
+.robot-inspector { min-width: 0; padding-top: 10px; }
+.robot-inspector h2 { font-size: 21px; line-height: 1.6; }
+.robot-inspector > p { font-size: 13px; color: #687d69; line-height: 1.9; margin: 12px 0; }
+.robot-inspector > small { display: block; font-size: 11px; line-height: 1.9; color: #738574; margin: 14px 0; }
+.robot-inspector .start-fields { margin: 20px 0; }
+.robot-inspector .start-fields label { font-size: 11px; }
+.robot-inspector .full { margin-top: 10px; }
+.robot-safety-note { display: flex; align-items: flex-start; gap: 8px; padding: 14px; border-radius: 8px; background: #e6eee4; color: #496650; font-size: 12px; line-height: 1.8; }
+.robot-safety-note .icon { width: 20px; flex-shrink: 0; }
+.robot-observation { background: #edf2eb; border-radius: 12px; margin: 15px 0; padding: 12px; text-align: center; color: #476a60; }
+.robot-observation .part-art { width: 150px; height: 125px; margin: auto; }
+.robot-observation p { font-size: 12px; color: #687d69; }
+.robot-joint-detail { background: #edf2eb; border: 1px solid #d2decf; padding: 14px; border-radius: 12px; margin-top: 15px; }
+.robot-module-slot { width: 100%; border: 1px solid #bbcdbf; border-radius: 10px; background: #f8fbf5; display: flex; flex-direction: column; align-items: center; color: #496f65; padding: 8px; touch-action: none; }
+.robot-module-slot.empty-part { border-style: dashed; }
+.robot-module-slot.empty-part .part-art { opacity: .2; }
+.robot-module-slot .part-art { width: 110px; height: 90px; }
+.robot-module-slot strong { font-size: 12px; font-weight: 500; }
+.robot-module-slot small { font-size: 10px; color: #799080; }
+.robot-bolts { display: flex; gap: 10px; margin: 12px 0; }
+.robot-bolt { flex: 1; display: flex; flex-direction: column; align-items: center; border: 1px solid #c6d4c3; border-radius: 8px; padding: 3px; background: #f9fcf6; color: #547265; touch-action: none; }
+.robot-bolt .part-art { width: 38px; height: 32px; }
+.robot-bolt span { font-size: 11px; }
+.robot-bolt small { font-size: 10px; color: #6e826d; }
+.robot-bolt.loose { border-style: dashed; color: #a97d49; }
+.robot-connector { width: 100%; background: #eff5e9; }
+.robot-connector.connected { background: #dae9dc; }
+.robot-dock { display: flex; gap: 14px; align-items: center; padding-top: 12px; margin-top: 12px; border-top: 1px solid #d5e1d4; }
+.robot-spares { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.robot-spares label { font-size: 10px; color: #72866f; min-width: 0; max-width: 150px; }
+.robot-spares select { font-size: 11px; background: transparent; min-height: 34px; padding: 4px; }
+.robot-spare-module .part-art { width: 60px; height: 50px; }
+.robot-tray { width: 155px; min-height: 100px; flex-direction: row; gap: 6px; padding: 8px; }
+.robot-tray .tray-drop-zone { min-width: 60px; }
+.robot-stored-battery { width: 64px; min-height: 75px; }
+.robot-stored-battery .part-art { width: 40px; height: 32px; }
+.robot-test-status { margin-top: 15px; border: 1px solid #aac6b5; background: #e7f1e5; color: #486c54; border-radius: 8px; padding: 12px; font-size: 12px; line-height: 1.8; }
+.robot-test-status.is-testing { background: #e0eeed; border-color: #88b6ae; }
+.robot-result dl { margin: 18px 0; }
+.robot-result dl > div { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; border-bottom: 1px solid #dce7d9; padding: 8px 0; }
+.robot-result dd { font-weight: 600; }
+.robot-result .unsaved { color: #a16e42; }
+.robot-result details { margin: 15px 0; font-size: 12px; line-height: 1.8; color: #687f63; }
+.robot-result ul { padding-left: 18px; }
+.robot-result-actions { display: grid; }
+@media (max-width:1000px) { .robot-grid { gap: 20px; grid-template-columns: minmax(0,1fr) 250px; } .robot-dock { gap: 7px; } .robot-spares { gap: 5px; } .robot-tray { width: 130px; } .robot-spares label { max-width: 110px; } .robot-dock > .inventory-piece { width: 52px; } }
+@media (max-width:760px) { .course-picker nav { grid-template-columns: 1fr; gap: 7px; } .course-picker .course-card { min-height: 67px; } .robot-grid { grid-template-columns: 1fr; } .robot-inspector { padding: 0; } .robot-inspector .start-fields { margin-top: 12px; } .robot-stage { height: 340px; } .robot-dock { flex-wrap: wrap; gap: 8px; } .robot-tray { width: 140px; } .robot-spares { flex: 1; } .robot-leg-selector { grid-template-columns: repeat(2,minmax(0,1fr)); } .compact-courses .course-card { padding: 7px 10px; } .robot-model-note { font-size: 8px; } }
+@media (max-width:760px) { .course-home .course-card { min-height: 210px; padding: 24px; } .robot-introduction .robot-stage, .course-introduction .drone-canvas { height: 340px; min-height: 340px; } }

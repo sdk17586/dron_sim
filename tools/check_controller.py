@@ -28,8 +28,10 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>window.qaCsp.push(e.effectiveDirective));")
             page.goto(args.url)
+            page.locator("[data-action=intro-drone]").click(force=True)
             scene = page.locator('.drone-3d-canvas[data-ready=true]'); scene.wait_for()
             page.locator('.controller-intro').click(force=True)
+            page.locator('[data-action=controller-start]').click(force=True)
             panel = page.locator('.controller-panel'); panel.wait_for()
             def rotation(): return int(panel.get_attribute('data-rotation'))
             def linked(): return panel.get_attribute('data-connected') == 'true'
@@ -142,6 +144,7 @@ def main():
             page.locator('#start-form').wait_for(); assert scene.get_attribute('data-rotor-demand') == '0'
             assert scene.get_attribute('data-battery-level') == '20'
             page.locator('.controller-intro').click(force=True)
+            page.locator('[data-action=controller-start]').click(force=True)
             assert not linked() and rotation() == 0
             assert page.locator('[data-action=controller-remote-power]').get_attribute('aria-pressed') == 'false'
             page.locator('.controller-return').click(force=True)

@@ -1,0 +1,114 @@
+{
+  "before-removal": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    }
+  },
+  "after-first-removal": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    }
+  },
+  "after-both-removals": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    }
+  },
+  "after-pick-cancel": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    }
+  },
+  "after-invalid-placement": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    }
+  },
+  "kit-B1": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 1,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 1,
+      "attached": true,
+      "clickable": true
+    }
+  },
+  "kit-A1": {
+    "0": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    },
+    "1": {
+      "present": true,
+      "visible": true,
+      "meshes": 3,
+      "attached": true,
+      "clickable": true
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "passed": 7,
+  "checks": [
+    "첫 작업·현재 준비 단계·바로 다음 작업 표시, 현재 버튼 강조와 불필요한 공구 숨김",
+    "1366·1920·390px 네 단계 표시·가로 넘침 없음, 도움말 열람 후 현재 작업 유지",
+    "강조된 대상만 따라 비상 정지→전원 차단→받침대→배터리 분리 후 관절 점검 진입",
+    "네 다리 판단마다 다음 관절 자동 확대, 모두 판단한 뒤 손상 관절·커넥터·공구로 안내",
+    "커넥터·두 볼트·모듈 수거·새 모듈·두 볼트 체결·연결을 순서대로 안내하고 배터리 복구로 전환",
+    "최종 안내만 따라 배터리·전원·시험·정지·완료까지 실수 없이 종료·결과 저장",
+    "JavaScript 오류·외부 요청·보안 정책 위반 없음"
+  ],
+  "widths": [
+    1366,
+    1920,
+    390
+  ],
+  "repairSteps": [
+    "robot-disconnect-front-left",
+    "robot-unbolt-front-left-0",
+    "robot-unbolt-front-left-1",
+    "robot-remove-front-left",
+    "robot-install-front-left",
+    "robot-fasten-front-left-0",
+    "robot-fasten-front-left-1",
+    "robot-connect-front-left"
+  ],
+  "finalSteps": [
+    "robot-battery-in",
+    "robot-test-power",
+    "robot-release-stop",
+    "robot-test",
+    "robot-final-stop",
+    "robot-final-power",
+    "robot-finish"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "cspViolations": [],
+  "screenshots": false
+}

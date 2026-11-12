@@ -66,16 +66,16 @@ export function droneSVG(state, selected, zoomed = false) {
 }
 
 export function renderWorkbench(s, ui) {
-  const flatPoints = ui.viewMode === '2d' ? `<div class="flat-points">${ui.controllerMode ? '' : PROFILE.motors.map(p => button(p.short, 'select-motor', 'three-motor-label', `data-motor="${p.id}" data-anchor="motor:${p.id}" data-inspection="${motorStatus(s, p.id)}" title="${p.short}번 ${p.name} · ${motorStatusLabel(motorStatus(s, p.id))}" aria-label="${p.name} 모터 선택${motorStatus(s, p.id) ? ' · ' + motorStatusLabel(motorStatus(s, p.id)) : ''}" aria-pressed="${ui.selected === p.id}"`)).join('')}${renderRepairPoints(s, ui)}</div>` : '';
+  const flatPoints = ui.viewMode === '2d' ? `<div class="flat-points">${ui.controllerMode || ui.previewMode ? '' : PROFILE.motors.map(p => button(p.short, 'select-motor', 'three-motor-label', `data-motor="${p.id}" data-anchor="motor:${p.id}" data-inspection="${motorStatus(s, p.id)}" title="${p.short}번 ${p.name} · ${motorStatusLabel(motorStatus(s, p.id))}" aria-label="${p.name} 모터 선택${motorStatus(s, p.id) ? ' · ' + motorStatusLabel(motorStatus(s, p.id)) : ''}" aria-pressed="${ui.selected === p.id}"`)).join('')}${renderRepairPoints(s, ui)}</div>` : '';
   return `<section class="workbench" aria-label="드론 정비 작업대">
     <div class="drone-canvas ${ui.viewMode === '3d' ? 'three-stage' : 'flat-stage'}">${ui.viewMode === '3d' ? '<div id="drone-viewport" class="drone-viewport"><span class="three-loading">드론을 준비하고 있습니다…</span></div>' : droneSVG(s, ui.selected, ui.zoomed)}${flatPoints}
       <div class="canvas-tools">${button(icon('reset'), 'view-all', 'camera-home', 'aria-label="기체 전체 보기" title="기체 전체 보기 · Esc"')}</div>
       <span class="canvas-help">${ui.viewMode === '3d' ? '빈 곳을 끌어 회전 · 휠로 확대' : ui.controllerMode ? '조종기로 회전 반응 확인' : '번호를 눌러 모터 선택'}</span><span class="model-note">${ui.controllerMode ? '작동 확인용 교육 기체 · 비행 없음' : '교육용 모델'}</span></div>
-    ${ui.rendererError ? `<p class="renderer-notice">${e(ui.rendererError)}</p>` : ''}${ui.controllerMode ? '' : renderPartsDock(s, ui)}</section>`;
+    ${ui.rendererError ? `<p class="renderer-notice">${e(ui.rendererError)}</p>` : ''}${ui.controllerMode || ui.previewMode ? '' : renderPartsDock(s, ui)}</section>`;
 }
 
 export function renderInspector(s, ui) {
-  if (!s) return `<aside class="inspector start-panel"><span class="eyebrow">BASIC MAINTENANCE</span><h2>정비 실습 준비</h2><p>모터 네 곳을 점검하고<br>필요한 부품을 교체합니다.</p>
+  if (!s) return `<aside class="inspector start-panel course-intro-panel"><span class="eyebrow">DRONE MAINTENANCE</span><h1 tabindex="-1">드론 정비 교육</h1><p>기체를 직접 살펴보고, 부품을 옮기며 기본 점검과 교체 절차를 익힙니다.</p><ul class="course-objectives"><li>배터리 잔량 확인·전원 차단·배터리 교체</li><li>네 모터의 프로펠러 손상 여부 판단</li><li>표식에 맞는 날개·나사 교체와 체결</li><li>교체 후 누락·표식·체결 최종 확인</li></ul>
     <form id="start-form"><div class="start-fields"><label>훈련 회차<input name="session" maxlength="40" required value="${e(ui.session)}" autocomplete="off"></label><label>교육생 번호<input name="trainee" maxlength="40" required value="${e(ui.trainee)}" autocomplete="off"></label></div>
     <details class="practice-settings"><summary>실습 설정</summary><fieldset class="mode-picker"><legend class="sr-only">실습 방식</legend><label class="mode-choice"><input type="radio" name="mode" value="guided" ${ui.mode === 'guided' ? 'checked' : ''}>안내 실습</label><label class="mode-choice"><input type="radio" name="mode" value="independent" ${ui.mode === 'independent' ? 'checked' : ''}>독립 실습</label></fieldset></details>
     <button class="button primary full" type="submit">실습 시작 ${icon('arrow')}</button></form><small>실명·군번 없이 번호만 입력하세요.</small></aside>`;

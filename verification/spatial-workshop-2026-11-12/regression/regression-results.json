@@ -1,0 +1,10 @@
+{
+  "coreRules": 22,
+  "csvUploadDownload": true,
+  "duplicateImport": true,
+  "malformedImport": true,
+  "reloadPersistence": true,
+  "browserRestartPersistence": true,
+  "pageErrors": [],
+  "externalRequests": []
+}

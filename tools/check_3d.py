@@ -35,6 +35,7 @@ def main():
                     window.qaCspViolations.push({directive:event.effectiveDirective,blocked:event.blockedURI});
                 });""")
             page.goto(args.url)
+            page.locator("[data-action=intro-drone]").click(force=True)
             canvas = page.locator('.drone-3d-canvas[data-ready="true"]'); canvas.wait_for()
             assert canvas.get_attribute('data-blades') == '8' and canvas.get_attribute('data-screws') == '8'
             assert int(canvas.get_attribute('data-triangles')) > 1000
@@ -80,6 +81,7 @@ def main():
             report.append('휠 이벤트: 확대 확인')
             def click(action, extra=''):
                 page.locator(f'[data-action="{action}"]{extra}').first.click(force=True)
+            page.locator('#start-form button[type="submit"]').click(force=True)
             click('view-all'); canvas.focus()
             for _ in range(12): page.keyboard.press('ArrowUp')
             label = page.locator('.three-motor-label[data-motor="rear-right"]'); bounds = label.bounding_box()
@@ -88,7 +90,6 @@ def main():
             assert canvas.get_attribute('data-selected-motor') == 'rear-right'
             report.append('3D 기체 직접 클릭: 모터 선택 확인')
             click('view-all')
-            page.locator('#start-form button[type="submit"]').click(force=True)
             click('confirm-power')
             def piece_node(kind, index=None):
                 locator = page.locator('[data-piece]')
@@ -171,6 +172,7 @@ def main():
                     return type==='webgl2'?null:original.call(this,type,...args);
                 };""")
             fallback.goto(args.url + '/?compatible3d=0')
+            fallback.locator('[data-action=intro-drone]').click(force=True)
             fallback.locator('.renderer-notice').wait_for()
             assert fallback.locator('.workbench .drone-svg').count() == 1
             fallback.locator('#start-form button[type="submit"]').click(force=True)

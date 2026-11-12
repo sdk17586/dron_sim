@@ -1,0 +1,14 @@
+{
+  "passed": 5,
+  "checks": [
+    "그래픽 검사 기능이 없는 환경은 자동 호환 3D, 로봇 정비 시점 8회 회전 후 유효한 형상 유지",
+    "드론 시점 8회 회전·세 화면 폭·오류 없는 호환 표시",
+    "사전 검사 성공 후 실제 WebGL 컨텍스트 생성이 실패해도 호환 3D 표시",
+    "그래픽 연결 중단을 모의 발생시켜 현재 로봇 작업·배터리 보존과 이후 드론 호환 모드 유지 확인",
+    "호환 모드 주소는 그래픽 검사를 생략하고 3D 표시"
+  ],
+  "pageErrors": [],
+  "gpuPixelsVerified": false,
+  "acceleratedRecoverySimulated": true,
+  "nativeGpuAttempt": "Worker WebGL initialization stalled in this headless environment; browser terminated by timeout. Physical GPU and pixel output remain unverified."
+}

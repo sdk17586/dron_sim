@@ -1,6 +1,7 @@
 export const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const icon = (name, cls = '') => {
   const paths = {
+    quadruped: '<rect x="6" y="5" width="12" height="6" rx="2"/><path d="m7 10-3 6 2 5m11-11 3 6-2 5M10 11l-1 5 2 4m3-9 1 5-2 4M6 6H3v3h3"/>',
     rotor: '<circle cx="6" cy="6" r="4"/><circle cx="18" cy="6" r="4"/><circle cx="6" cy="18" r="4"/><circle cx="18" cy="18" r="4"/><path d="m6 6 12 12M18 6 6 18"/><rect x="9" y="8" width="6" height="8" rx="2"/>',
     tool: '<path d="m14 6 4 4M4 20l9-9M15 3a6 6 0 0 0-6 8L3 17a3 3 0 0 0 4 4l6-6a6 6 0 0 0 8-6l-4 3-5-5z"/>',
     chart: '<path d="M4 3v17h17M8 16v-5m5 5V6m5 10V9"/>',
