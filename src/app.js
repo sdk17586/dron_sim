@@ -8,12 +8,12 @@ import { renderResult, renderOperations } from './ui/results.js';
 import { escapeHTML as e, icon } from './ui/shared.js';
 import { installedBattery } from './domain/battery.js';
 import { previewBatteryGauge } from './ui/battery-indicator.js';
-import { createControllerState, createControllerAircraft, controllerTransition, rotationDemand, connectionLabel, sticksNeutral } from './domain/controller.js';
-import { renderController, updateController, installControllerInput } from './ui/controller.js';
+import { createControllerState, createControllerAircraft, controllerTransition, rotationDemand, connectionLabel, sticksNeutral, droneMotionDemand } from './domain/controller.js';
+import { renderController, updateController, installControllerInput, updateFlatControllerPose } from './ui/controller.js';
 import { updateFlatRotorPreview, stopRotorPreviews } from './ui/rotor-preview.js';
 import { maintenanceGuide } from './domain/learning-guide.js';
 import { controllerCourseGuide, canEnterControllerIMU } from './domain/controller-course.js';
-import { renderLearningHeader, renderCourseSelector, renderControllerIntro, renderTaskGuide, renderLearningHelp, updateTaskGuide, applyLearningHighlights } from './ui/learning.js';
+import { renderLearningHeader, renderCourseSelector, renderEquipmentEducation, renderControllerIntro, renderTaskGuide, renderLearningHelp, updateTaskGuide, applyLearningHighlights } from './ui/learning.js';
 import { createRobotState, chooseRobotFault, robotTransition, placeRobotPart, robotGuide, buildRobotResult, robotIsolated } from './domain/quadruped.js';
 import { renderRobot } from './ui/quadruped.js';
 import { createRobotControllerState, robotControllerTransition, robotControllerGuide, robotDriveDemand, robotConnectionLabel } from './domain/quadruped-controller.js';
@@ -22,9 +22,14 @@ import { renderSpatialScene } from './ui/spatial-maintenance.js';
 import { GuideVoice, updateVoiceControls } from './ui/guide-voice.js';
 import { chooseRenderBackend } from './ui/renderer3d.js';
 import { createIMUState, imuTransition } from './domain/imu.js';
-import { renderIMU, updateIMU } from './ui/imu.js';
+import { renderIMU, updateIMU, updateIMUHold } from './ui/imu.js';
 import { CourseCompletionNotice } from './ui/course-completion.js';
 import { Showcase, renderShowcase } from './ui/showcase.js';
+import { createPandaMaintenanceState, pandaMaintenanceGuide, buildPandaMaintenanceResult } from './domain/panda-maintenance.js';
+import { renderPandaMaintenanceIntro, renderPandaMaintenanceLesson } from './ui/panda-maintenance.js';
+import { PandaMaintenanceCourse } from './ui/panda-maintenance-course.js';
+import { createPandaMissionState, buildPandaMissionResult, pandaMissionReportText } from './domain/panda-mission.js';
+import { renderPandaLesson } from './ui/panda.js';
 
 const app = document.querySelector('#app');
 let storage;
@@ -42,6 +47,7 @@ let renderBackend = ui.compatible3d ? 'svg' : null, choosingRenderBackend = null
 let robot = createRobotState(), robotResult = null, robotSaved = false, robotSaveError = '', robotStarted = 0, lastRobotTarget = '';
 let robotViewport = null, RobotViewportClass = null, loadingRobotViewport = false, robotTestTimer = null;
 let controller = createControllerState(), controllerAircraft = createControllerAircraft(), controllerInput = null;
+let droneMotionTimer = null;
 let imu = createIMUState(), imuAircraft = createControllerAircraft(), imuTimer = null, imuTickAt = 0;
 let robotController = createRobotControllerState(), robotDriveTimer = null;
 let robotControllerAttempt = 0;
@@ -51,27 +57,131 @@ Object.values(robotPreview.legs).forEach(leg => { leg.condition = 'healthy'; });
 const robotControllerModel = structuredClone(robotPreview);
 const sceneState = () => ui.route.startsWith('imu') ? { ...imuAircraft, power: ui.route === 'imu' && imu.power } : ['controller', 'controller-intro'].includes(ui.route) ? controllerAircraft : ui.route === 'drone-intro' ? null : state;
 const sceneUI = () => ui.route === 'imu' ? { ...ui, imuMode: true, imuState: imu, previewMode: true, viewMode: '3d', zoomed: false, topView: false, exploded: false } : ['drone-intro', 'controller-intro'].includes(ui.route) ? { ...ui, previewMode: true, viewMode: ui.rendererError ? '2d' : '3d', zoomed: false, topView: false, exploded: false }
-  : ui.route === 'controller' ? { ...ui, controllerMode: true, zoomed: false, exploded: false } : ui.route === 'training' && state?.status === 'active' ? { ...ui, immersiveMode: true, viewMode: '3d', exploded: false } : ui;
-const currentGuide = () => ['controller', 'imu'].includes(ui.route) ? controllerCourseGuide(controller, imu, ui.route) : ui.route === 'robot-controller' ? robotControllerGuide(robotController) : ui.route === 'robot' ? (robot.status === 'active' || robot.status === 'completed' ? robotGuide({ ...robot, moduleChoice: ui.robotModule }, ui.robotSelected) : null) : ui.route === 'training' && state && (!result || result.status === 'completed') ? maintenanceGuide(state, ui) : null;
+  : ui.route === 'controller' ? { ...ui, controllerMode: true, controllerState: controller, zoomed: false, exploded: false } : ui.route === 'training' && state?.status === 'active' ? { ...ui, immersiveMode: true, viewMode: '3d', exploded: false } : ui;
+const currentGuide = () => ui.route==='panda-maintenance'?pandaMaintenanceGuide(pandaMaintenanceState): ['controller', 'imu'].includes(ui.route) ? controllerCourseGuide(controller, imu, ui.route) : ui.route === 'robot-controller' ? robotControllerGuide(robotController) : ui.route === 'robot' ? (robot.status === 'active' || robot.status === 'completed' ? robotGuide({ ...robot, moduleChoice: ui.robotModule }, ui.robotSelected) : null) : ui.route === 'training' && state && (!result || result.status === 'completed') ? maintenanceGuide(state, ui) : null;
 const guideVoice = new GuideVoice({ storage, onChange: status => updateVoiceControls(app, status) });
 const completionNotice = new CourseCompletionNotice();
-let showcase = null, showcaseRepaired = false;
+let showcase = null, showcaseRepaired = false, showcaseKind='robot';
+let DroneShowcaseClass=null, loadingDroneShowcase=false;
+let PandaShowcaseClass=null, loadingPandaShowcase=false, pandaShowcaseLoadAttempt=0;
+let homeEquipment=null, HomeEquipmentClass=null, loadingHomeEquipment=false;
+let pandaState=createPandaMissionState(), pandaCourse=null, PandaCourseClass=null, loadingPanda=false;
+let pandaSave={record:null,saved:false,error:''};
+let pandaMaintenanceState=createPandaMaintenanceState(),pandaMaintenanceCourse=null,pandaMaintenanceSave={record:null,saved:false,error:''};
+function savePandaMaintenanceRecord(){try{repository.add(pandaMaintenanceSave.record);pandaMaintenanceSave.saved=true;pandaMaintenanceSave.error='';}catch(error){pandaMaintenanceSave.saved=false;pandaMaintenanceSave.error=error.message;}}
+function syncPandaMaintenanceCourse(){
+ const root=app.querySelector('.panda-maintenance');
+ if(pandaMaintenanceCourse&&pandaMaintenanceCourse.root!==root){pandaMaintenanceCourse.dispose();pandaMaintenanceCourse=null;}
+ if(!root)return;if(renderBackend===null){resolveRenderBackend();return;}
+ if(!pandaMaintenanceCourse)pandaMaintenanceCourse=new PandaMaintenanceCourse(root,{state:pandaMaintenanceState,compatible:renderBackend==='svg',onUnavailable:useCompatible3D,getSaveState:()=>pandaMaintenanceSave,onSave:savePandaMaintenanceRecord,onExport:()=>{if(pandaMaintenanceSave.record)download(exportCSV([pandaMaintenanceSave.record]),'aerolab-panda-gripper-maintenance.csv');},onChange:next=>{
+  pandaMaintenanceState=next;
+  if(next.status==='completed'&&!pandaMaintenanceSave.record){pandaMaintenanceSave.record=buildPandaMaintenanceResult(next);savePandaMaintenanceRecord();}
+  syncCompletionNotice();syncGuideVoice();
+ }});
+}
+function savePandaRecord() {
+  if(!pandaSave.record)return;
+  try{repository.add(pandaSave.record);pandaSave.saved=true;pandaSave.error='';}
+  catch(error){pandaSave.saved=false;pandaSave.error=error.message;}
+}
+function updatePandaState(next) {
+  if(next.mission.attemptId!==pandaState.mission.attemptId)pandaSave={record:null,saved:false,error:''};
+  pandaState=next;
+  if(next.mission.phase==='complete'&&!pandaSave.record){pandaSave.record=buildPandaMissionResult(next);savePandaRecord();}
+  syncCompletionNotice();
+}
+function syncPandaCourse() {
+  syncPandaMaintenanceCourse();
+  const root=app.querySelector('.panda-course');
+  if(pandaCourse && pandaCourse.root!==root){pandaCourse.dispose();pandaCourse=null;}
+  if(!root)return;
+  if(renderBackend===null){resolveRenderBackend();return;}
+  if(!PandaCourseClass){
+    if(!loadingPanda){
+      loadingPanda=true;
+      import('./ui/panda-course.js').then(module=>{PandaCourseClass=module.PandaCourse;loadingPanda=false;syncPandaCourse();})
+        .catch(()=>{loadingPanda=false;if(root.isConnected)root.innerHTML='<p>로봇팔 교육을 준비하지 못했습니다.</p><button data-action="panda-start">다시 불러오기</button>';});
+    }
+    return;
+  }
+  if(!pandaCourse)pandaCourse=new PandaCourseClass(root,{state:pandaState,compatible:renderBackend==='svg',onUnavailable:useCompatible3D,cancelInput:()=>controllerInput?.cancel(false),
+    onChange:updatePandaState,getSaveState:()=>pandaSave,onSave:savePandaRecord,onExport:kind=>{
+      if(!pandaSave.record)return;
+      if(kind==='export-csv')download(exportCSV([pandaSave.record]),'aerolab-panda-wire-game.csv');
+      else download(pandaMissionReportText(pandaState),'aerolab-panda-wire-game-report.txt','text/plain;charset=utf-8');
+    }});
+}
+function resolveRenderBackend() {
+  choosingRenderBackend ||= chooseRenderBackend().then(backend => {
+    renderBackend = backend; choosingRenderBackend = null;
+    syncViewport(); syncShowcase(); syncHomeEquipment(); syncPandaCourse();
+  });
+}
+function syncHomeEquipment() {
+  const root = app.querySelector('.course-home,.equipment-course-hub');
+  if (!root) { homeEquipment?.dispose(); homeEquipment=null; return; }
+  if (renderBackend === null) { resolveRenderBackend(); return; }
+  if (!HomeEquipmentClass) {
+    if (!loadingHomeEquipment) {
+      loadingHomeEquipment=true;
+      import('./ui/home-equipment.js').then(module=>{
+        HomeEquipmentClass=module.HomeEquipment; loadingHomeEquipment=false; syncHomeEquipment();
+      }).catch(()=>{
+        loadingHomeEquipment=false;
+        app.querySelectorAll('[data-equipment-preview]').forEach(host=>{
+          host.textContent='미리보기를 준비하지 못했습니다. 교육 선택은 계속할 수 있습니다.';
+        });
+      });
+    }
+    return;
+  }
+  if (homeEquipment?.root === root) return;
+  homeEquipment?.dispose();
+  homeEquipment=new HomeEquipmentClass(root,{compatible:renderBackend==='svg',onUnavailable:useCompatible3D});
+}
 function closeShowcase() {
   showcase?.dispose(); showcase = null; ui.route = 'home'; render();
-  app.querySelector('[data-action="showcase"]')?.focus();
+  app.querySelector(`[data-action="${showcaseKind==='panda'?'panda-showcase':showcaseKind==='drone'?'drone-showcase':'showcase'}"]`)?.focus();
 }
 function syncShowcase() {
   if (ui.route !== 'showcase') return;
   if (renderBackend === null) {
-    choosingRenderBackend ||= chooseRenderBackend().then(backend => {
-      renderBackend = backend; choosingRenderBackend = null; syncShowcase();
-    });
+    resolveRenderBackend();
     return;
   }
   const root = app.querySelector('.showcase');
+  if(root&&!showcase&&showcaseKind==='panda'&&!PandaShowcaseClass){
+    if(!loadingPandaShowcase){
+      loadingPandaShowcase=true;
+      const source=`./ui/panda-showcase.js${pandaShowcaseLoadAttempt?`?retry=${pandaShowcaseLoadAttempt}`:''}`;pandaShowcaseLoadAttempt++;
+      import(source).then(module=>{PandaShowcaseClass=module.PandaShowcase;loadingPandaShowcase=false;syncShowcase();})
+        .catch(()=>{loadingPandaShowcase=false;if(ui.route==='showcase'&&showcaseKind==='panda'){
+          const current=app.querySelector('.showcase');if(current)current.innerHTML='<div class="showcase-load-error"><h2>로봇팔 가이드를 준비하지 못했습니다.</h2><p>다시 시도하거나 교육 선택으로 돌아가세요.</p><button data-action="panda-showcase">다시 불러오기</button><button data-action="showcase-exit">교육 선택으로</button></div>';
+        }});
+    }
+    return;
+  }
+  // A missing drone renderer must not prevent the home screen or other courses from loading.
+  if(root && !showcase && showcaseKind==='drone' && !DroneShowcaseClass){
+    if(!loadingDroneShowcase){
+      loadingDroneShowcase=true;
+      import('./ui/drone-showcase.js').then(module=>{
+        DroneShowcaseClass=module.DroneShowcase;loadingDroneShowcase=false;syncShowcase();
+      }).catch(()=>{
+        loadingDroneShowcase=false;
+        if(ui.route==='showcase' && showcaseKind==='drone'){
+          const current=app.querySelector('.showcase');
+          if(current)current.innerHTML='<div class="showcase-load-error"><h2>드론 가이드를 준비하지 못했습니다.</h2><p>새로고침해 다시 시도하거나 교육 선택으로 돌아가세요.</p><button data-action="showcase-exit">교육 선택으로</button></div>';
+        }
+      });
+    }
+    return;
+  }
   if (root && !showcase) {
     try {
-      showcase = new Showcase(root, { compatible: renderBackend === 'svg', onExit: closeShowcase, repaired: showcaseRepaired,
+      const Presentation=showcaseKind==='panda'?PandaShowcaseClass:showcaseKind==='drone'?DroneShowcaseClass:Showcase;
+      showcase = new Presentation(root, { compatible: renderBackend === 'svg', onExit: closeShowcase, repaired: showcaseRepaired,
+        onPractice:()=>{showcase?.dispose();showcase=null;ui.route='panda-education';ui.helpOpen=false;feedback=null;window.scrollTo(0,0);render();app.querySelector('main h1')?.focus({preventScroll:true});},
         onUnavailable: () => { renderBackend = 'svg'; showcase?.dispose(); showcase = null; render(); } });
     } catch (error) {
       root.innerHTML = '<p>3D 시연을 준비하지 못했습니다. 새로고침 후 다시 시도하세요.</p><button data-action="home">교육 선택으로</button>';
@@ -83,12 +193,14 @@ function syncCompletionNotice(guide = currentGuide()) {
   let completion = null;
   if (ui.route === 'training' && result?.status === 'completed') completion = { key: `drone:${result.attemptId}`, course: '드론 정비 교육' };
   else if (ui.route === 'robot' && robotResult?.status === 'completed') completion = { key: `robot:${robotResult.attemptId}`, course: '사족보행 로봇 정비 교육' };
-  else if (ui.route === 'imu' && guide?.complete) completion = { key: `controller:${imu.attempt}`, course: '드론 조종기 교육 · IMU 보정' };
+  else if (ui.route === 'controller' && controller.flightReady && guide?.complete) completion = { key: `controller:${imu.attempt}`, course: '드론 조종기 교육 · IMU 보정 · 기체 이동 연습' };
   else if (ui.route === 'robot-controller' && guide?.complete) completion = { key: `robot-controller:${robotControllerAttempt}`, course: '사족보행 로봇 조종기 교육' };
+  else if (ui.route === 'panda-maintenance' && pandaMaintenanceState.status === 'completed') completion = { key: `panda-maintenance:${pandaMaintenanceState.meta.attemptId}`, course: '로봇팔 정비 교육 · 그리퍼 교체' };
+  else if (ui.route === 'panda' && pandaState.mission.phase==='complete') completion = {key:`panda:${pandaState.mission.attemptId}`,course:'로봇팔 · 폭탄 해체 교육',title:'가상 폭탄 해체 게임을 마쳤습니다!'};
   completionNotice.update(completion);
 }
 function syncGuideVoice(guide = currentGuide()) {
-  const attempt = ['controller', 'imu'].includes(ui.route) ? imu.attempt : ui.route === 'robot' ? robot.meta.attemptId : ui.route === 'training' ? state?.meta.attemptId : '';
+  const attempt = ui.route==='panda-maintenance'?pandaMaintenanceState.meta.attemptId: ['controller', 'imu'].includes(ui.route) ? imu.attempt : ui.route === 'robot' ? robot.meta.attemptId : ui.route === 'training' ? state?.meta.attemptId : '';
   if (document.hidden) guideVoice.suspend();
   guideVoice.update(guide, `${ui.route}:${attempt || ''}`);
   updateVoiceControls(app, guideVoice.snapshot());
@@ -107,11 +219,26 @@ function syncIMUTimer() {
 function actIMU(action) {
   if (ui.route !== 'imu') return;
   if (['START', 'MOVE_BEGIN', 'POSE'].includes(action.type)) imuTickAt = performance.now();
-  const previous = imu, previousTask = currentGuide().current.id;
+  const previous = imu;
   imu = imuTransition(imu, action);
+  if (action.type === 'TICK' && previous.samples.length === imu.samples.length) {
+    if (previous.stableMs !== imu.stableMs) updateIMUHold(app, imu.stableMs);
+    return;
+  }
+  const focused = document.activeElement;
   if (['POWER', 'LINK'].includes(action.type)) controller = { ...controller, aircraftPower: imu.power, connected: imu.linked };
-  const structural = previousTask !== currentGuide().current.id || previous.status !== imu.status || previous.power !== imu.power || previous.linked !== imu.linked || previous.surface !== imu.surface;
-  if (structural) render();
+  const structural = previous.samples.length !== imu.samples.length || previous.pose !== imu.pose || previous.status !== imu.status || previous.power !== imu.power || previous.linked !== imu.linked || previous.surface !== imu.surface;
+  if (structural) {
+    const guide = currentGuide();
+    updateIMU(app, imu);
+    updateTaskGuide(app, guide);
+    syncViewport();
+    applyLearningHighlights(app, guide, ui);
+    syncGuideVoice(guide);
+    if (focused?.closest('.imu-panel-actions') && (focused.hidden || focused.disabled)) {
+      app.querySelector('#current-task-title')?.focus({ preventScroll: true });
+    }
+  }
   else {
     updateIMU(app, imu);
     if (viewport?.imuInteraction) {
@@ -191,7 +318,7 @@ function syncRobotViewport() {
     const consoleMode = ui.route.startsWith('robot-controller');
     robotControllerModel.power = ui.route === 'robot-controller' && robotController.robotPower;
     robotViewport.sync(consoleMode ? robotControllerModel : ui.route === 'robot-intro' ? robotPreview : robot,
-      consoleMode ? { ...ui, robotControllerMode: true, previewMode: ui.route.endsWith('-intro'), robotZoomed: false }
+      consoleMode ? { ...ui, robotControllerMode: true, robotControllerState:robotController, previewMode: ui.route.endsWith('-intro'), robotZoomed: false }
         : ui.route === 'robot-intro' ? { ...ui, previewMode: true, robotZoomed: false } : { ...ui, immersiveMode: robot.status === 'active' });
   }
   catch { host.textContent = '로봇 3D 표시를 준비하지 못했습니다. 새로고침해 다시 시도하세요.'; }
@@ -201,11 +328,26 @@ function updateControllerDisplay() {
   updateController(app, controller);
   const level = rotationDemand(controller);
   viewport?.setRotorPreview(level); updateFlatRotorPreview(app, level);
+  viewport?.setControllerPose(controller);
+  updateFlatControllerPose(app, controller);
+  const flat = app.querySelector('.flat-stage');
+  if (flat) positionFlatPoints(flat, ui);
+  if (droneMotionDemand(controller).active && !ui.helpOpen && !document.hidden) {
+    if (!droneMotionTimer) {
+      let previous = performance.now();
+      droneMotionTimer = setInterval(() => {
+        const now = performance.now();
+        controller = controllerTransition(controller, { type: 'TICK', seconds: (now - previous) / 1000 }); previous = now;
+        updateControllerDisplay();
+      }, 50);
+    }
+  } else { clearInterval(droneMotionTimer); droneMotionTimer = null; }
   if (sticksNeutral(controller)) {
     const guide = currentGuide(); updateTaskGuide(app, guide); applyLearningHighlights(app, guide, ui); syncGuideVoice(guide);
   }
 }
 function stopController() {
+  clearInterval(droneMotionTimer); droneMotionTimer = null;
   controllerInput?.cancel(false); controller = createControllerState();
   clearInterval(robotDriveTimer); robotDriveTimer = null; robotController = createRobotControllerState();
   stopRotorPreviews(app);
@@ -238,11 +380,12 @@ function actRobotController(action) {
   render();
 }
 function actController(action) {
-  if (ui.route !== 'controller') return;
+  if (ui.route !== 'controller' || (ui.helpOpen && action.type === 'STICK')) return;
+  if (!['STICK', 'CENTER'].includes(action.type)) controllerInput?.cancel(false);
   controller = controllerTransition(controller, action);
   controllerAircraft.power = controller.aircraftPower;
   if (['STICK', 'CENTER'].includes(action.type)) { updateControllerDisplay(); return; }
-  announce(action.type === 'STOP' ? '회전을 정지하고 연결을 해제했습니다.' : connectionLabel(controller));
+  announce(action.type === 'STOP' ? '드론을 정지하고 연결을 해제했습니다.' : action.type === 'RESET_POSE' ? '드론을 시작 위치로 되돌렸습니다.' : connectionLabel(controller));
   render();
 }
 
@@ -265,9 +408,7 @@ function useCompatible3D() {
 }
 function syncViewport() {
   if (renderBackend === null && app.querySelector('#drone-viewport,#robot-viewport')) {
-    choosingRenderBackend ||= chooseRenderBackend().then(backend => {
-      renderBackend = backend; choosingRenderBackend = null; syncViewport();
-    });
+    resolveRenderBackend();
     return;
   }
   syncRobotViewport();
@@ -301,11 +442,14 @@ function syncViewport() {
 }
 
 function render() {
+  pandaMaintenanceCourse?.pause();
+  if(pandaCourse?.state.motion||pandaCourse?.state.game.active)pandaCourse.pause('화면을 전환하여 멈췄습니다. 실습 재개를 누르세요.');
   if (ui.route === 'showcase' && showcase?.root.isConnected) return;
   if (showcase) { showcase.dispose(); showcase = null; }
   const wasHelpOpen = document.querySelector('#learning-help')?.open || false;
   interactions?.clear();
   stopRotorPreviews(app);
+  clearInterval(droneMotionTimer); droneMotionTimer = null;
   controllerInput?.cancel(false);
   controller = controllerTransition(controller, { type: 'CENTER' });
   robotController = robotControllerTransition(robotController, { type: 'CENTER' });
@@ -321,6 +465,9 @@ function render() {
   const focusLabel = active?.getAttribute('aria-label');
   const panelScroll = document.querySelector('.inspector')?.scrollTop || 0;
   const stored = repository.load();
+  if(pandaSave.record&&pandaSave.saved&&(stored.error||!stored.records.some(r=>r.attemptId===pandaSave.record.attemptId))){
+    pandaSave.saved=false;pandaSave.error=stored.error||'이 결과가 훈련 기록에서 삭제되었습니다. 다시 저장하거나 파일로 보관할 수 있습니다.';
+  }
   if (result && saved && (stored.error || !stored.records.some(r => r.attemptId === result.attemptId))) {
     saved = false;
     saveError = stored.error || '이 결과가 저장 목록에서 삭제되었습니다. 다시 저장하거나 파일로 보관할 수 있습니다.';
@@ -332,19 +479,24 @@ function render() {
   const settingsOpen = document.querySelector('.more-menu')?.open || false;
   const guide = currentGuide();
   let content;
-  if (ui.route === 'showcase') content = renderShowcase();
+  if (ui.route === 'showcase') content = renderShowcase(showcaseKind);
   else if (ui.route === 'home') content = renderCourseSelector(ui, state, result);
   else if (ui.route === 'operations') content = renderOperations(stored.records, ui, stored);
   else {
     content = renderCourseSelector(ui);
-    if (ui.route === 'drone-intro') content += `<div class="training-grid is-preparing course-introduction">${renderWorkbench(null, sceneUI())}${renderInspector(null, ui)}</div>`;
+    if (['drone-education','robot-education','panda-education'].includes(ui.route)) content += renderEquipmentEducation(ui.route==='panda-education'?'panda':ui.route==='robot-education'?'robot':'drone',ui);
+    else if(ui.route==='panda-maintenance-intro')content+=renderPandaMaintenanceIntro(ui);
+    else if(ui.route==='panda-bomb-intro')content+=renderEquipmentEducation('panda-bomb',ui);
+    else if(ui.route==='panda-maintenance')content+=renderPandaMaintenanceLesson();
+    else if (ui.route === 'panda') content += renderPandaLesson();
+    else if (ui.route === 'drone-intro') content += `<div class="training-grid is-preparing course-introduction">${renderWorkbench(null, sceneUI())}${renderInspector(null, ui)}</div>`;
     else if (ui.route === 'imu') content += renderIMU(imu, guide);
     else if (ui.route === 'controller-intro') content += `<div class="training-grid is-preparing course-introduction">${renderWorkbench(controllerAircraft, sceneUI())}${renderControllerIntro()}</div>`;
     else if (ui.route === 'robot-intro') content += renderRobot(robotPreview, { ...ui, previewMode: true }, null, false, '');
     else if (ui.route === 'robot-controller-intro') content += renderRobotController(true);
     else if (ui.route === 'robot-controller') content += `<div id="task-guide-host">${renderTaskGuide(guide)}</div>${renderRobotController()}`;
     else if (ui.route === 'robot') content += robot.status === 'active' ? renderSpatialScene('robot',robot,ui) : `${guide ? `<div id="task-guide-host">${renderTaskGuide(guide)}</div>` : ''}${renderRobot(robot, ui, robotResult, robotSaved, robotSaveError)}`;
-    else if (ui.route === 'controller') content += `<div id="task-guide-host">${renderTaskGuide(guide)}</div><div class="training-grid controller-grid">${renderWorkbench(controllerAircraft, sceneUI())}${renderController()}</div>`;
+    else if (ui.route === 'controller') content += `<div class="training-grid controller-grid drone-lesson"><div id="task-guide-host" class="lesson-guide">${renderTaskGuide(guide,true)}</div>${renderWorkbench(controllerAircraft, sceneUI())}${renderController(controller)}</div>`;
     else if (result) content += renderResult(result, saved, saveError);
     else if (state?.status === 'active') content += renderSpatialScene('drone',state,ui);
     else content += `${state ? `<div id="task-guide-host">${renderTaskGuide(guide)}</div>` : ''}<div class="training-grid ${state ? 'is-practicing' : 'is-preparing'}">${renderWorkbench(state, ui)}${renderInspector(state, ui)}</div>`;
@@ -355,6 +507,8 @@ function render() {
   if (inspector) inspector.scrollTop = panelScroll;
   syncViewport();
   syncShowcase();
+  syncHomeEquipment();
+  syncPandaCourse();
   const flat = document.querySelector('.flat-stage');
   if (flat) positionFlatPoints(flat, ui);
   updateControllerDisplay();
@@ -404,6 +558,14 @@ function finish(status) {
   state.status = status; saveCurrent();
 }
 function allowLeave() {
+  let abandoningPanda=false;
+  if(ui.route==='panda-maintenance'&&pandaMaintenanceState.status==='active'){
+   if(!confirm('로봇팔 정비를 중단 결과로 보관하고 이동할까요?'))return false;
+   pandaMaintenanceCourse?.pause();pandaMaintenanceSave.record=buildPandaMaintenanceResult(pandaMaintenanceState,{status:'abandoned'});savePandaMaintenanceRecord();abandoningPanda=true;
+  }
+  if(ui.route==='panda-maintenance'&&pandaMaintenanceSave.record&&!pandaMaintenanceSave.saved&&!confirm('정비 결과를 저장하지 못했습니다. 저장하지 않고 이동할까요?')){if(abandoningPanda)pandaMaintenanceSave.record=null;return false;}
+  if(abandoningPanda)pandaMaintenanceState.status='abandoned';
+
   if (ui.route === 'robot' && robot.status === 'active') {
     if (!confirm('로봇 정비를 중단 결과로 보관하고 이동할까요?')) return false;
     finishRobot('abandoned');
@@ -463,16 +625,34 @@ function runAction(target) {
   if (!target || target.disabled) return;
   const action = target.dataset.action;
   try {
-    if (action === 'showcase' || action === 'showcase-repaired') {
+    if(action==='showcase-exit'){closeShowcase();return;}
+    if (action === 'showcase' || action === 'showcase-repaired' || action === 'drone-showcase' || action === 'panda-showcase') {
       if (!allowLeave()) return;
       stopController(); guideVoice.suspend();
       showcaseRepaired = action === 'showcase-repaired';
+      showcaseKind=action==='panda-showcase'?'panda':action==='drone-showcase'?'drone':'robot';
       ui.route = 'showcase'; ui.helpOpen = false; feedback = null;
       window.scrollTo(0, 0); render(); return;
     }
+    if(action==='locate-task'&&ui.route==='panda-maintenance'){const current=pandaMaintenanceGuide(pandaMaintenanceState).current.id;if(!['stop','power-off','test-power','test-release','final-stop','final-power'].includes(current))pandaMaintenanceCourse?.service?.focus();else pandaMaintenanceCourse?.service?.overview();return;}
     if (action === 'voice-toggle') { guideVoice.setEnabled(!guideVoice.enabled); return; }
     if (action === 'voice-repeat') { guideVoice.read(); return; }
-    const entrances = { home: 'home', 'intro-drone': 'drone-intro', robot: 'robot-intro', controller: 'controller-intro', 'robot-controller': 'robot-controller-intro' };
+    if(action==='panda-maintenance-restart'){if(!allowLeave())return;pandaMaintenanceState=createPandaMaintenanceState({session:ui.session,trainee:ui.trainee});pandaMaintenanceSave={record:null,saved:false,error:''};render();return;}
+    if(action==='panda-start'||action==='panda-maintenance-start'){
+      const fields=app.querySelector('.panda-briefing-fields');
+      if(fields){
+        const inputs=[...fields.querySelectorAll('input')];
+        if(inputs.some(input=>!input.reportValidity()))return;
+        const session=inputs.find(input=>input.name==='session').value.trim(),trainee=inputs.find(input=>input.name==='trainee').value.trim();
+        if(!session||!trainee||session.length>40||trainee.length>40||/[\x00-\x1f]/.test(session+trainee))return notify('훈련 회차와 교육생 번호를 확인하세요.','warning');
+        ui.session=session;ui.trainee=trainee;
+      }
+      if(!allowLeave())return;
+      stopController();if(action==='panda-maintenance-start'){pandaMaintenanceState=createPandaMaintenanceState({session:ui.session,trainee:ui.trainee});pandaMaintenanceSave={record:null,saved:false,error:''};ui.route='panda-maintenance';}else{pandaState=createPandaMissionState({session:ui.session,trainee:ui.trainee,mode:target.dataset.mode||'guided',standalone:true});pandaSave={record:null,saved:false,error:''};ui.route='panda';}ui.helpOpen=false;feedback=null;
+      window.scrollTo(0,0);render();return;
+    }
+    if(action==='panda-restart'){pandaCourse?.restart();return;}
+    const entrances = { 'panda-maintenance-intro':'panda-maintenance-intro','panda-bomb-intro':'panda-bomb-intro',home: 'home', 'drone-education': 'drone-education', 'robot-education': 'robot-education', 'panda-education':'panda-education', 'intro-drone': 'drone-intro', robot: 'robot-intro', controller: 'controller-intro', 'robot-controller': 'robot-controller-intro' };
     if (entrances[action]) {
       if (action === 'controller' && ['controller', 'imu'].includes(ui.route)) return;
       const destination = entrances[action];
@@ -487,6 +667,15 @@ function runAction(target) {
       return;
     }
     if (action === 'open-help' || action === 'close-help') { if (action === 'open-help') pauseIMU('도움말을 열어 측정을 멈췄습니다.'); ui.helpOpen = action === 'open-help'; render(); return; }
+    if (action === 'imu-flight-next') {
+      if (ui.route !== 'imu') return;
+      const next = controllerTransition(controller, { type: 'BEGIN_FLIGHT', calibration: imu });
+      if (!next.flightReady) return;
+      controllerInput?.cancel(false); controller = next; controllerAircraft.power = controller.aircraftPower;
+      Object.assign(ui, { route: 'controller', helpOpen: false, viewMode: '3d', rendererError: '', zoomed: false, topView: false });
+      if (viewport) viewport.cameraKey = '';
+      window.scrollTo(0, 0); render(); return;
+    }
     if (action === 'controller-imu-next') {
       if (ui.route !== 'controller' || !canEnterControllerIMU(controller)) return;
       controllerInput?.cancel(false); controller = controllerTransition(controller, { type: 'STOP' });
@@ -498,10 +687,14 @@ function runAction(target) {
     }
     const imuActions = { 'imu-surface': 'SURFACE', 'imu-power': 'POWER', 'imu-link': 'LINK', 'imu-begin': 'START', 'imu-verify': 'VERIFY' };
     if (imuActions[action] && ui.route === 'imu') { actIMU({ type: imuActions[action] }); return; }
+    if (action === 'imu-set-pose' && ui.route === 'imu' && !target.hidden && !imu.moving && ['calibrating','measured'].includes(imu.status)) {
+      actIMU({ type:'POSE', pose:target.dataset.poseChoice }); return;
+    }
     if (action === 'imu-view-all') { if (viewport) viewport.cameraKey = ''; render(); return; }
     if (action === 'locate-task') {
       const task = currentGuide()?.current; if (!task) return;
       ui.helpOpen = false;
+      if((ui.route==='robot-controller'&&task.id==='robot-control-robot')||(ui.route==='robot'&&['robot-power-off','robot-test-power','robot-final-power'].includes(task.id))){render();robotViewport?.focusPowerButton();return;}
       if (ui.route === 'robot' && task.legId) selectRobotLeg(task.legId);
       else if (task.motorId) selectMotor(task.motorId);
       else {
@@ -536,7 +729,7 @@ function runAction(target) {
       pauseIMU('전체 교육을 다시 시작합니다.'); stopController();
       controllerAircraft = createControllerAircraft(); imuAircraft = controllerAircraft; imu = createIMUState();
       Object.assign(ui, { route: 'controller', helpOpen: false, zoomed: false, topView: false }); feedback = null;
-      render(); announce('조종기 작동 확인과 IMU 보정 교육을 처음부터 시작합니다.'); return;
+      render(); announce('조종기 확인·IMU 보정·기체 이동 연습을 처음부터 시작합니다.'); return;
     }
     if (action === 'controller-start') {
       if (ui.route === 'robot' && !allowLeave()) return;
@@ -547,7 +740,7 @@ function runAction(target) {
       if (viewport) viewport.cameraKey = '';
       document.querySelector('.more-menu')?.removeAttribute('open'); render(); return;
     }
-    const controllerActions = { 'controller-aircraft-power': 'AIRCRAFT_POWER', 'controller-remote-power': 'REMOTE_POWER', 'controller-link': 'LINK', 'controller-stop': 'STOP' };
+    const controllerActions = { 'controller-aircraft-power': 'AIRCRAFT_POWER', 'controller-remote-power': 'REMOTE_POWER', 'controller-link': 'LINK', 'controller-stop': 'STOP', 'controller-position-reset': 'RESET_POSE' };
     if (controllerActions[action]) { actController({ type: controllerActions[action] }); return; }
     if (action === 'training' || action === 'operations') {
       if (ui.route === action) return;
@@ -677,7 +870,8 @@ window.addEventListener('focus', () => { if (!document.hidden) guideVoice.resume
 document.addEventListener('visibilitychange', () => { if (document.hidden) guideVoice.suspend(); else if (document.hasFocus()) guideVoice.resume(); });
 window.addEventListener('pagehide', () => guideVoice.stop());
 window.addEventListener('pagehide', () => showcase?.dispose());
-window.addEventListener('pagehide', () => { clearInterval(imuTimer); imuTimer = null; stopController(); viewport?.dispose(); viewport = null; clearTimeout(robotTestTimer); robotViewport?.dispose(); robotViewport = null; });
+window.addEventListener('pagehide', () => {pandaMaintenanceCourse?.dispose();pandaMaintenanceCourse=null;pandaCourse?.dispose();pandaCourse=null;});
+window.addEventListener('pagehide', () => {pandaMaintenanceCourse?.dispose();pandaMaintenanceCourse=null; homeEquipment?.dispose(); homeEquipment=null; clearInterval(imuTimer); imuTimer = null; stopController(); viewport?.dispose(); viewport = null; clearTimeout(robotTestTimer); robotViewport?.dispose(); robotViewport = null; });
 window.addEventListener('blur', () => pauseIMU('창 초점을 벗어나 측정을 멈췄습니다.'));
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseIMU('다른 탭으로 이동하여 측정을 멈췄습니다.'); });
 const cancelRobotTest = () => { if (ui.route === 'robot' && robot.testing) actRobot({ type: 'CANCEL_TEST' }); };
@@ -686,10 +880,17 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
 const suspendRobotController = () => { if (ui.route === 'robot-controller') actRobotController({ type: 'SUSPEND' }); };
 window.addEventListener('blur', suspendRobotController);
 document.addEventListener('visibilitychange', () => { if (document.hidden) suspendRobotController(); });
-controllerInput = installControllerInput(app, action => ui.route === 'robot-controller' ? actRobotController(action) : actController(action));
+controllerInput = installControllerInput(app, action => {
+  if (ui.route === 'panda') pandaCourse?.control(action);
+  else if (ui.route === 'robot-controller') actRobotController(action);
+  else actController(action);
+});
+app.addEventListener('model-ready', event => {
+  if (event.target.matches('#drone-viewport, #robot-viewport')) applyLearningHighlights(app, currentGuide(), ui);
+});
 window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', () => {
   updateControllerDisplay();
-  if (ui.route === 'robot') robotViewport?.sync(robot, ui);
+  if (ui.route === 'robot') syncRobotViewport();
   updateRobotControllerDisplay();
 });
 function placeInWorkshop(piece, target) {

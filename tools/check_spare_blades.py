@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -15,9 +16,10 @@ def main():
     checks = []; snapshots = {}
     def passed(label): checks.append(label); print('PASS', label, flush=True)
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'])
+        graphics = ['--disable-gpu'] if args.compatible else ['--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+        browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage', *graphics])
         try:
-            page = browser.new_page(viewport={'width': 1366, 'height': 1050}); page.set_default_timeout(15000)
+            page = browser.new_page(viewport={'width': 1366, 'height': 1050}, reduced_motion='reduce'); page.set_default_timeout(20000)
             errors = []; page.on('pageerror', lambda error: errors.append(str(error)))
             page.goto(args.url.rstrip('/') + ('/?compatible3d=1' if args.compatible else '/'))
             # Observe the actual scene objects without exposing test hooks in production.
@@ -26,7 +28,7 @@ def main():
               const stock=Workshop3D.prototype.stock;
               Workshop3D.prototype.stock=function(...args){const result=stock.apply(this,args);window.qaWorkshop=this;return result;};
             }''')
-            def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def canvas(): return page.locator('.immersive-stage [data-workshop=true]')
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             def settle(): page.wait_for_function('()=>document.querySelector("[data-workshop=true]").dataset.busy3d!=="true"', polling=40)
@@ -40,19 +42,28 @@ def main():
                 x, y = xy(source); tx, ty = xy(target)
                 page.mouse.move(x, y); page.mouse.down(); page.mouse.move(tx, ty, steps=1); page.mouse.up(); settle()
             def stock():
-                return page.evaluate('''()=>Object.fromEntries([0,1].map(index=>{
-                  const entry=qaWorkshop.entries.find(e=>e.id===`new-blade-${index}`);
-                  if(!entry)return [index,{present:false}];
-                  let visible=true;for(let n=entry.object;n;n=n.parent)if(!n.visible)visible=false;
-                  let meshes=0;entry.object.traverse(n=>{if(n.isMesh&&n.visible)meshes++;});
-                  return [index,{present:true,visible,meshes,attached:entry.object.parent===qaWorkshop.bench,clickable:!entry.button.hidden}];
-                }))''')
+                return page.evaluate('''async()=>{
+                  const {Raycaster}=await import('/src/vendor/three/three.module.min.js');
+                  const workshop=qaWorkshop, surfaces=[], ray=new Raycaster();
+                  workshop.scene.traverseVisible(node=>{if(node.isMesh)surfaces.push(node)});
+                  return Object.fromEntries([0,1].map(index=>{
+                    const entry=workshop.entries.find(e=>e.id===`new-blade-${index}`);
+                    if(!entry)return [index,{present:false}];
+                    // At the user's picking point the nearest surface must be the real
+                    // spare blade, even when the label and its hit proxy are visible.
+                    ray.setFromCamera(workshop.anchor(entry).project(workshop.camera),workshop.camera);
+                    const hit=ray.intersectObjects(surfaces,false)[0]?.object;
+                    const visible=Boolean(hit?.name.endsWith('_good') && entry.object.getObjectById(hit.id));
+                    return [index,{present:true,visible,attached:entry.object.parent===workshop.bench,clickable:!entry.button.hidden}];
+                  }));
+                }''')
             def require_visible(label):
                 snapshot = stock(); snapshots[label] = snapshot
                 (output / 'visibility.json').write_text(json.dumps(snapshots, ensure_ascii=False, indent=2))
-                assert all(s['present'] and s['visible'] and s['attached'] and s['meshes'] > 0 for s in snapshot.values()), (label, snapshot)
+                assert all(s['present'] and s['visible'] and s['attached'] and s['clickable'] for s in snapshot.values()), (label, snapshot)
             click('intro-drone'); page.locator('#start-form button[type=submit]').click(force=True)
             page.wait_for_function('()=>document.querySelector("[data-workshop=true][data-ready=true]")', polling=40)
+            assert canvas().get_attribute('data-render-backend') == ('svg' if args.compatible else 'webgl')
             mesh('drone-power'); drag('drone-battery', 'drone-discard')
             target = None
             for _ in range(4):
@@ -65,6 +76,8 @@ def main():
             require_visible('before-removal')
             drag(f'blade-{target}-0', 'drone-discard'); require_visible('after-first-removal')
             drag(f'blade-{target}-1', 'drone-discard'); require_visible('after-both-removals')
+            page.mouse.move(0, 0)
+            canvas().screenshot(path=str(output / 'spares-after-removal.png'))
             passed('손상 날개 한 개·두 개를 수거해도 두 스페어의 실제 모형·표면·조작 위치 유지')
             mesh('new-blade-0')
             assert page.evaluate('()=>qaWorkshop.held.ghost.visible')

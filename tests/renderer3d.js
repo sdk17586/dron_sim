@@ -1,4 +1,4 @@
-import { chooseRenderBackend, CONTEXT_OPTIONS } from '../src/ui/renderer3d.js';
+import { chooseRenderBackend, CONTEXT_OPTIONS, watchRendererContext, disposeRenderer3D } from '../src/ui/renderer3d.js';
 
 let passed = 0;
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
@@ -40,6 +40,26 @@ try {
   await test('응답 없는 검사는 제한 시간 후 정리하고 호환 표시 선택', async () => {
     worker('timeout'); const before = terminated;
     assert(await chooseRenderBackend({ timeout: 10 }) === 'svg' && terminated === before + 1, 'timeout not handled');
+  });
+  await test('현재 화면의 그래픽 연결 중단만 복구 콜백으로 전달', async () => {
+    const view={canvas:new EventTarget(),disposed:false};let calls=0;
+    const release=watchRendererContext(view,()=>calls++);
+    const active=new Event('webglcontextlost',{cancelable:true});view.canvas.dispatchEvent(active);
+    assert(calls===1&&active.defaultPrevented,'active context ignored');
+    view.disposed=true;const retired=new Event('webglcontextlost',{cancelable:true});view.canvas.dispatchEvent(retired);
+    assert(calls===1&&!retired.defaultPrevented,'retired context changed live backend');release();
+  });
+  await test('폐기 시 연결 감시를 제거해 지연된 오류를 무시', async () => {
+    const view={canvas:new EventTarget()};let calls=0;
+    const release=watchRendererContext(view,()=>calls++);release();
+    view.canvas.dispatchEvent(new Event('webglcontextlost',{cancelable:true}));assert(calls===0,'listener leaked');
+  });
+  await test('렌더러 객체와 네이티브 그래픽 연결을 순서대로 해제하며 호환 표시도 처리', async () => {
+    const calls=[];disposeRenderer3D({dispose:()=>calls.push('dispose'),forceContextLoss:()=>calls.push('release')});
+    assert(calls.join(',')==='dispose,release','native context retained');
+    disposeRenderer3D({dispose:()=>calls.push('svg')});assert(calls.at(-1)==='svg','SVG cleanup failed');
+    disposeRenderer3D({dispose:()=>calls.push('already-lost'),getContext:()=>({isContextLost:()=>true}),forceContextLoss:()=>{throw new Error('lost twice');}});
+    assert(calls.at(-1)==='already-lost','lost context cleanup failed');
   });
 } finally {
   for (const [key, value] of Object.entries(originals)) {

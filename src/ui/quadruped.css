@@ -1,9 +1,7 @@
 .compact-courses nav { flex-wrap: wrap; }
 .robot-controller-grid .robot-stage { height: clamp(400px,calc(100vh - 330px),640px); }
 .robot-controller-grid.course-introduction .robot-stage { height: clamp(420px,calc(100vh - 220px),660px); }
-.robot-console-power { position: absolute; top: 14px; left: 14px; display: flex; align-items: center; gap: 7px; padding: 9px 12px; min-height: 40px; border: 1px solid #b6c9b7; border-radius: 8px; background: #f8fbf4; color: #48634c; font-size: 12px; }
-.robot-console-power .icon { width: 17px; height: 17px; }
-.robot-console-power[aria-pressed=true] { background: #3d654a; color: #fff; }
+.robot-body-power-status { position:absolute;top:14px;left:14px;right:14px;color:#a8c6d8;font-size:12px;pointer-events:none; }
 .robot-drive-status { position: absolute; top: 64px; left: 14px; max-width: calc(100% - 28px); padding: 5px 8px; background: #f9fcf2e8; color: #526f58; border-radius: 5px; font-size: 11px; pointer-events: none; }
 .robot-drive-hint { margin: 12px 0 0; font-size: 12px; line-height: 1.8; color: #637c69; }
 .remote-estop { width: 100%; min-height: 40px; margin-top: 9px; padding: 8px; border: 1px solid #b95c4d; border-radius: 7px; background: #b34e40; color: #fff; font-size: 12px; }

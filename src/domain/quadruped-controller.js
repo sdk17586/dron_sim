@@ -72,7 +72,7 @@ export function robotControllerTransition(s, a) {
 export function robotControllerGuide(s) {
   const task = (id, title, detail, targetLabel, selector, done) => ({ id: `robot-control-${id}`, title, detail, targetLabel, target: { kind: 'robot', selector }, done });
   const tasks = [
-    task('robot', '로봇 전원을 켜세요', '3D 화면 위의 로봇 전원을 누릅니다.', '로봇 전원 버튼', '[data-action="robot-controller-power"]', s.practice.robot),
+    task('robot', '로봇 전원을 켜세요', '3D 로봇 몸체 위에서 전원 기호가 있는 작은 버튼을 직접 누르세요. 위치 보기를 누르면 가까이 볼 수 있습니다.', '3D 본체 위 · 전원 기호 버튼', '[data-spatial-id="robot-body-power"]', s.practice.robot),
     task('remote', '조종기 전원을 켜세요', '조종기 오른쪽 위 둥근 전원 버튼을 누릅니다.', '조종기 전원 버튼', '[data-action="robot-controller-remote"]', s.practice.remote),
     task('link', '로봇과 가상 연결하세요', '양쪽 전원을 켜고 두 스틱을 중앙에 둔 뒤 연결을 누릅니다.', '조종기 화면의 연결 버튼', '[data-action="robot-controller-link"]', s.practice.link),
     task('release', '비상 정지를 해제하세요', '연결 상태와 스틱 중립을 확인하고 비상 정지 해제를 누릅니다.', '조종기 아래 비상 정지 해제', '[data-action="robot-controller-estop"]', s.practice.release),

@@ -1,0 +1,45 @@
+{
+  "pressure": {
+    "retired": 40,
+    "released": 40,
+    "live": 3
+  },
+  "stableFrames": [
+    {
+      "kind": "drone",
+      "first": {
+        "hash": 4130421949,
+        "lit": 6474
+      },
+      "second": {
+        "hash": 4130421949,
+        "lit": 6474
+      },
+      "depth": 24
+    },
+    {
+      "kind": "robot",
+      "first": {
+        "hash": 3093567020,
+        "lit": 24508
+      },
+      "second": {
+        "hash": 3093567020,
+        "lit": 24508
+      },
+      "depth": 24
+    },
+    {
+      "kind": "panda",
+      "first": {
+        "hash": 3403170627,
+        "lit": 22640
+      },
+      "second": {
+        "hash": 3403170627,
+        "lit": 22640
+      },
+      "depth": 24
+    }
+  ]
+}

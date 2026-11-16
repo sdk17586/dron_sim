@@ -3,6 +3,7 @@
 import json
 import argparse
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 def main():
@@ -19,7 +20,7 @@ def main():
             page.on('pageerror',lambda e:errors.append(str(e)))
             context.route('**/*',lambda r:r.continue_() if r.request.url.startswith('http://127.0.0.1:8000/') else (external.append(r.request.url),r.abort()))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>qaCsp.push(e.effectiveDirective));")
-            def click(a): page.locator(f'[data-action="{a}"]').first.click(force=True)
+            def click(a): choose_course(page, a, force=True)
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             def put(source,target): source.click(force=True); target.click(force=True)
             def drag(source,target):

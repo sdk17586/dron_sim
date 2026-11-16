@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -27,7 +28,7 @@ def main():
             page = context.new_page(); page.on('pageerror', lambda error: errors.append(str(error)))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>window.qaCsp.push(e.effectiveDirective));")
             page.goto(args.url)
-            page.locator("[data-action=intro-drone]").click(force=True)
+            choose_course(page, 'intro-drone', force=True)
             scene = page.locator('.drone-3d-canvas[data-ready="true"]'); scene.wait_for()
             page.locator('#start-form button[type=submit]').click(force=True)
             gauge = page.locator('[data-battery-gauge]')

@@ -31,7 +31,7 @@ export class CourseCompletionNotice {
     this.previousFocus = document.activeElement;
     this.dialog.dataset.course = completion.course;
     const demo = completion.demo === true;
-    this.dialog.innerHTML = `<div class="course-completion-content"><div class="course-completion-check" aria-hidden="true">${icon('check')}</div><p class="course-completion-label">${demo ? '자동 시연 완료' : '교육 완료'}</p><h2 id="${this.dialog.id}-title">${demo ? '수리하고, 다시 움직였습니다!' : '교육을 마쳤습니다!'}</h2><p id="${this.dialog.id}-description"><strong>${e(completion.course)}</strong><span>${demo ? '직접 정비 교육도 체험해보세요. 시연은 교육 기록에 저장하지 않습니다.' : '모든 실습 단계를 완료했습니다.'}</span></p><button type="button" class="button primary" data-dismiss-completion autofocus>확인</button></div>`;
+    this.dialog.innerHTML = `<div class="course-completion-content"><div class="course-completion-check" aria-hidden="true">${icon('check')}</div><p class="course-completion-label">${demo ? '자동 시연 완료' : '교육 완료'}</p><h2 id="${this.dialog.id}-title">${e(completion.title || (demo ? '수리하고, 다시 움직였습니다!' : '교육을 마쳤습니다!'))}</h2><p id="${this.dialog.id}-description"><strong>${e(completion.course)}</strong><span>${e(completion.description || (demo ? '직접 정비 교육도 체험해보세요. 시연은 교육 기록에 저장하지 않습니다.' : '모든 실습 단계를 완료했습니다.'))}</span></p><button type="button" class="button primary" data-dismiss-completion autofocus>확인</button></div>`;
     document.documentElement.classList.add('has-course-completion');
     this.dialog.showModal();
     this.dialog.querySelector('[data-dismiss-completion]').focus({ preventScroll: true });

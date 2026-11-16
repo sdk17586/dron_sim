@@ -42,15 +42,17 @@ def main():
                 const joints=[...v.legs].map(([id,m])=>{
                     const nodes=v.portedRig.joints.get(id),service=m.service;
                     const bolts=m.bolts.map(b=>b.getWorldPosition(new THREE.Vector3()));
-                    return {id,coverAttached:service.panel.parent===nodes.module && m.crack.parent===nodes.module,ring:m.ring.visible,
+                    return {id,coverAttached:service.panel.parent===nodes.module && nodes.module.getObjectByName('qtrain-fracture').parent===service.panel,
+                        chipped:nodes.module.getObjectByName('qtrain-fracture').visible, intact:nodes.module.getObjectByName('qtrain-cover').visible,
                         span:bolts[0].distanceTo(bolts[1]),plug:m.connector.visible,
                         seamGap:Math.abs(service.panel.getWorldPosition(new THREE.Vector3()).distanceTo(service.anchor()))};
                 });
                 return {backend:v.canvas.dataset.renderBackend,source:v.canvas.dataset.modelSource,joints};
             }''')
             assert fitted['backend']=='webgl' and fitted['source']=='unitree-go2'
-            assert all(j['coverAttached'] and not j['ring'] and .1<j['span']<.27 and j['seamGap']<.025 for j in fitted['joints'])
+            assert all(j['coverAttached'] and j['chipped'] != j['intact'] and .1<j['span']<.27 and j['seamGap']<.025 for j in fitted['joints'])
             assert [j['id'] for j in fitted['joints'] if j['plug']]==['front-left']
+            assert [j['id'] for j in fitted['joints'] if j['chipped']]==['front-left']
             page.screenshot(path=str(output/'joint-fitted-webgl.png'))
             passed('네 관절의 덮개·작은 볼트가 실제 모듈에 밀착, 큰 고리 제거·선택한 수리 관절만 커넥터 표시')
             moved = page.evaluate('''() => {
@@ -73,7 +75,7 @@ def main():
                 jointQA.start=entry.object.getWorldPosition(new jointQA.THREE.Vector3());jointQA.axis=entry.pullAxis();
                 v.workshop.pick(entry);
             }''')
-            page.wait_for_timeout(300)
+            page.wait_for_function('()=>!jointQA.v.workshop.animation')
             extraction = page.evaluate('''() => {
                 const {v,start,axis,s}=jointQA,delta=v.workshop.held.ghost.position.clone().sub(start);
                 const result={axial:delta.dot(axis),side:delta.clone().addScaledVector(axis,-delta.dot(axis)).length(),

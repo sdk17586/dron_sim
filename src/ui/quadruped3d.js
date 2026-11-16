@@ -1,10 +1,12 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { OrbitControls } from '../vendor/three/OrbitControls.js';
-import { createRenderer3D, showRenderBackend } from './renderer3d.js';
+import { createRenderer3D, showRenderBackend, watchRendererContext, disposeRenderer3D } from './renderer3d.js';
 import { ROBOT_LEGS } from '../domain/quadruped.js';
 import { configureRobotWorkshop } from './spatial-maintenance.js';
 import { CameraTravel, addStudioFinish } from './presentation3d.js';
 import { loadGo2 } from './go2-model.js';
+import { loadModelAsset, renderModelStatus } from './model-asset.js';
+import { SCENE_COLORS } from './scene-theme.js';
 
 // Shared depth-buffered rendering, with SVG available as a compatibility fallback.
 export class QuadrupedViewport {
@@ -14,7 +16,7 @@ export class QuadrupedViewport {
     this.canvas.classList.add('robot-3d-canvas');
     this.canvas.setAttribute('tabindex', '0'); this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', '사족보행 로봇 3D 모델. 끌어 회전, 휠로 확대, 방향키로 회전합니다. 다리 번호를 눌러 점검하세요.');
-    this.scene = new THREE.Scene(); this.scene.background = new THREE.Color('#edf2ee');
+    this.scene = new THREE.Scene(); this.scene.background = new THREE.Color(SCENE_COLORS.background);
     this.camera = new THREE.PerspectiveCamera(38, 1, .1, 60);
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enablePan = false; this.controls.enableDamping = false;
@@ -22,24 +24,16 @@ export class QuadrupedViewport {
     this.controls.minPolarAngle = .15; this.controls.maxPolarAngle = Math.PI * .48;
     this.controls.addEventListener('change', () => this.draw());
     const svg = this.canvas.dataset.renderBackend === 'svg';
-    this.scene.add(svg ? new THREE.AmbientLight('#ffffff', .62) : new THREE.HemisphereLight('#ffffff', '#758b80', 2));
+    this.scene.add(svg ? new THREE.AmbientLight('#ffffff', .62) : new THREE.HemisphereLight('#f0f6ff', SCENE_COLORS.groundLight, 2));
     const key = new THREE.DirectionalLight('#fff6df', svg ? .6 : 2.4); key.position.set(-4, 7, -6); this.scene.add(key);
     const fill = new THREE.DirectionalLight('#c7e1dc', svg ? .3 : 1.2); fill.position.set(6, 3, 4); this.scene.add(fill);
     this.materials = new Set(); this.geometries = new Set(); this.legs = new Map();
     this.body = new THREE.Group(); this.scene.add(this.body);
-    this.build();
-    this.canvas.dataset.modelStatus = 'loading';
-    this.modelReady = loadGo2(this).then(() => {
-      if (this.disposed) return;
-      this.canvas.dataset.modelStatus = 'ready'; this.draw();
-    }).catch(error => {
-      if (this.disposed) return;
-      this.canvas.dataset.modelStatus = 'fallback'; this.canvas.dataset.modelSource = 'procedural';
-      this.canvas.dataset.modelError = error.message; this.draw();
-    });
+    this.buildStage();
+    loadModelAsset(this, loadGo2);
     this.studio = addStudioFinish(this);
     this.travel = new CameraTravel(this);
-    this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); onUnavailable?.(); });
+    this.releaseContextWatch = watchRendererContext(this, onUnavailable);
     this.observer = new ResizeObserver(() => this.resize());
     this.canvas.addEventListener('keydown', event => {
       if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '=', '-'].includes(event.key)) return;
@@ -71,17 +65,8 @@ export class QuadrupedViewport {
   cylinder(radius, length, material, parent, position) {
     const m = this.mesh(new THREE.CylinderGeometry(radius, radius, length, 12), material, parent, position); m.rotation.z = Math.PI / 2; return m;
   }
-  build() {
-    const shell = this.mat('#49675e'), panel = this.mat('#7c9a8c'), metal = this.mat('#b7c5bc');
-    const dark = this.mat('#293f3b'), rubber = this.mat('#223631'), copper = this.mat('#c49b62');
-    this.box(1.62, .58, 3.05, shell, this.body, [0, 2.12, 0]);
-    this.box(1.4, .12, 2.5, panel, this.body, [0, 2.47, .05]);
-    for (const x of [-.73, .73]) this.box(.07, .13, 2.45, metal, this.body, [x, 2.5, .05]);
-    for (let i = 0; i < 6; i++) this.box(.55, .015, .035, dark, this.body, [0, 2.54, i * .14 - .1]);
-    this.box(1.34, .28, .21, dark, this.body, [0, 2.11, -1.6]);
-    for (const x of [-.43, .43]) {
-      const lens = this.cylinder(.11, .055, this.mat('#638f97'), this.body, [x, 2.12, -1.72]); lens.rotation.set(Math.PI / 2, 0, 0);
-    }
+  buildTeachingParts() {
+    const metal = this.mat('#b7c5bc'), dark = this.mat('#293f3b'), copper = this.mat('#c49b62');
     this.battery = this.box(.94, .32, .7, dark, this.body, [0, 2.42, .96]);
     this.box(.5, .03, .05, this.mat('#8cbe7c'), this.battery, [0, .18, 0]);
     this.stop = this.cylinder(.13, .08, this.mat('#b85e4b'), this.body, [0, 2.59, -.75]); this.stop.rotation.set(0, 0, 0);
@@ -96,34 +81,19 @@ export class QuadrupedViewport {
       this.box(1.32, .12, .45, copper, this.stands, [0, 1.8, z]);
     }
     for (const p of ROBOT_LEGS) {
-      const group = new THREE.Group(); group.position.set(p.x * 1.03, 2.13, p.z * 1.15); this.body.add(group);
-      this.cylinder(.26, .45, metal, group, [0, 0, 0]);
-      const upper = this.box(.24, 1.07, .25, panel, group, [0, -.48, .18]); upper.rotation.x = -.34;
-      const knee = new THREE.Group(); knee.position.set(0, -.99, .36); group.add(knee);
-      this.cylinder(.31, .22, dark, knee, [0, 0, 0]);
-      this.cylinder(.1, .4, metal, knee, [0, 0, 0]);
-      const cartridge = new THREE.Group(); knee.add(cartridge);
-      const cover = this.cylinder(.29, .35, shell, cartridge, [p.x * .15, 0, 0]);
-      this.cylinder(.19, .37, metal, cartridge, [p.x * .15, 0, 0]);
-      this.cylinder(.12, .39, dark, cartridge, [p.x * .15, 0, 0]);
-      const bolts = [-1, 1].map(v => this.cylinder(.07, .05, metal, knee, [p.x * .43, .22, v * .16]));
-      for (const v of [-1, 1]) this.cylinder(.09, .12, dark, cartridge, [p.x * .36, .22, v * .16]);
-      const crackGeometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(p.x * .358, .24, -.1), new THREE.Vector3(p.x * .358, .08, -.04),
-        new THREE.Vector3(p.x * .358, .02, -.12), new THREE.Vector3(p.x * .358, -.13, -.03),
-        new THREE.Vector3(p.x * .358, -.24, -.07),
-      ]);
-      const crackMaterial = new THREE.LineBasicMaterial({ color: '#e2a25d' }); this.materials.add(crackMaterial); this.geometries.add(crackGeometry);
-      const crack = new THREE.Line(crackGeometry, crackMaterial); cartridge.add(crack);
-      const connector = this.box(.13, .18, .16, copper, knee, [p.x * .25, .33, 0]);
-      const lower = new THREE.Group(); lower.rotation.x = .42; knee.add(lower);
-      this.box(.16, .97, .2, dark, lower, [0, -.51, 0]);
-      this.box(.08, .7, .08, metal, lower, [p.x * .1, -.5, -.08]);
-      this.mesh(new THREE.SphereGeometry(.15, 10, 6), rubber, lower, [0, -1.02, 0]);
-      const ring = this.mesh(new THREE.TorusGeometry(.4, .022, 4, 20), this.mat('#8eae6c'), knee, [p.x * .37, 0, 0]); ring.rotation.y = Math.PI / 2;
-      this.legs.set(p.id, { group, knee, lower, cartridge, cover, bolts, crack, connector, ring });
+      // Empty frames retain the gait state and service coordinates of the Go2 rig.
+      const group = new THREE.Group(); group.position.x = p.x;
+      const knee = new THREE.Group(); this.body.add(knee);
+      const lower = new THREE.Group(); lower.rotation.x = .42;
+      this.legs.set(p.id, { group, knee, lower });
     }
-    const grid = new THREE.GridHelper(12, 20, '#b8cdbd', '#d5e1d6'); this.scene.add(grid);
+    this.frontArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, .15, -1.65), .9, '#c49b62', .3, .25);
+    this.frontArrow.visible = false; this.body.add(this.frontArrow);
+    this.frontArrow.traverse(o => { if (o.geometry) this.geometries.add(o.geometry); if (o.material) this.materials.add(o.material); });
+  }
+  buildStage() {
+    const grid = new THREE.GridHelper(12, 20, SCENE_COLORS.gridMajor, SCENE_COLORS.gridMinor); this.scene.add(grid);
+    if(this.canvas.dataset.renderBackend==='svg')grid.material.color.set(SCENE_COLORS.gridMinor);
     this.geometries.add(grid.geometry); this.materials.add(grid.material);
     const edgeGeometry = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-5.4, .025, -5.4), new THREE.Vector3(5.4, .025, -5.4),
@@ -132,9 +102,6 @@ export class QuadrupedViewport {
     const edgeMaterial = new THREE.LineBasicMaterial({ color: '#6e9987' });
     this.driveBoundary = new THREE.LineLoop(edgeGeometry, edgeMaterial); this.driveBoundary.visible = false; this.scene.add(this.driveBoundary);
     this.geometries.add(edgeGeometry); this.materials.add(edgeMaterial);
-    this.frontArrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, .15, -1.65), .9, '#c49b62', .3, .25);
-    this.frontArrow.visible = false; this.body.add(this.frontArrow);
-    this.frontArrow.traverse(o => { if (o.geometry) this.geometries.add(o.geometry); if (o.material) this.materials.add(o.material); });
   }
   attach(host) {
     if (this.host !== host) {
@@ -160,35 +127,27 @@ export class QuadrupedViewport {
   }
   sync(state, ui) {
     this.state = state; this.ui = ui;
+    if (this.canvas.dataset.modelStatus !== 'ready') { this.draw(); return; }
     this.body.position.set(0, 0, 0); this.body.rotation.y = 0;
     this.driveBoundary.visible = Boolean(ui.robotControllerMode); this.frontArrow.visible = Boolean(ui.robotControllerMode);
     this.controls.maxDistance = ui.robotControllerMode ? 28 : 18;
+    this.controls.minDistance = ui.robotZoomed && !ui.robotControllerMode ? .85 : 2.5;
     this.canvas.setAttribute('aria-label', ui.robotControllerMode ? '사족보행 로봇 조종 연습장 3D 모델. 스틱으로 이동·회전합니다. 빈 곳을 끌어 시점을 회전하고 휠로 확대합니다.' : '사족보행 로봇 3D 모델. 끌어 회전, 휠로 확대, 방향키로 회전합니다. 다리 번호를 눌러 점검하세요.');
     this.battery.visible = state.battery; this.stands.visible = state.supported; this.powerLight.visible = state.power;
-    this.stop.position.y = this.portedRig ? this.go2StopY - (state.estop ? .012 : 0) : state.estop ? 2.55 : 2.59;
+    this.stop.position.y = this.go2StopY - (state.estop ? .012 : 0);
     for (const p of ROBOT_LEGS) {
       const model = this.legs.get(p.id), l = state.legs[p.id];
-      model.cartridge.visible = l.present; model.crack.visible = l.condition === 'damaged';
-      if (!this.portedRig) model.cover.material = l.source === 'new' ? this.newModuleMaterial || (this.newModuleMaterial = this.mat('#689d78')) : this.originalModuleMaterial || (this.originalModuleMaterial = model.cover.material);
-      if (!model.service) {
-        model.connector.visible = true;
-        model.connector.position.x = p.x * (l.connected ? .25 : .5);
-        model.bolts.forEach((b, i) => {
-          b.visible = l.bolts[i] || l.source === 'new';
-          b.position.x = p.x * (l.bolts[i] ? .43 : .54);
-          b.rotation.set(0,0,Math.PI/2);
-        });
-      }
-      model.ring.visible = !ui.previewMode && !ui.robotControllerMode && ui.robotSelected === p.id;
+      model.cartridge.visible = l.present;
       this.labels.querySelector(`[data-leg="${p.id}"]`).setAttribute('aria-pressed', String(ui.robotSelected === p.id));
     }
-    const key = `${Boolean(ui.robotControllerMode)}:${ui.robotZoomed}:${ui.robotSelected}`;
+    const key = `${Boolean(ui.robotControllerMode)}:${ui.robotZoomed}:${ui.robotSelected}:${ui.robotControllerMode?state.power:''}`;
     if (this.cameraKey !== key) {
       const from = this.camera.position.clone(), look = this.controls.target.clone(), animate = this.cameraKey && ui.presentationMode;
       this.cameraKey = key;
       const model = this.legs.get(ui.robotSelected);
-      const target = ui.robotZoomed ? model.knee.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 1.2, 0);
-      const offset = ui.robotControllerMode ? new THREE.Vector3(-10, 7, -11) : ui.robotZoomed ? new THREE.Vector3(model.group.position.x < 0 ? -3.5 : 3.5, 1.5, -2.4) : this.portedRig ? new THREE.Vector3(-4.8,3.2,-5.2) : new THREE.Vector3(-6, 4.1, -6.8);
+      const target = ui.robotZoomed ? model.service.anchor() : new THREE.Vector3(0, 1.2, 0);
+      if(ui.robotControllerMode&&!state.power){target.x=ui.robotControllerState?.pose.x||0;target.z=ui.robotControllerState?.pose.z||0;}
+      const offset = ui.robotControllerMode ? state.power?new THREE.Vector3(-10,7,-11):new THREE.Vector3(-3.8,3.5,-4.2) : ui.robotZoomed ? model.service.axis().multiplyScalar(1.65).add(new THREE.Vector3(0,.34,-.48)) : new THREE.Vector3(-4.8,3.2,-5.2);
       this.controls.target.copy(target); this.camera.position.copy(target).add(offset.multiplyScalar(this.camera.aspect < 1 ? 1.15 : 1)); this.controls.update();
       if (animate) {
         const destination = this.camera.position.clone();
@@ -199,11 +158,19 @@ export class QuadrupedViewport {
     this.canvas.dataset.modules = String(ROBOT_LEGS.filter(p => state.legs[p.id].present).length);
     this.canvas.dataset.damaged = String(ROBOT_LEGS.filter(p => state.legs[p.id].condition === 'damaged').length);
     this.canvas.dataset.supported = String(state.supported); this.canvas.dataset.testing = String(state.testing);
-    this.canvas.dataset.battery = String(state.battery);
+    this.canvas.dataset.battery = String(state.battery);this.canvas.dataset.power=String(state.power);
     if (state.testing && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) this.startMotion();
     else this.stopMotion();
     configureRobotWorkshop(this,state,ui);
     this.draw();
+  }
+  focusPowerButton(){
+    if(this.canvas.dataset.modelStatus!=='ready')return;
+    this.travel?.cancel();this.body.updateWorldMatrix(true,true);
+    const target=this.powerButton.getWorldPosition(new THREE.Vector3());
+    const offset=new THREE.Vector3(-2.6,3,-2.8).multiplyScalar(this.camera.aspect<1?1.3:1);
+    this.controls.target.copy(target);this.camera.position.copy(target).add(offset);this.controls.update();this.draw();
+    this.workshop?.entries.find(e=>e.id==='robot-body-power'||e.id==='robot-power')?.button.focus({preventScroll:true});
   }
   startMotion() {
     if (this.motion) return;
@@ -222,6 +189,7 @@ export class QuadrupedViewport {
   }
   setDrive(s, active = false) {
     this.stopMotion();
+    if (this.canvas.dataset.modelStatus !== 'ready') return;
     this.body.position.set(s.pose.x, 0, s.pose.z); this.body.rotation.y = s.pose.yaw;
     const animate = active && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (animate) {
@@ -241,22 +209,22 @@ export class QuadrupedViewport {
     this.portedRig?.update();
     this.workshop?.update();
     this.renderer.render(this.scene, this.camera);
+    const ready = renderModelStatus(this, 'Go2', 'robot-asset-note', loadGo2);
+    if (this.labels) this.labels.hidden = !ready;
+    if (!ready) return;
     if (this.labels) for (const p of ROBOT_LEGS) {
       const v = this.legs.get(p.id).knee.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, .57, 0)).project(this.camera);
       const b = this.labels.querySelector(`[data-leg="${p.id}"]`);
       b.style.left = `${(v.x + 1) * .5 * this.width}px`; b.style.top = `${(1 - v.y) * .5 * this.height}px`;
       b.hidden = this.ui?.immersiveMode || this.ui?.previewMode || this.ui?.robotControllerMode || Math.abs(v.x) > .97 || Math.abs(v.y) > .97 || v.z > 1;
     }
-    this.canvas.dataset.ready = String(this.canvas.dataset.modelStatus !== 'loading');
     this.canvas.dataset.modelTriangles = String(this.renderer.info?.render?.triangles ?? this.renderer.info?.render?.faces ?? 0);
-    if (this.host) {
-      let note = this.host.querySelector('.robot-asset-note');
-      if (this.canvas.dataset.modelStatus !== 'ready') {
-        if (!note) { note = document.createElement('span'); note.className = 'robot-asset-note'; note.setAttribute('role','status'); this.host.append(note); }
-        note.textContent = this.canvas.dataset.modelStatus === 'loading' ? 'Go2 모델을 불러오고 있습니다…' : '모델을 불러오지 못해 간단한 대체 모델로 표시합니다.';
-      } else note?.remove();
-    }
   }
   detach() { this.travel?.cancel(); this.workshop?.detach(); this.stopMotion(); this.observer.disconnect(); this.controls.enabled = false; this.host = null; this.canvas.remove(); this.labels?.remove(); }
-  dispose() { this.disposed = true; this.travel?.dispose(); this.studio?.dispose(); this.workshop?.dispose(); this.detach(); this.controls.dispose(); this.renderer.dispose?.(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
+  dispose() {
+    if (this.disposed) return;
+    this.disposed = true; this.releaseContextWatch?.();
+    this.travel?.dispose(); this.studio?.dispose(); this.workshop?.dispose(); this.detach(); this.controls.dispose();
+    disposeRenderer3D(this.renderer); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose());
+  }
 }

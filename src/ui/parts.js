@@ -51,7 +51,7 @@ export function renderPartsDock(s, ui) {
 }
 
 export function positionFlatPoints(host, ui) {
-  const svg = host.querySelector('.drone-svg'), matrix = svg?.getScreenCTM();
+  const svg = host.querySelector('.drone-svg'), matrix = (svg?.querySelector('[data-controller-airframe]') || svg)?.getScreenCTM();
   if (!matrix) return;
   const bounds = host.getBoundingClientRect(), p = motorProfile(ui.selected);
   for (const node of host.querySelectorAll('[data-anchor]')) {

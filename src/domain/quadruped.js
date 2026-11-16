@@ -139,7 +139,7 @@ export function robotGuide(s, selected = '') {
   const prep = [
     t('robot-estop', '먼저 비상 정지를 걸어주세요', '정비 중 다리가 움직이지 않도록 멈춥니다. 3D 로봇 몸체 위의 빨간 비상 정지 버튼을 직접 누르세요.', '몸체 위 · 빨간 비상 정지 버튼', '[data-action=robot-estop]', s.prepared || s.estop),
     t('robot-power-off', '이제 주 전원을 꺼주세요', '비상 정지를 걸었습니다. 빨간 버튼 옆 몸체의 작은 전원 버튼을 직접 눌러 전원을 차단하세요.', '몸체 위 · 작은 주 전원 버튼', '[data-action=robot-power]', s.prepared || !s.power),
-    t('robot-support', '로봇을 받침대로 지지하세요', '관절을 분리해도 몸체가 내려앉지 않도록 합니다. 3D 작업대의 받침대를 집어 몸체 아래 파란색 고리로 옮기세요.', '로봇 화면 위 · 받침대 설치', '[data-action=robot-support]', s.supported),
+    t('robot-support', '로봇을 받침대로 지지하세요', '관절을 분리해도 몸체가 내려앉지 않도록 합니다. 3D 작업대의 받침대를 집어 몸체 아래 초록색 고리로 옮기세요.', '로봇 화면 위 · 받침대 설치', '[data-action=robot-support]', s.supported),
     t('robot-battery-out', '마지막으로 배터리를 분리하세요', '몸체 뒤쪽의 배터리를 집어 3D 작업대의 수거함으로 옮기세요. 클릭해서 집고 수거함을 클릭해도 됩니다.', '몸체 뒤쪽 배터리 → 3D 수거함', '.robot-battery', s.prepared || !s.battery, '', '.robot-tray'),
   ];
   const inspections = ROBOT_LEGS.map(p => t(`robot-inspect-${p.id}`, `${p.short}번 다리의 상태를 판단하세요`, s.legs[p.id].inspected ? '확대한 관절 덮개의 균열·변형을 살펴보고 ‘정상’ 또는 ‘교체 필요’를 선택하세요. 네 다리를 모두 점검한 뒤 교체합니다.' : `${p.short}번 다리 관절을 직접 눌러 가까이 보세요. 균열·변형을 살펴보고 ‘정상’ 또는 ‘교체 필요’를 선택합니다.`, `${p.short}번 · ${p.name} 다리`, '.robot-verdicts', s.legs[p.id].verdict, p.id));
@@ -174,6 +174,6 @@ export function robotGuide(s, selected = '') {
   const pending = phases.flatMap(p => p.tasks).filter(v => !v.done);
   const upNext = pending.find(v => v.id !== current?.id);
   return { current, phases, complete, workflow, phaseIndex, upNext, remaining: pending.length,
-    inputHelp: current?.target.destination ? '끌어 놓거나, 부품을 클릭해 집고 놓을 자리를 클릭하세요 · 취소: Esc' : '3D 모델에서 파란색으로 점멸하는 곳이 다음 조작 대상입니다 · 부품·공구를 직접 집어보세요',
+    inputHelp: current?.target.destination ? '끌어 놓거나, 부품을 클릭해 집고 놓을 자리를 클릭하세요 · 취소: Esc' : '3D 모델에서 초록색 고리로 강조된 곳이 다음 조작 대상입니다 · 부품·공구를 직접 집어보세요',
     summary: phaseIndex === 0 ? `안전 준비 ${prep.filter(v => v.done).length}/4` : `다리 판단 ${inspections.filter(v => v.done).length}/4 · 관절 시험 ${s.tested ? '완료' : '미완료'}` };
 }

@@ -1,6 +1,61 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { robotDiagnosed } from '../domain/quadruped.js';
 
+// Cross section of a chipped and buckled cover, in the plane of its two bolts.
+// The recessed seal is visible through the missing corner and the split.
+function chippedCover(view, radius, outward, shell) {
+  const group = new THREE.Group();
+  group.name = 'qtrain-fracture';
+  const wall = view.mat('#50585b'), lip = view.mat('#a1a7a7');
+  const impact = [[.73,.62],[.64,.60],[.61,.66],[.47,.53],[.52,.46],
+    [.37,.35],[.40,.32],[.30,.21],[.43,.29],[.42,.32],[.56,.40],
+    [.59,.48],[.70,.40],[.72,.48],[.83,.43],[.87,.44]];
+  // Walk the intact outer circumference, then return along the torn edge.
+  const contour = [];
+  for (let a = 65; a <= 383; a += 3) {
+    const theta = THREE.MathUtils.degToRad(a);
+    contour.push([Math.cos(theta), Math.sin(theta)]);
+  }
+  contour.push(...impact.slice().reverse());
+  const face = new THREE.Shape(contour.map(([u,v]) => new THREE.Vector2(u*radius,v*radius)));
+  const geometry = new THREE.ExtrudeGeometry(face,{depth:.018,bevelEnabled:false,steps:1});
+  const p = geometry.attributes.position;
+  for (let i=0;i<p.count;i++) {
+    const u=p.getX(i)/radius, v=p.getY(i)/radius;
+    const dent=Math.exp(-((u-.66)**2/.052+(v-.39)**2/.037));
+    const fold=Math.exp(-((u-.62)**2/.032+(v-.64)**2/.018));
+    p.setZ(i,p.getZ(i)-.009-radius*.095*dent+radius*.15*fold);
+  }
+  // Extrude uses front/back and side groups. Keep the cut face darker than
+  // the coating and retain shading on the bent lip in both renderers.
+  geometry.rotateY(outward * Math.PI/2);
+  geometry.computeVertexNormals();
+  view.mesh(geometry,[shell,wall],group);
+  // Only the opening exposes the backing. Keep it inside that contour so the
+  // depth-sorted compatibility renderer cannot paint it across the intact face.
+  const opening = [];
+  for (let a = 23; a <= 65; a += 3) {
+    const theta = THREE.MathUtils.degToRad(a);
+    opening.push([Math.cos(theta), Math.sin(theta)]);
+  }
+  opening.push(...impact);
+  const backing = new THREE.ShapeGeometry(new THREE.Shape(
+    opening.map(([u,v]) => new THREE.Vector2(u*radius, v*radius))
+  ));
+  backing.rotateY(outward * Math.PI/2);
+  view.mesh(backing,wall,group,[-outward*.012,0,0]);
+  const gasket = new THREE.TorusGeometry(radius*.85,.004,6,12,THREE.MathUtils.degToRad(36));
+  gasket.rotateZ(THREE.MathUtils.degToRad(26));
+  gasket.rotateY(outward * Math.PI/2);
+  view.mesh(gasket,lip,group,[-outward*.008,0,0]);
+  return group;
+}
+
+export function setModuleDamage(module, damaged) {
+  module.getObjectByName('qtrain-cover').visible = !damaged;
+  module.getObjectByName('qtrain-fracture').visible = damaged;
+}
+
 // Teaching fittings are seated on the imported housing in its own joint frame.
 export function createJointService(view, leg, nodes, basis) {
   const model = view.legs.get(leg.id), frame = model.knee;
@@ -23,9 +78,14 @@ export function createJointService(view, leg, nodes, basis) {
     const mesh = view.mesh(new THREE.CylinderGeometry(r, r, thickness, segments), material, parent, [x,y,z]);
     mesh.rotation.z = Math.PI / 2; return mesh;
   };
-  disk(radius, .018, shell, panel);
-  const seam = view.mesh(new THREE.TorusGeometry(radius + .003, .006, 6, 40), dark, panel);
+  const intact=new THREE.Group();intact.name='qtrain-cover';panel.add(intact);
+  disk(radius, .018, shell, intact);
+  const seam = view.mesh(new THREE.TorusGeometry(radius + .003, .006, 6, 40), dark, intact);
   seam.rotation.y = Math.PI / 2;
+  const chipped = chippedCover(view,radius,outward,shell);
+  // Keep the impact on the exposed lower rim, clear of the plug and bolts.
+  chipped.rotation.x = outward < 0 ? Math.PI : -Math.PI/2;
+  panel.add(chipped);
   disk(radius * .42, .024, metal, panel, outward * .005);
   const recess = new THREE.Group(); frame.add(recess); recess.position.set(surface - outward * .025, cy, cz);
   disk(radius * .95, .028, dark, recess); disk(radius * .36, .045, metal, recess, outward * .008);
@@ -42,8 +102,7 @@ export function createJointService(view, leg, nodes, basis) {
     view.mesh(new THREE.CylinderGeometry(.008,.008,.035,8),metal,bolt,[0,-.02,0]);
     bolt.rotation.z = -outward * Math.PI/2; return bolt;
   });
-  model.bolts.forEach(bolt => { bolt.visible=false; }); model.bolts = bolts;
-  model.connector.visible=false;
+  model.bolts = bolts;
   const connector = new THREE.Group(); frame.add(connector);
   view.box(.052,.045,.078,dark,connector);
   view.box(.057,.008,.045,metal,connector,[0,.026,0]);
@@ -55,21 +114,8 @@ export function createJointService(view, leg, nodes, basis) {
   const cableMaterial = new THREE.LineBasicMaterial({color:'#35483f'});view.materials.add(cableMaterial);
   const cable = new THREE.Line(cableGeometry,cableMaterial);frame.add(cable);
   model.connector = connector;
-  const crackPoints = [[-.7,-.32],[-.25,-.12],[0,-.28],[.28,.06],[.7,.3]].map(([y,z]) =>
-    new THREE.Vector3(surface+outward*.03,cy+y*radius,cz+z*radius));
-  const old = model.crack;old.removeFromParent();view.geometries.delete(old.geometry);old.geometry.dispose();
-  const fracture=new THREE.Group();fracture.name='qtrain-fracture';frame.add(fracture);
-  const fractureMaterial=view.mat('#9c4c39');
-  for(let i=1;i<crackPoints.length;i++){
-    const a=crackPoints[i-1],b=crackPoints[i],direction=b.clone().sub(a);
-    const segment=view.mesh(new THREE.CylinderGeometry(.0025,.0025,direction.length(),5),fractureMaterial,fracture);
-    segment.position.copy(a).add(b).multiplyScalar(.5);
-    segment.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction.normalize());
-  }
-  model.crack=fracture;
   frame.updateWorldMatrix(true,true);
   nodes.module.attach(panel);
-  nodes.module.attach(fracture);
   model.service = {
     surface, center: new THREE.Vector3(surface,cy,cz), radius, panel, recess, boltPoints,
     axis() { frame.updateWorldMatrix(true,false);return new THREE.Vector3(outward,0,0).transformDirection(frame.matrixWorld); },
@@ -81,9 +127,10 @@ export function createJointService(view, leg, nodes, basis) {
       const state=view.state, ui=view.ui, l=state?.legs[leg.id];if(!l)return;
       const inspecting=Boolean(ui?.immersiveMode && ui.robotZoomed && ui.robotSelected===leg.id);
       const repairing=inspecting && robotDiagnosed(state) && l.verdict==='replace';
-      model.ring.visible=false;
       shell.color.set(l.source==='new'?'#a2b8aa':'#b9c2c0');
-      model.crack.visible=l.condition==='damaged' && l.present && nodes.module.visible;
+      const damaged=l.condition==='damaged';
+      intact.visible=!damaged;
+      chipped.visible=damaged;
       recess.visible=inspecting && !nodes.module.visible;
       bolts.forEach((bolt,i)=>{
         bolt.visible=(l.bolts[i] || l.source==='new') && nodes.module.visible && !ui?.robotControllerMode;

@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -28,7 +29,7 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>window.qaCsp.push(e.effectiveDirective));")
             page.goto(args.url)
-            def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             def help_open(): page.locator('header [data-action=open-help]').click(force=True)
             def help_close(): page.locator('[data-action=close-help]').click(force=True)
@@ -51,12 +52,14 @@ def main():
                 page.mouse.move(b['x']+b['width']/2+dx,b['y']+b['height']/2+dy,steps=1)
             courses = page.locator('.course-picker .course-card')
             assert courses.count() == 2 and all(c.is_visible() for c in courses.all())
-            assert '드론 정비 교육' in courses.nth(0).inner_text() and '사족보행 로봇 정비' in courses.nth(1).inner_text()
+            assert courses.locator('strong').all_text_contents() == ['드론 교육', '사족보행 로봇 교육']
             assert page.locator('#drone-viewport,#robot-viewport').count() == 0
-            passed('첫 화면의 두 장비 선택과 장비 미표시')
+            passed('첫 화면의 두 장비 교육 선택과 3D 미리보기 영역')
 
             before = record_text()
             courses.nth(0).focus(); page.keyboard.press('Enter')
+            assert page.locator('.equipment-course-hub[data-education-kind=drone]').count() == 1
+            click('intro-drone')
             preview = page.locator('.drone-3d-canvas[data-ready=true]'); preview.wait_for()
             assert page.locator('.course-objectives li').count() >= 3
             assert page.locator('[data-current-task],[data-piece]').count() == 0

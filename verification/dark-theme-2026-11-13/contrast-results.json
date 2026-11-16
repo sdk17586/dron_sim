@@ -1,0 +1,916 @@
+{
+  "samples": [
+    {
+      "selector": ".course-picker-heading h1",
+      "text": "어떤 교육을 시작할까요?",
+      "ratio": 16.25,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-picker-heading p",
+      "text": "교육을 선택하면 학습 내용과 3D 장비를 먼저 살펴볼 수 있습니다.",
+      "ratio": 9.24,
+      "threshold": 4.5,
+      "color": "rgb(164, 182, 197)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-card strong",
+      "text": "드론 정비 교육",
+      "ratio": 16.25,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-card strong",
+      "text": "사족보행 로봇 정비 교육",
+      "ratio": 16.25,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-card small",
+      "text": "배터리·프로펠러 점검과 교체조종기 교육: 연결·작동 확인 → IMU 보정",
+      "ratio": 9.24,
+      "threshold": 4.5,
+      "color": "rgb(164, 182, 197)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-card small",
+      "text": "다리 관절 점검과 모듈 교체조종기 연결·이동·정지 확인",
+      "ratio": 9.24,
+      "threshold": 4.5,
+      "color": "rgb(164, 182, 197)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-card-link",
+      "text": "교육 살펴보기",
+      "ratio": 11.02,
+      "threshold": 4.5,
+      "color": "rgb(88, 216, 195)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-card-link",
+      "text": "교육 살펴보기",
+      "ratio": 11.02,
+      "threshold": 4.5,
+      "color": "rgb(88, 216, 195)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".showcase-launch strong",
+      "text": "직접 고치고, 다시 움직이다.",
+      "ratio": 13.86,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        16,
+        33,
+        46
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".showcase-launch small",
+      "text": "고장 발견부터 관절 교체, 복구된 로봇의 보행까지.",
+      "ratio": 9.29,
+      "threshold": 4.5,
+      "color": "rgb(177, 198, 210)",
+      "background": [
+        16,
+        33,
+        46
+      ],
+      "screen": "home"
+    },
+    {
+      "selector": ".course-intro-panel h1",
+      "text": "드론 정비 교육",
+      "ratio": 16.25,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".course-objectives",
+      "text": "배터리 잔량 확인·전원 차단·배터리 교체네 모터의 프로펠러 손상 여부 판단표식에 ",
+      "ratio": 9.24,
+      "threshold": 4.5,
+      "color": "rgb(164, 182, 197)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".start-fields label",
+      "text": "훈련 회차",
+      "ratio": 9.63,
+      "threshold": 4.5,
+      "color": "rgb(167, 186, 201)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".start-fields label",
+      "text": "교육생 번호",
+      "ratio": 9.63,
+      "threshold": 4.5,
+      "color": "rgb(167, 186, 201)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".start-fields input",
+      "text": "",
+      "ratio": 14.99,
+      "threshold": 4.5,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        13,
+        25,
+        37
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".start-fields input",
+      "text": "",
+      "ratio": 14.99,
+      "threshold": 4.5,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        13,
+        25,
+        37
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".button.primary",
+      "text": "실습 시작",
+      "ratio": 9.53,
+      "threshold": 4.5,
+      "color": "rgb(8, 33, 42)",
+      "background": [
+        88,
+        216,
+        195
+      ],
+      "screen": "intro"
+    },
+    {
+      "selector": ".scene-guide h2",
+      "text": "전원 차단을 확인하세요",
+      "ratio": 10.4,
+      "threshold": 4.5,
+      "color": "rgb(168, 217, 255)",
+      "background": [
+        15.84,
+        37.32,
+        56.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".task-copy p",
+      "text": "기체 위 전원 아이콘을 눌러 차단 상태를 확인합니다.",
+      "ratio": 7.68,
+      "threshold": 4.5,
+      "color": "rgb(164, 185, 201)",
+      "background": [
+        15.84,
+        37.32,
+        56.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".guide-progress",
+      "text": "모터 판단 0/4 · 최종 확인 0/3",
+      "ratio": 7.68,
+      "threshold": 4.5,
+      "color": "rgb(164, 185, 201)",
+      "background": [
+        15.84,
+        37.32,
+        56.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".guide-next strong",
+      "text": "기체의 전원 확인 아이콘",
+      "ratio": 10.4,
+      "threshold": 4.5,
+      "color": "rgb(168, 217, 255)",
+      "background": [
+        15.84,
+        37.32,
+        56.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".guide-locate",
+      "text": "위치 보기",
+      "ratio": 8.14,
+      "threshold": 4.5,
+      "color": "rgb(182, 224, 255)",
+      "background": [
+        24,
+        61,
+        90
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".scene-camera-tools button",
+      "text": "전체 보기",
+      "ratio": 11.96,
+      "threshold": 4.5,
+      "color": "rgb(210, 229, 240)",
+      "background": [
+        19.44,
+        37.74,
+        53.32000000000001
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".spatial-caption",
+      "text": "01",
+      "ratio": 11.92,
+      "threshold": 4.5,
+      "color": "rgb(197, 219, 233)",
+      "background": [
+        15.64,
+        29.19,
+        41.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".spatial-caption",
+      "text": "02",
+      "ratio": 11.92,
+      "threshold": 4.5,
+      "color": "rgb(197, 219, 233)",
+      "background": [
+        15.64,
+        29.19,
+        41.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".spatial-caption",
+      "text": "03",
+      "ratio": 11.92,
+      "threshold": 4.5,
+      "color": "rgb(197, 219, 233)",
+      "background": [
+        15.64,
+        29.19,
+        41.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".spatial-caption",
+      "text": "04",
+      "ratio": 11.92,
+      "threshold": 4.5,
+      "color": "rgb(197, 219, 233)",
+      "background": [
+        15.64,
+        29.19,
+        41.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".spatial-caption",
+      "text": "교체 배터리 100%",
+      "ratio": 11.92,
+      "threshold": 4.5,
+      "color": "rgb(197, 219, 233)",
+      "background": [
+        15.64,
+        29.19,
+        41.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".spatial-caption",
+      "text": "분리 부품 수거함",
+      "ratio": 11.92,
+      "threshold": 4.5,
+      "color": "rgb(197, 219, 233)",
+      "background": [
+        15.64,
+        29.19,
+        41.92
+      ],
+      "screen": "maintenance"
+    },
+    {
+      "selector": ".help-dialog-heading h2",
+      "text": "도움말 · 남은 작업",
+      "ratio": 14.58,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        15.783999999999999,
+        27.649,
+        40.514
+      ],
+      "screen": "help"
+    },
+    {
+      "selector": ".help-current h3",
+      "text": "전원 차단을 확인하세요",
+      "ratio": 10.37,
+      "threshold": 4.5,
+      "color": "rgb(168, 217, 255)",
+      "background": [
+        15.99136,
+        37.58596,
+        57.300560000000004
+      ],
+      "screen": "help"
+    },
+    {
+      "selector": ".help-current p",
+      "text": "기체 위 전원 아이콘을 눌러 차단 상태를 확인합니다.",
+      "ratio": 8.13,
+      "threshold": 4.5,
+      "color": "rgb(168, 191, 206)",
+      "background": [
+        15.99136,
+        37.58596,
+        57.300560000000004
+      ],
+      "screen": "help"
+    },
+    {
+      "selector": ".help-phase li[aria-current=step] strong",
+      "text": "전원 차단을 확인하세요",
+      "ratio": 11.41,
+      "threshold": 4.5,
+      "color": "rgb(211, 234, 255)",
+      "background": [
+        16,
+        45,
+        71
+      ],
+      "screen": "help"
+    },
+    {
+      "selector": ".help-phase li[aria-current=step] p",
+      "text": "기체 위 전원 아이콘을 눌러 차단 상태를 확인합니다.",
+      "ratio": 9.03,
+      "threshold": 4.5,
+      "color": "rgb(171, 212, 243)",
+      "background": [
+        16,
+        45,
+        71
+      ],
+      "screen": "help"
+    },
+    {
+      "selector": ".help-note",
+      "text": "상태를 판단하면 필요한 교체 작업이 이곳에 표시됩니다.",
+      "ratio": 9.02,
+      "threshold": 4.5,
+      "color": "rgb(168, 191, 206)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "help"
+    },
+    {
+      "selector": ".controller-panel h1",
+      "text": "조종기 작동 확인",
+      "ratio": 16.25,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".controller-panel > p",
+      "text": "기체 전원 → 조종기 전원 → 연결스틱을 움직여 회전 반응을 확인하세요.",
+      "ratio": 9.63,
+      "threshold": 4.5,
+      "color": "rgb(167, 186, 201)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".controller-panel > p",
+      "text": "스틱을 끌고 놓으면 중앙으로 돌아옵니다.키보드: 스틱 선택 후 방향키 · 놓으면 ",
+      "ratio": 9.63,
+      "threshold": 4.5,
+      "color": "rgb(167, 186, 201)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".remote-top",
+      "text": "AEROLAB · 가상 조종기",
+      "ratio": 9.76,
+      "threshold": 4.5,
+      "color": "rgb(164, 188, 204)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".remote-link",
+      "text": "조종기 전원 꺼짐",
+      "ratio": 9.86,
+      "threshold": 4.5,
+      "color": "rgb(169, 190, 207)",
+      "background": [
+        7,
+        18,
+        27
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".remote-readings b",
+      "text": "꺼짐",
+      "ratio": 13.75,
+      "threshold": 4.5,
+      "color": "rgb(160, 234, 219)",
+      "background": [
+        7,
+        18,
+        27
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".remote-readings b",
+      "text": "—",
+      "ratio": 13.75,
+      "threshold": 4.5,
+      "color": "rgb(160, 234, 219)",
+      "background": [
+        7,
+        18,
+        27
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".remote-readings b",
+      "text": "0%",
+      "ratio": 13.75,
+      "threshold": 4.5,
+      "color": "rgb(160, 234, 219)",
+      "background": [
+        7,
+        18,
+        27
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".stick-unit",
+      "text": "왼쪽중앙",
+      "ratio": 9.76,
+      "threshold": 4.5,
+      "color": "rgb(164, 188, 204)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".stick-unit",
+      "text": "오른쪽중앙",
+      "ratio": 9.76,
+      "threshold": 4.5,
+      "color": "rgb(164, 188, 204)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".remote-stop",
+      "text": "회전 정지 · Esc",
+      "ratio": 8.56,
+      "threshold": 4.5,
+      "color": "rgb(243, 198, 139)",
+      "background": [
+        56,
+        44,
+        32
+      ],
+      "screen": "controller"
+    },
+    {
+      "selector": ".page-heading h1",
+      "text": "훈련 기록",
+      "ratio": 16.25,
+      "threshold": 3,
+      "color": "rgb(228, 237, 245)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": ".page-heading p",
+      "text": "이 노트북의 결과를 확인하고 다른 노트북의 결과를 취합합니다.",
+      "ratio": 9.05,
+      "threshold": 4.5,
+      "color": "rgb(158, 181, 198)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "교육생",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "훈련 회차",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "교육 과정",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "실습 방식",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "수행 결과",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "실수 / 추가 힌트",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "th",
+      "text": "종료 시각 · 한국",
+      "ratio": 8.44,
+      "threshold": 4.5,
+      "color": "rgb(164, 195, 214)",
+      "background": [
+        20,
+        37,
+        53
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "001da6c555d",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "훈련-01",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "드론 정비",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "안내 실습",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "완료",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "0 / 0회",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "td",
+      "text": "11. 13. 10:18",
+      "ratio": 10.29,
+      "threshold": 4.5,
+      "color": "rgb(183, 203, 217)",
+      "background": [
+        16,
+        28,
+        41
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": ".status-tag",
+      "text": "완료",
+      "ratio": 8.3,
+      "threshold": 4.5,
+      "color": "rgb(164, 230, 196)",
+      "background": [
+        22,
+        62,
+        51
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": ".record-notes",
+      "text": "기록은 현재 브라우저에 저장됩니다. 교육 종료 후 CSV로 보관하세요.가져올 수 ",
+      "ratio": 9.05,
+      "threshold": 4.5,
+      "color": "rgb(158, 181, 198)",
+      "background": [
+        8,
+        15,
+        23
+      ],
+      "screen": "records"
+    },
+    {
+      "selector": "#theme-completion h2",
+      "text": "교육을 마쳤습니다!",
+      "ratio": 15.24,
+      "threshold": 3,
+      "color": "rgb(230, 243, 247)",
+      "background": [
+        15.783999999999999,
+        27.649,
+        40.514
+      ],
+      "screen": "completion"
+    },
+    {
+      "selector": "#theme-completion strong",
+      "text": "드론 정비 교육",
+      "ratio": 15.24,
+      "threshold": 3,
+      "color": "rgb(230, 243, 247)",
+      "background": [
+        15.783999999999999,
+        27.649,
+        40.514
+      ],
+      "screen": "completion"
+    },
+    {
+      "selector": "#theme-completion [id$=\"-description\"]",
+      "text": "드론 정비 교육모든 실습 단계를 완료했습니다.",
+      "ratio": 10.09,
+      "threshold": 4.5,
+      "color": "rgb(180, 201, 214)",
+      "background": [
+        15.783999999999999,
+        27.649,
+        40.514
+      ],
+      "screen": "completion"
+    },
+    {
+      "selector": "#theme-completion .button.primary",
+      "text": "확인",
+      "ratio": 9.53,
+      "threshold": 4.5,
+      "color": "rgb(8, 33, 42)",
+      "background": [
+        88,
+        216,
+        195
+      ],
+      "screen": "completion"
+    }
+  ],
+  "failed": [],
+  "errors": []
+}

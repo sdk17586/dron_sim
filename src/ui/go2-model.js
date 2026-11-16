@@ -1,7 +1,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { GLTFLoader } from '../vendor/three/GLTFLoader.js';
 import { ROBOT_LEGS } from '../domain/quadruped.js';
-import { createJointService, seatBodyControls } from './joint-service.js';
+import { createJointService, seatBodyControls, setModuleDamage } from './joint-service.js';
 
 const templates = new Map();
 const prefixes = { 'front-left': 'FL', 'front-right': 'FR', 'rear-left': 'RL', 'rear-right': 'RR' };
@@ -12,7 +12,10 @@ async function template(compatible) {
   const quality = compatible ? 'compatible' : 'detail';
   if (!templates.has(quality)) {
     const url = new URL(`../../assets/models/go2/go2-${quality}.glb`, import.meta.url);
-    const promise = new GLTFLoader().loadAsync(url.href).catch(error => { templates.delete(quality); throw error; });
+    const promise = new GLTFLoader().loadAsync(url.href).catch(error => {
+      if (templates.get(quality) === promise) templates.delete(quality);
+      throw error;
+    });
     templates.set(quality, promise);
   }
   return templates.get(quality);
@@ -20,10 +23,15 @@ async function template(compatible) {
 
 export async function loadGo2(view) {
   const compatible = view.canvas.dataset.renderBackend === 'svg';
+  const quality = compatible ? 'compatible' : 'detail';
+  const pending = template(compatible), cached = templates.get(quality);
   let timer;
-  const source = await Promise.race([template(compatible), new Promise((_, reject) => {
+  const source = await Promise.race([pending, new Promise((_, reject) => {
     timer = setTimeout(() => reject(new Error('모델을 불러오는 시간이 초과되었습니다.')), 8000);
-  })]).finally(() => clearTimeout(timer));
+  })]).catch(error => {
+    if (templates.get(quality) === cached) templates.delete(quality);
+    throw error;
+  }).finally(() => clearTimeout(timer));
   if (view.disposed) return;
   const root = source.scene.clone(true), geometries = new Map(), materials = new Map();
   const joints = new Map();
@@ -51,17 +59,10 @@ export async function loadGo2(view) {
   root.updateMatrixWorld(true);
   root.position.y += .04 - new THREE.Box3().setFromObject(root).min.y;
 
-  const protectedObjects = new Set();
-  for (const object of [view.battery, view.stop, view.powerLight, view.powerButton, view.stands, view.frontArrow,
-    ...[...view.legs.values()].flatMap(model => [model.connector, model.ring, model.crack, ...model.bolts])]) {
-    object.traverse(child => protectedObjects.add(child));
-  }
-  view.body.traverse(object => { if (object.isMesh && !protectedObjects.has(object)) object.visible = false; });
+  view.buildTeachingParts();
   view.body.add(root);
   for (const leg of ROBOT_LEGS) {
     const model = view.legs.get(leg.id);
-    view.body.add(model.knee);
-    model.knee.add(model.crack); model.crack.position.x = -leg.x * .27;
     model.cartridge = joints.get(leg.id).module;
   }
   const top = root.position.y + .0888 * units;
@@ -92,7 +93,7 @@ export async function loadGo2(view) {
     },
     spareModule({damaged=false}={}) {
       const module = joints.get(view.state?.targetLeg || 'front-left').module.clone(true);
-      const fracture=module.getObjectByName('qtrain-fracture');if(fracture)fracture.visible=damaged;
+      setModuleDamage(module,damaged);
       module.visible = true; module.position.set(0,0,0); module.scale.setScalar(units);
       module.quaternion.setFromRotationMatrix(rosRotation); module.rotateY(.72);
       return module;
@@ -107,5 +108,4 @@ export async function loadGo2(view) {
   view.canvas.dataset.modelQuality = compatible ? 'compatible' : 'detail';
   view.canvas.dataset.modelLinks = '17';
   view.cameraKey = '';
-  if (view.state) view.sync(view.state, view.ui);
 }

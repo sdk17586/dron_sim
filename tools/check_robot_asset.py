@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -20,7 +21,7 @@ def main():
             errors=[];external=[]
             page.on('pageerror',lambda error:errors.append(str(error)))
             page.on('request',lambda request:external.append(request.url) if not request.url.startswith(args.url+'/') else None)
-            page.goto(args.url+'/');page.locator('[data-action=robot]').click()
+            page.goto(args.url+'/');choose_course(page, 'robot')
             canvas=page.locator('.robot-3d-canvas[data-ready=true]');canvas.wait_for()
             assert canvas.get_attribute('data-model-source')=='unitree-go2'
             assert canvas.get_attribute('data-model-quality')=='detail'
@@ -63,12 +64,16 @@ def main():
             page.screenshot(path=str(output/'go2-webgl-showcase.png'),full_page=True)
             passed('자동 시연에서도 새 Go2 모델 사용과 화면 캡처')
             fallback=browser.new_page();fallback.route('**/assets/models/go2/*.glb',lambda route:route.abort())
-            fallback.goto(args.url+'/?compatible3d=1');fallback.locator('[data-action=robot]').click()
-            fallback.locator('.robot-3d-canvas[data-model-status=fallback][data-ready=true]').wait_for()
+            fallback.goto(args.url+'/?compatible3d=1');choose_course(fallback, 'robot')
+            fallback.locator('.robot-3d-canvas[data-model-status=error][data-ready=false]').wait_for()
             assert fallback.locator('.robot-asset-note').is_visible()
+            assert fallback.locator('.robot-3d-canvas').get_attribute('data-model-source')=='unavailable'
+            fallback.unroute('**/assets/models/go2/*.glb')
+            fallback.locator('[data-model-retry]').click()
+            fallback.locator('[data-model-source=unitree-go2][data-ready=true]').wait_for()
             fallback.close()
             assert not errors and not external,{'errors':errors,'external':external}
-            passed('GLB 로드 실패 시 안내와 대체 모델 제공, 외부 요청·JavaScript 오류 없음')
+            passed('GLB 로드 실패 시 구형 모델 없이 안내·재시도로 Go2 복원, 외부 요청·JavaScript 오류 없음')
             (output/'asset-results.json').write_text(json.dumps({'passed':len(checks),'checks':checks,'mapping':mapping,'errors':errors,'external':external,'webgl':'SwiftShader software renderer'},ensure_ascii=False,indent=2))
         finally:browser.close()
 

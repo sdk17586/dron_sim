@@ -5,10 +5,14 @@
 .immersive-stage { position: relative; width: 100%; height: clamp(560px,calc(100vh - 190px),900px); min-height: 560px; overflow: hidden; border: 1px solid #d3dfcf; border-radius: 16px; background: #edf2ee; }
 .immersive-stage > .drone-viewport, .immersive-stage > .robot-viewport { position: absolute; inset: 0; width: 100%; height: 100%; }
 .spatial-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.spatial-task-cue { position: absolute; width: 34px; height: 34px; transform: translate(-50%,-50%); border: 2px solid #2563eb; border-radius: 50%; background: #3b82f614; pointer-events: none; animation: spatial-task-pulse 2s ease-in-out infinite; }
+.spatial-task-cue {
+  position: absolute; width: 34px; height: 34px; transform: translate(-50%,-50%);
+  border: 3px solid var(--task); border-radius: 50%; background: #42ef701a;
+  box-shadow: var(--task-shadow); pointer-events: none;
+  animation: task-target-pulse var(--task-cycle) ease-in-out infinite;
+}
 .spatial-task-cue[hidden] { display: none; }
-@keyframes spatial-task-pulse { 0%,100% { opacity: .6; box-shadow: 0 0 0 2px #3b82f61a; } 50% { opacity: 1; box-shadow: 0 0 0 9px #3b82f633,0 0 18px #3b82f64d; } }
-@media (prefers-reduced-motion: reduce) { .spatial-task-cue { animation: none; opacity: 1; box-shadow: 0 0 0 3px #3b82f633; } }
+@media (prefers-reduced-motion: reduce) { .spatial-task-cue { animation: none; } }
 .spatial-hit { position: absolute; transform: translate(-50%,-50%); width: 26px; height: 26px; padding: 0; border: 0; opacity: 0; pointer-events: none; font-size: 11px; }
 .spatial-hit:focus-visible { opacity: 1; width: auto; min-width: 32px; max-width: 220px; height: auto; min-height: 32px; padding: 6px 10px; border-radius: 6px; background: #f7fbef; color: #37553e; box-shadow: 0 0 0 3px #8caf73; }
 .spatial-caption { position: absolute; transform: translate(-50%,0); white-space: nowrap; padding: 2px 5px; border-radius: 4px; font-size: 10px; color: #46624b; background: #f4f8eede; pointer-events: none; }
@@ -43,7 +47,19 @@
 .scene-guide .robot-workflow li { font-size: 10px; gap: 5px; }
 .scene-guide .robot-workflow li > span { width: 20px; height: 20px; font-size: 10px; }
 .scene-guide .guide-progress { margin-top: 3px; }
-.immersive-stage:has([data-holding3d]:not([data-holding3d=""])) .scene-guide { pointer-events: none; opacity: .25; }
+.immersive-stage:has([data-holding3d]:not([data-holding3d=""])) .scene-guide { pointer-events: none; }
+.immersive-stage:has([data-holding3d]:not([data-holding3d=""])) .scene-guide .current-task-active { background-color: color-mix(in srgb, var(--task-bg) 72%, transparent); }
 @media (max-width:800px) { .scene-guide { width: calc(100% - 28px); } .scene-guide .task-guide { flex-direction: row; align-items: center; } .scene-guide .guide-next { flex-basis: 125px; border: 0; padding: 0; } .scene-guide .guide-up-next { display: none; } .scene-context { top: 210px; } }
 
 .scene-held-note { position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 28px); padding: 6px 12px; border: 1px solid #b2c89f; border-radius: 6px; background: #f3fae9e8; color: #476a37; font-size: 12px; pointer-events: none; }
+
+/* Let the maintenance scene use the browser's available area on desktop. */
+@media (min-width:801px) {
+  .minimal-shell:has(main > .spatial-workbench) { height: 100dvh; min-height: 680px; }
+  .minimal-shell:has(main > .spatial-workbench) > .minimal-header { flex-shrink: 0; }
+  .minimal-shell main:has(> .spatial-workbench) { max-width: none; flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 16px 16px; }
+  main:has(> .spatial-workbench) > .course-selector { flex: 0 0 auto; margin-bottom: 12px; }
+  main > .spatial-workbench { flex: 1; min-height: 0; display: flex; }
+  main > .spatial-workbench > .immersive-stage { flex: 1; height: auto; min-height: 0; border-radius: 12px; }
+  .minimal-shell:has(.imu-stage) { min-height: 860px; }
+}

@@ -1,4 +1,4 @@
-import { createIMUState, imuTransition as step, imuGuide, IMU_POSES, IMU_HOLD_MS } from '../src/domain/imu.js';
+import { createIMUState, imuTransition as step, imuGuide, requiredIMUPose, allowedIMUPoses, IMU_POSES, IMU_HOLD_MS } from '../src/domain/imu.js';
 import * as THREE from '../src/vendor/three/three.module.min.js';
 import { nearestIMUPose } from '../src/ui/imu3d.js';
 
@@ -23,6 +23,42 @@ test('목표 자세에서 3초 정지해야 측정 완료·중복 방지', () =>
   let s = dwell(prepared(), 2900); assert(!s.samples.length && s.stableMs === 2900, 'early complete');
   s = step(s, { type: 'TICK', elapsedMs: 100 }); assert(s.samples.join() === 'level', 'missing sample');
   s = dwell(s); assert(s.samples.length === 1 && s.stableMs === 0, 'duplicate face sampled');
+});
+test('옆면은 왼쪽 먼저·오른쪽 먼저 모두 각각 한 번씩 인정', () => {
+  for (const order of [['left','right'],['right','left']]) {
+    let s = dwell(prepared());
+    assert(allowedIMUPoses(s).length === 2 && imuGuide(s).current.title.includes('순서 자유'), 'side choice missing');
+    for (const id of order) {
+      s = step(s, { type: 'POSE', pose: id });
+      assert(requiredIMUPose(s).id === id && imuGuide(s).current.id === 'imu-pose-'+id, 'current side not accepted');
+      s = dwell(s);
+    }
+    assert(s.samples.join() === ['level',...order].join() && requiredIMUPose(s).id === 'nose-up', 'side order rejected');
+  }
+});
+test('이미 마친 옆면은 중복 집계하지 않고 반대쪽은 새로 3초 유지', () => {
+  let s = dwell(prepared()); s = dwell(step(s, { type: 'POSE', pose: 'right' }));
+  s = dwell(s, 9000);
+  assert(s.samples.join() === 'level,right' && s.stableMs === 0, 'side counted twice');
+  assert(allowedIMUPoses(s).length === 1 && requiredIMUPose(s).id === 'left', 'remaining side missing');
+  s = step(s, { type: 'POSE', pose: 'left' }); s = dwell(s, 2900);
+  assert(s.samples.length === 2 && s.stableMs === 2900, 'opposite side credited early');
+  s = step(s, { type: 'TICK', elapsedMs: 100 }); assert(s.samples.join() === 'level,right,left', 'opposite side missing');
+});
+test('옆면 자유 순서가 다른 자세 건너뛰기를 허용하지 않음', () => {
+  let s = dwell(prepared());
+  s = dwell(step(s, { type: 'POSE', pose: 'nose-up' }));
+  assert(s.samples.join() === 'level', 'skipped side stage');
+  s = dwell(step(s, { type: 'POSE', pose: 'right' }));
+  s = dwell(step(s, { type: 'POSE', pose: 'inverted' }));
+  assert(s.samples.join() === 'level,right', 'skipped remaining side');
+});
+test('오른쪽부터 측정한 뒤 중단·재개해도 반대쪽 진행과 고유 면 수 보존', () => {
+  let s = dwell(prepared()); s = dwell(step(s, { type: 'POSE', pose: 'right' }));
+  s = dwell(step(s, { type: 'POSE', pose: 'left' }), 500);
+  s = step(s, { type: 'PAUSE' }); s = step(s, { type: 'START' });
+  assert(s.stableMs === 0 && s.samples.join() === 'level,right', 'resume changed side count');
+  s = dwell(s); assert(s.samples.join() === 'level,right,left', 'remaining side not preserved');
 });
 test('틀린 자세·회전·화면 지연은 정지 시간을 적립하지 않음', () => {
   let s = dwell(prepared(), 500);

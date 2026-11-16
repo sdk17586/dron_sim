@@ -1,4 +1,5 @@
 import * as THREE from '../vendor/three/three.module.min.js';
+import { SCENE_COLORS } from './scene-theme.js';
 
 // One reusable camera move; pointer interaction always gives control back.
 export class CameraTravel {
@@ -36,7 +37,7 @@ export class CameraTravel {
 
 export function addStudioFinish(view, { shadow = true } = {}) {
   const svg = view.canvas.dataset.renderBackend === 'svg';
-  const rim = new THREE.DirectionalLight('#d7e9ff', svg ? .12 : 1.5);
+  const rim = new THREE.DirectionalLight(SCENE_COLORS.rim, svg ? .12 : 1.5);
   rim.position.set(3, 5, 1); view.scene.add(rim);
   const resources = [], group = new THREE.Group(); view.scene.add(group);
   if (shadow) {
@@ -44,7 +45,7 @@ export function addStudioFinish(view, { shadow = true } = {}) {
       // Geometry-only contact shade also works without a GPU or texture loading.
       for (let i = 0; i < 7; i++) {
         const g = new THREE.CircleGeometry(1, 40);
-        const m = new THREE.MeshBasicMaterial({ color: new THREE.Color('#edf2ee').lerp(new THREE.Color('#7a8d85'), (i + 1) * .025), depthWrite: false });
+        const m = new THREE.MeshBasicMaterial({ color: new THREE.Color(SCENE_COLORS.background).lerp(new THREE.Color(SCENE_COLORS.shadow), (i + 1) * .07), depthWrite: false });
         const disk = new THREE.Mesh(g, m); disk.rotation.x = -Math.PI / 2;
         disk.scale.set(1.65 - i * .09, 2.05 - i * .11, 1); disk.position.y = .002 + i * .001;
         group.add(disk); resources.push(g, m);
@@ -52,7 +53,7 @@ export function addStudioFinish(view, { shadow = true } = {}) {
     } else {
       const canvas = document.createElement('canvas'); canvas.width = canvas.height = 128;
       const ctx = canvas.getContext('2d'), gradient = ctx.createRadialGradient(64, 64, 6, 64, 64, 64);
-      gradient.addColorStop(0, 'rgba(21,42,37,.38)'); gradient.addColorStop(1, 'rgba(21,42,37,0)');
+      gradient.addColorStop(0, 'rgba(0,3,8,.7)'); gradient.addColorStop(1, 'rgba(0,3,8,0)');
       ctx.fillStyle = gradient; ctx.fillRect(0, 0, 128, 128);
       const texture = new THREE.CanvasTexture(canvas), geometry = new THREE.PlaneGeometry(4.2, 5);
       const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false });

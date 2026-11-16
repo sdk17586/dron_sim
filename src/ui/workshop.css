@@ -34,6 +34,7 @@
 .camera-home .icon { width: 16px; height: 16px; }
 .canvas-help { position: absolute; bottom: 21px; left: 62px; font-size: 11px; color: #819176; pointer-events: none; }
 .model-note { position: absolute; bottom: 21px; right: 18px; color: #8c9883; font-size: 10px; pointer-events: none; }
+.drone-asset-note { position: absolute; left: 12px; bottom: 45px; max-width: calc(100% - 24px); padding: 6px 9px; border-radius: 5px; color: #526c58; background: #f5f9efee; font-size: 11px; pointer-events: none; }
 .inspector { border: 0; border-radius: 0; background: none; padding: 28px 0 0; max-height: none; overflow: visible; }
 .eyebrow { display: block; color: #7c8d70; letter-spacing: 1.3px; font-size: 10px; margin-bottom: 14px; }
 .start-panel { padding-top: 42px; }

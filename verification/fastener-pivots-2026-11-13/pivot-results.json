@@ -1,0 +1,298 @@
+{
+  "cases": [
+    {
+      "kind": "drone",
+      "id": "front-left",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 8.881784197001252e-16,
+      "radialMax": 8.881784197001252e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-left",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 9.155133597044475e-16,
+      "radialMax": 9.155133597044475e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-left",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 4.965068306494546e-16,
+      "radialMax": 4.965068306494546e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-left",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 4.965068306494546e-16,
+      "radialMax": 4.965068306494546e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-right",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 8.95090418262362e-16,
+      "radialMax": 8.95090418262362e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-right",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 8.95090418262362e-16,
+      "radialMax": 8.95090418262362e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-right",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 9.155133597044475e-16,
+      "radialMax": 9.155133597044475e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "front-right",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 9.155133597044475e-16,
+      "radialMax": 9.155133597044475e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-left",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 8.881784197001252e-16,
+      "radialMax": 8.881784197001252e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-left",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 8.881784197001252e-16,
+      "radialMax": 8.881784197001252e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-left",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 4.47545209131181e-16,
+      "radialMax": 4.47545209131181e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-left",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 4.47545209131181e-16,
+      "radialMax": 4.47545209131181e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-right",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 8.881784197001252e-16,
+      "radialMax": 8.881784197001252e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-right",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 8.881784197001252e-16,
+      "radialMax": 8.881784197001252e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-right",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 8.95090418262362e-16,
+      "radialMax": 8.95090418262362e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "drone",
+      "id": "rear-right",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 8.95090418262362e-16,
+      "radialMax": 8.95090418262362e-16,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-left",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-left",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-left",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-left",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-right",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-right",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-right",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "front-right",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-left",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-left",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-left",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-left",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-right",
+      "index": 0,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-right",
+      "index": 0,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-right",
+      "index": 1,
+      "fasten": false,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    },
+    {
+      "kind": "robot",
+      "id": "rear-right",
+      "index": 1,
+      "fasten": true,
+      "translationMax": 0,
+      "radialMax": 0,
+      "axisDriftMax": 0
+    }
+  ],
+  "cancelled": {
+    "position": 0,
+    "rotation": 0,
+    "commits": 0
+  },
+  "errors": []
+}

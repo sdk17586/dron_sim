@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -25,7 +26,7 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             context.route('**/*', lambda route: route.continue_() if route.request.url.startswith(args.url + '/') else (external.append(route.request.url), route.abort()))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>qaCsp.push(e.effectiveDirective));")
-            def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             def pose(): return canvas.evaluate('(e)=>[e.dataset.driveX,e.dataset.driveZ,e.dataset.driveYaw]')
             def pointer(side, x, y):
@@ -38,14 +39,14 @@ def main():
                 click('robot-controller-power'); click('robot-controller-remote'); click('robot-controller-link'); click('robot-controller-estop')
             page.goto(args.url + ('/?compatible3d=1' if args.compatible else '/'))
             baseline = page.evaluate('JSON.stringify(localStorage)')
-            assert page.locator('.course-home .course-card').count() == 2
+            assert page.locator('.course-home .course-card').count() == 3
             click('robot'); assert page.locator('.course-selector [data-action=robot-controller]').is_visible()
             click('robot-controller')
             canvas = page.locator('.robot-3d-canvas[data-ready=true]'); canvas.wait_for()
             assert page.locator('.course-objectives li').count() == 5
             assert page.locator('.robot-controller-panel,[data-current-task],[data-stick],[data-piece]').count() == 0
             assert page.evaluate('JSON.stringify(localStorage)') == baseline
-            passed('첫 화면 두 장비 유지, 로봇 조종기 소개·3D 미리보기·명시적 실습 시작')
+            passed('첫 화면 세 장비 유지, 로봇 조종기 소개·3D 미리보기·명시적 실습 시작')
             click('robot-controller-start'); assert task() == 'robot-control-robot'
             assert canvas.get_attribute('data-supported') == 'false' and canvas.get_attribute('data-damaged') == '0'
             initial = pose()

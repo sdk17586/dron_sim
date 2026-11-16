@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 def main():
@@ -35,7 +36,7 @@ def main():
                     window.qaCspViolations.push({directive:event.effectiveDirective,blocked:event.blockedURI});
                 });""")
             page.goto(args.url)
-            page.locator("[data-action=intro-drone]").click(force=True)
+            choose_course(page, 'intro-drone', force=True)
             canvas = page.locator('.drone-3d-canvas[data-ready="true"]'); canvas.wait_for()
             assert canvas.get_attribute('data-blades') == '8' and canvas.get_attribute('data-screws') == '8'
             assert int(canvas.get_attribute('data-triangles')) > 1000
@@ -172,7 +173,7 @@ def main():
                     return type==='webgl2'?null:original.call(this,type,...args);
                 };""")
             fallback.goto(args.url + '/?compatible3d=0')
-            fallback.locator('[data-action=intro-drone]').click(force=True)
+            choose_course(fallback, 'intro-drone', force=True)
             fallback.locator('.renderer-notice').wait_for()
             assert fallback.locator('.workbench .drone-svg').count() == 1
             fallback.locator('#start-form button[type="submit"]').click(force=True)

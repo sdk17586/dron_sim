@@ -39,6 +39,24 @@ export function createRenderer3D({ compatible = false } = {}) {
   return renderer;
 }
 
+// A retired canvas may receive a delayed context-loss event (including one
+// caused by the browser's context limit). It cannot choose the live backend.
+export function watchRendererContext(view, onUnavailable) {
+  const lost = event => {
+    if (view.disposed) return;
+    event.preventDefault(); onUnavailable?.();
+  };
+  view.canvas.addEventListener('webglcontextlost', lost);
+  return () => view.canvas.removeEventListener('webglcontextlost', lost);
+}
+
+// dispose() releases Three.js objects, but the native context otherwise stays
+// alive until garbage collection. Previews are frequently replaced as a group.
+export function disposeRenderer3D(renderer) {
+  renderer.dispose?.();
+  if (!renderer.getContext?.()?.isContextLost?.()) renderer.forceContextLoss?.();
+}
+
 export function showRenderBackend(host, canvas) {
   host.querySelector('.render-mode-note')?.remove();
   if (canvas.dataset.renderBackend !== 'svg') return;

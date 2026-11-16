@@ -1,0 +1,35 @@
+{
+  "before": [
+    [
+      "drone",
+      "webgl"
+    ],
+    [
+      "robot",
+      "webgl"
+    ],
+    [
+      "panda",
+      "webgl"
+    ]
+  ],
+  "retiredCanvas": {
+    "connected": false,
+    "contextLost": false,
+    "retired": 4
+  },
+  "after": [
+    [
+      "drone",
+      "svg"
+    ],
+    [
+      "robot",
+      "svg"
+    ],
+    [
+      "panda",
+      "svg"
+    ]
+  ]
+}

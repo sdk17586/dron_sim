@@ -1,3 +1,15 @@
+:root {
+  --task: #5cf783;
+  --task-text: #bcffcb;
+  --task-edge: #173e24;
+  --task-bg: #11291e;
+  --task-glow: #42ef704d;
+  --task-cycle: 1.5s;
+  --task-wave-radius: 9px;
+  --task-shadow: 0 0 0 1px var(--task-edge), 0 0 0 3px var(--task), 0 0 8px 2px var(--task-glow);
+  --task-panel-shadow: inset 3px 0 0 var(--task), 0 0 0 1px #48c77180, 0 0 8px #42ef7033;
+}
+
 .minimal-header .header-action { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 7px 12px; border: 1px solid #cdd8c4; border-radius: 7px; background: #fff; color: #415e37; font-size: 12px; white-space: nowrap; }
 .header-action .icon { width: 15px; height: 15px; }
 .minimal-header .restart-visible { background: #eef3e7; border-color: #b6c9a5; }
@@ -58,8 +70,15 @@
 .robot-workflow [data-workflow-state=done] > span { background: #edf4e7; }
 .task-copy .guide-up-next { color: #6c8061; font-size: 11px; }
 @media (max-width:650px) { .robot-workflow { flex-basis: auto; gap: 4px; padding-bottom: 10px; } .robot-workflow li { gap: 4px; font-size: 10px; } .robot-workflow li > span { width: 20px; height: 20px; font-size: 10px; } }
-.guide-source { box-shadow: 0 0 0 3px #3b82f640 !important; outline: 2px solid #2563eb; outline-offset: 3px; animation: task-target-pulse 2s ease-in-out infinite; }
-.guide-destination { outline: 2px dashed #3b82f6; outline-offset: 4px; }
+.model-power, .repair-point, .spatial-task-cue, .imu-stage [data-imu-active=true] { --task-wave-radius: 16px; }
+.guide-source, .guide-destination, [data-next-action] {
+  outline: 3px solid var(--task);
+  outline-offset: 2px;
+  box-shadow: var(--task-shadow);
+  animation: task-target-pulse var(--task-cycle) ease-in-out infinite;
+}
+.guide-destination { outline-style: dashed; outline-offset: 3px; }
+.guide-source:focus-visible, .guide-destination:focus-visible, [data-next-action]:focus-visible { outline-color: var(--task); outline-offset: 5px; }
 .two-buttons.guide-source { border-radius: 8px; }
 .learning-help-dialog { width: min(680px,calc(100vw - 32px)); max-height: 86vh; overflow-y: auto; overscroll-behavior: contain; margin: auto; padding: 26px; border: 1px solid #c7d7b8; border-radius: 15px; color: #2c432f; background: #fafcf7; box-shadow: 0 20px 70px #1d332540; }
 .learning-help-dialog::backdrop { background: #1d302c66; }
@@ -85,27 +104,37 @@
 .help-controls summary { cursor: pointer; }
 .help-controls ul { padding-left: 18px; line-height: 1.9; margin-top: 10px; }
 .help-controls li { margin: 7px 0; }
-.current-task-active { border-color: #3b82f6; animation: task-panel-pulse 2s ease-in-out infinite; }
-.task-guide.current-task-active, .scene-guide .task-guide.current-task-active, .help-current.current-task-active { background: #eff6fff5; }
-.current-task-active .task-copy > .guide-caption:first-child, .help-current.current-task-active > .guide-caption { color: #1d4ed8; font-weight: 600; }
-.current-task-active .task-copy > .guide-caption:first-child::before, .help-current.current-task-active > .guide-caption::before, .help-attention::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #2563eb; margin-right: 7px; animation: task-dot-pulse 2s ease-in-out infinite; }
+.current-task-active { border-color: var(--task); box-shadow: var(--task-panel-shadow); animation: task-panel-pulse var(--task-cycle) ease-in-out infinite; }
+.task-guide.current-task-active, .scene-guide .task-guide.current-task-active, .help-current.current-task-active { background: var(--task-bg); }
+.current-task-active .task-copy > .guide-caption:first-child, .current-task-active > .guide-caption { color: var(--task-text); font-weight: 600; }
+.current-task-active .task-copy > .guide-caption:first-child::before, .current-task-active > .guide-caption::before, .help-attention::after { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--task); margin-right: 7px; animation: task-dot-pulse var(--task-cycle) ease-in-out infinite; }
 .help-attention::after { margin: 0 0 0 2px; flex-shrink: 0; }
-.current-task-active #current-task-title, .help-current.current-task-active h3, .current-task-active [data-current-target] { color: #1e40af; }
-.current-task-active .guide-locate { color: #1d4ed8; background: #dbeafe; border-color: #93c5fd; }
-.robot-workflow [data-workflow-state=current] { color: #1d4ed8; }
-.robot-workflow [data-workflow-state=current] > span { background: #2563eb; border-color: #2563eb; }
-.help-phase li[aria-current=step] { border: 1px solid #60a5fa; border-radius: 7px; padding: 12px; margin-top: 6px; background: #eff6ff; color: #1e40af; animation: task-panel-pulse 2s ease-in-out infinite; }
-.help-phase li[aria-current=step] .task-state, .help-phase li[aria-current=step] p, .help-phase li[aria-current=step] small { color: #1d4ed8; }
-.current-task-badge { display: inline-block; margin-left: 7px; padding: 2px 6px; border-radius: 4px; background: #2563eb; color: white; font-size: 10px; white-space: nowrap; }
+.current-task-active #current-task-title, .help-current.current-task-active h3, .current-task-active [data-current-target] { color: var(--task-text); }
+.current-task-active .guide-locate { color: var(--task-text); background: var(--task-bg); border-color: var(--task); }
+.robot-workflow [data-workflow-state=current] { color: var(--task-text); }
+.robot-workflow [data-workflow-state=current] > span { background: var(--task); border-color: var(--task); }
+.help-phase li[aria-current=step] { border: 1px solid var(--task); border-radius: 7px; padding: 12px; margin-top: 6px; background: var(--task-bg); color: var(--task-text); animation: task-panel-pulse var(--task-cycle) ease-in-out infinite; }
+.help-phase li[aria-current=step] .task-state, .help-phase li[aria-current=step] p, .help-phase li[aria-current=step] small { color: var(--task-text); }
+.current-task-badge { display: inline-block; margin-left: 7px; padding: 2px 6px; border-radius: 4px; background: var(--task); color: var(--task-edge); font-size: 10px; white-space: nowrap; }
 .task-voice-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .task-voice-controls button { min-height: 28px; padding: 4px 7px; border: 1px solid #93c5fd; border-radius: 5px; background: #fff; color: #1d4ed8; font-size: 10px; white-space: nowrap; }
 .task-voice-controls [aria-pressed=true] { background: #dbeafe; border-color: #60a5fa; }
 .task-voice-controls button:disabled { opacity: .55; cursor: default; }
 .voice-status { flex-basis: 100%; color: #42678e; font-size: 10px; line-height: 1.7; }
-@keyframes task-panel-pulse { 0%,100% { box-shadow: 0 0 0 1px #3b82f62b; } 50% { box-shadow: 0 0 0 4px #3b82f654,0 0 18px #3b82f624; } }
-@keyframes task-target-pulse { 0%,100% { outline-color: #93c5fd; } 50% { outline-color: #2563eb; } }
-@keyframes task-dot-pulse { 0%,100% { opacity: .55; box-shadow: 0 0 0 0 #3b82f61a; } 50% { opacity: 1; box-shadow: 0 0 0 4px #3b82f633; } }
-@media (prefers-reduced-motion: reduce) { .current-task-active, .guide-source, .help-phase li[aria-current=step], .current-task-active .task-copy > .guide-caption:first-child::before, .help-current.current-task-active > .guide-caption::before, .help-attention::after { animation: none; } }
+@keyframes task-panel-pulse {
+  0%,100% { border-color: #48ba69; box-shadow: var(--task-panel-shadow); }
+  50% { border-color: #b4ffbf; box-shadow: inset 3px 0 0 var(--task), 0 0 0 3px #63ff8bc9, 0 0 18px 4px #42ef7066; }
+}
+@keyframes task-target-pulse {
+  0%,100% { box-shadow: var(--task-shadow); }
+  50% {
+    box-shadow: 0 0 0 calc(var(--task-wave-radius) - 3px) #16402aeb,
+                0 0 0 var(--task-wave-radius) #94ffac,
+                0 0 15px var(--task-wave-radius) #42ef7066;
+  }
+}
+@keyframes task-dot-pulse { 0%,100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 4px var(--task-glow); } }
+@media (prefers-reduced-motion: reduce) { .current-task-active, .guide-source, .guide-destination, [data-next-action], .help-phase li[aria-current=step], .current-task-active .task-copy > .guide-caption:first-child::before, .current-task-active > .guide-caption::before, .help-attention::after { animation: none; } }
 .is-preparing .start-panel { padding-top: 18px; }
 .is-preparing .start-panel > p { margin: 9px 0 15px; }
 .is-preparing .start-fields { margin-top: 18px; }

@@ -1,4 +1,8 @@
 import * as THREE from '../vendor/three/three.module.min.js';
+import { SCENE_COLORS } from './scene-theme.js';
+
+const DRIVER_DURATION_MS=2400;
+const DRIVER_TURNS=2;
 
 // Shared spatial interaction for both teaching models. Domain state is committed
 // only after a valid placement animation; cancellation never changes the parts.
@@ -8,9 +12,7 @@ export class Workshop3D {
     this.entries = []; this.geometries = new Set(); this.materials = new Map(); this.epoch = 0;
     this.bench = new THREE.Group(); this.scene.add(this.bench); this.bench.visible = false;
     this.proxies = new THREE.Group(); this.scene.add(this.proxies); this.ray = new THREE.Raycaster();
-    this.markers = new THREE.Group(); this.scene.add(this.markers);
     this.proxyGeometry = new THREE.SphereGeometry(1, 8, 6); this.geometries.add(this.proxyGeometry);
-    this.ring = this.mesh(new THREE.TorusGeometry(.18, .018, 5, 28), '#3b82f6'); this.scene.add(this.ring); this.ring.visible = false;
     this.listen();
   }
   material(color) {
@@ -23,7 +25,7 @@ export class Workshop3D {
   }
   box(x,y,z,color,parent,position) { return this.mesh(new THREE.BoxGeometry(x,y,z),color,parent,position); }
   cylinder(r,h,color,parent,position) { return this.mesh(new THREE.CylinderGeometry(r,r,h,12),color,parent,position); }
-  art(kind, color = '#496958', charge = 100) {
+  art(kind, color = '#386c7c', charge = 100) {
     const g = new THREE.Group();
     if (kind === 'driver') {
       this.cylinder(.11,.55,color,g,[0,.42,0]); this.cylinder(.025,.5,'#aab8ae',g,[0,-.09,0]);
@@ -42,9 +44,9 @@ export class Workshop3D {
       for (const x of [-.25,.25]) this.box(.09,.65,.1,'#97aaa1',g,[x,.34,0]);
       this.box(.72,.08,.42,color,g,[0,.05,0]); this.box(.65,.09,.25,'#c49b62',g,[0,.7,0]);
     } else if (kind === 'tray') {
-      this.box(1.4,.08,1.1,'#9aada2',g,[0,.04,0]);
-      for (const x of [-.72,.72]) this.box(.06,.25,1.18,'#607e6c',g,[x,.14,0]);
-      for (const z of [-.57,.57]) this.box(1.5,.25,.06,'#607e6c',g,[0,.14,z]);
+      this.box(1.4,.08,1.1,'#46515d',g,[0,.04,0]);
+      for (const x of [-.72,.72]) this.box(.06,.25,1.18,'#2b3541',g,[x,.14,0]);
+      for (const z of [-.57,.57]) this.box(1.5,.25,.06,'#2b3541',g,[0,.14,z]);
     } else {
       this.box(.66,.3,.43,color,g,[0,.2,0]); this.box(.48,.02,.045,'#263a2d',g,[0,.36,0]);
       if(charge>0)this.box(.48*charge/100,.025,.045,charge<=20?'#cf674b':charge<=50?'#c99a3c':'#71ad50',g,[-.24+.24*charge/100,.365,0]);
@@ -56,15 +58,15 @@ export class Workshop3D {
   reset(active, validate) {
     this.cancel(); this.epoch++; this.active = active; this.validate = validate;
     this.tooltip?.remove(); this.tooltip=null;
-    this.entries = []; this.proxies.clear(); this.markers.clear();
+    this.entries = []; this.proxies.clear();
     this.bench.traverse(o => { if (o.isMesh && this.geometries.has(o.geometry)) { o.geometry.dispose(); this.geometries.delete(o.geometry); } });
     this.bench.clear(); this.bench.visible = active;
-    this.layer?.remove(); this.layer = null; this.ring.visible = false;
+    this.layer?.remove(); this.layer = null;
     this.canvas.dataset.workshop = String(active);
     if (!active || !this.view.host) return;
     this.layer = document.createElement('div'); this.layer.className = 'spatial-labels'; this.view.host.append(this.layer);
     this.tooltip = document.createElement('output'); this.tooltip.className = 'spatial-tooltip'; this.tooltip.hidden = true; this.view.host.append(this.tooltip);
-    this.box(9,.12,1.55,'#c9d2c7',this.bench,[0,-.1,0]);
+    this.box(9,.12,1.55,SCENE_COLORS.bench,this.bench,[0,-.1,0]);
     this.canvas.dataset.workshop = 'true';
   }
   bind(id, object, options = {}) {
@@ -87,7 +89,7 @@ export class Workshop3D {
   }
   anchor(entry) { return entry.anchor ? entry.anchor() : entry.object.getWorldPosition(new THREE.Vector3()); }
   accepts(piece,target) {
-    const kinds={battery:'discard','mounted-blade':'discard','battery-pack':'battery-slot',driver:'screw',blade:'blade',screw:'screw','robot-battery':'robot-discard','robot-mounted-module':'robot-discard','robot-stored-battery':'robot-battery-slot','robot-driver':'robot-bolt','robot-module':'robot-module-slot','robot-support':'robot-support-slot'};
+    const kinds={'panda-driver':'panda-bolt','panda-mounted-gripper':'panda-discard','panda-gripper':'panda-gripper-slot',battery:'discard','mounted-blade':'discard','battery-pack':'battery-slot',driver:'screw',blade:'blade',screw:'screw','robot-battery':'robot-discard','robot-mounted-module':'robot-discard','robot-stored-battery':'robot-battery-slot','robot-driver':'robot-bolt','robot-module':'robot-module-slot','robot-support':'robot-support-slot'};
     return Boolean(piece && target && kinds[piece.kind]===target.kind);
   }
   update() {
@@ -101,23 +103,17 @@ export class Workshop3D {
     this.bench.quaternion.copy(this.camera.quaternion); this.bench.rotateX(Math.PI/2-.35);
     this.bench.scale.setScalar(distance * .065 * Math.min(1,this.camera.aspect));
     this.scene.updateMatrixWorld(true);
-    const w = this.view.host.clientWidth, h = this.view.host.clientHeight; this.ring.visible=false;
+    const w = this.view.host.clientWidth, h = this.view.host.clientHeight;
     for (const entry of this.entries) {
       const point = this.anchor(entry); entry.proxy.position.copy(point);
       entry.proxy.scale.setScalar(entry.supply ? distance*.032*Math.min(1,this.camera.aspect) : entry.radius);
       const p = point.clone().project(this.camera), x = (p.x+1)*.5*w, y = (1-p.y)*.5*h;
       entry.button.style.left = `${x}px`; entry.button.style.top = `${y}px`;
-      const visible = Math.abs(p.x)<.97 && Math.abs(p.y)<.97 && p.z<1 && entry.enabled !== false;
+      const visible = Math.abs(p.x)<.97 && Math.abs(p.y)<.97 && p.z>=-1 && p.z<1 && entry.enabled !== false;
       entry.button.hidden = !visible; entry.button.dataset.x = String(x); entry.button.dataset.y = String(y);
       entry.cue.style.left = `${x}px`; entry.cue.style.top = `${y}px`;
       entry.cue.hidden = !visible || !(this.held ? this.accepts(this.held.entry.piece,entry.drop) : entry.current);
       if (entry.captionNode) { entry.captionNode.style.left = `${x}px`; entry.captionNode.style.top = `${y+23}px`; entry.captionNode.hidden = !visible; }
-      if (entry.current && !this.held) { this.ring.position.copy(point); this.ring.quaternion.copy(this.camera.quaternion); this.ring.scale.setScalar((entry.cueRadius||.18)/.18);this.ring.visible = visible; }
-      if(entry.drop){
-        if(!entry.marker){entry.marker=new THREE.Mesh(this.ring.geometry,this.ring.material);this.markers.add(entry.marker);}
-        entry.marker.position.copy(point);entry.marker.quaternion.copy(this.camera.quaternion);entry.marker.scale.setScalar((entry.cueRadius||.18)/.18);
-        entry.marker.visible=visible && this.accepts(this.held?.entry.piece,entry.drop);
-      }
     }
     this.proxies.updateMatrixWorld(true);
     this.canvas.dataset.holding3d = this.held?.entry.piece?.kind || '';
@@ -140,11 +136,23 @@ export class Workshop3D {
   }
   pick(entry) {
     entry.object.updateWorldMatrix(true,true);
-    this.cancel(); const ghost = entry.object.clone(true); ghost.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = false; o.material.opacity = 1; } });
+    this.cancel();
+    const ghost = entry.object.clone(true), materials = new Map();
+    const opaqueCopy = original => {
+      if (!materials.has(original)) {
+        const copy = original.clone();
+        copy.transparent = false; copy.opacity = 1;
+        materials.set(original, copy);
+      }
+      return materials.get(original);
+    };
+    ghost.traverse(o => {
+      if (o.isMesh) o.material = Array.isArray(o.material) ? o.material.map(opaqueCopy) : opaqueCopy(o.material);
+    });
     const position = new THREE.Vector3(), quaternion = new THREE.Quaternion(), scale = new THREE.Vector3();
     entry.object.matrixWorld.decompose(position,quaternion,scale); ghost.position.copy(position); ghost.quaternion.copy(quaternion); ghost.scale.copy(scale);
     this.scene.add(ghost); const visible = entry.object.visible; entry.object.visible = false;
-    this.held = { entry, ghost, visible }; this.view.controls.enabled = false;
+    this.held = { entry, ghost, visible, materials }; this.view.controls.enabled = false;
     if(entry.pullAxis) {
       const from=ghost.position.clone(), axis=entry.pullAxis(), started=performance.now(), token=this.epoch;
       if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)ghost.position.addScaledVector(axis,.25);
@@ -172,7 +180,7 @@ export class Workshop3D {
     this.epoch++; clearInterval(this.animation); this.animation = null; this.busy = false;
     if (this.held) {
       this.held.entry.object.visible = this.held.visible; this.held.ghost.removeFromParent();
-      this.held.ghost.traverse(o => { if (o.isMesh) o.material.dispose(); }); this.held = null;
+      this.held.materials.forEach(material => material.dispose()); this.held = null;
     }
     if (this.operation) { this.operation.object.position.copy(this.operation.position); this.operation.object.quaternion.copy(this.operation.quaternion); this.operation=null; }
     if (this.tooltip) this.tooltip.hidden=true;
@@ -208,8 +216,12 @@ export class Workshop3D {
     const approach=seat?to.clone().addScaledVector(destination.pullAxis(),.28):null;
     const toolRotation=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),axis);
     if(driver)to.addScaledVector(axis,.38*carried.ghost.scale.y);
-    if (destination.turn) this.operation={object:destination.turn,position:destination.turn.position.clone(),quaternion:destination.turn.quaternion.clone()};
-    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : seat ? 700 : driver ? 500 : 330;
+    if (destination.turn) {
+      const object=destination.turn,pivot=destination.turnPivot?.clone() || new THREE.Vector3();
+      this.operation={object,position:object.position.clone(),quaternion:object.quaternion.clone(),pivot,
+        center:object.position.clone().add(pivot.clone().multiply(object.scale).applyQuaternion(object.quaternion))};
+    }
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : seat ? 700 : driver ? DRIVER_DURATION_MS : 330;
     this.animation = setInterval(() => {
       if (token !== this.epoch || !this.view.host?.isConnected) return this.cancel();
       const t = duration ? Math.min(1,(performance.now()-start)/duration) : 1;
@@ -224,13 +236,17 @@ export class Workshop3D {
         carried.ghost.position.lerpVectors(from,to,ease); carried.ghost.position.y += Math.sin(t*Math.PI)*.22;
       }
       if (piece.kind.includes('driver')) {
-        const approach=Math.min(1,t/.3), spin=Math.max(0,(t-.3)/.7);
+        const approach=Math.min(1,t/.2), progress=Math.max(0,(t-.2)/.8);
+        const spin=progress*progress*(3-2*progress),angle=spin*Math.PI*2*DRIVER_TURNS;
         carried.ghost.position.lerpVectors(from,to,approach*approach*(3-2*approach));
         carried.ghost.quaternion.slerpQuaternions(fromRotation,toolRotation,approach);
-        carried.ghost.rotateY(spin*Math.PI*6);
+        carried.ghost.rotateY(angle);
         if (this.operation) {
-          this.operation.object.quaternion.copy(this.operation.quaternion); this.operation.object.rotateY(spin*Math.PI*6);
-          this.operation.object.position.copy(this.operation.position).addScaledVector(destination.turnOffset || new THREE.Vector3(0,.13,0),spin);
+          const operation=this.operation,object=operation.object;
+          object.quaternion.copy(operation.quaternion);object.rotateY(angle);
+          // Keep the shaft centre fixed even when the mesh is offset inside its group.
+          object.position.copy(operation.center)
+            .sub(operation.pivot.clone().multiply(object.scale).applyQuaternion(object.quaternion));
         }
       }
       this.canvas.dataset.animationFrame3d = String((Number(this.canvas.dataset.animationFrame3d)||0)+1); this.draw();
@@ -243,6 +259,7 @@ export class Workshop3D {
       if (!this.active || event.button !== 0) return;
       const entry = this.hit(event); if (!entry && !this.held) return;
       event.preventDefault(); event.stopImmediatePropagation();
+      this.canvas.focus({preventScroll:true});
       if (this.busy) return;
       this.down = { entry, x:event.clientX, y:event.clientY, id:event.pointerId, dragged:false };
       this.view.controls.enabled = false; this.canvas.setPointerCapture(event.pointerId);
@@ -274,6 +291,6 @@ export class Workshop3D {
     window.addEventListener('blur',() => { this.cancel(); this.draw(); }, { signal: this.lifecycle.signal });
     document.addEventListener('visibilitychange',() => { if (document.hidden) { this.cancel(); this.draw(); } }, { signal: this.lifecycle.signal });
   }
-  detach() { this.cancel(); this.active = false; this.canvas.dataset.workshop = 'false'; this.bench.visible = false; this.ring.visible = false; this.markers.clear(); this.layer?.remove(); this.tooltip?.remove();this.tooltip=null; }
-  dispose() { this.lifecycle?.abort(); this.detach(); this.bench.removeFromParent(); this.proxies.removeFromParent(); this.markers.removeFromParent(); this.ring.removeFromParent(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
+  detach() { this.cancel(); this.active = false; this.canvas.dataset.workshop = 'false'; this.bench.visible = false; this.layer?.remove(); this.tooltip?.remove();this.tooltip=null; }
+  dispose() { this.lifecycle?.abort(); this.detach(); this.bench.removeFromParent(); this.proxies.removeFromParent(); this.geometries.forEach(g => g.dispose()); this.materials.forEach(m => m.dispose()); }
 }

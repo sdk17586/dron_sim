@@ -7,14 +7,14 @@ const act = (s, type, values = {}) => controllerTransition(s, { type, ...values 
 const checked = () => {
   let s = createControllerState();
   for (const type of ['AIRCRAFT_POWER', 'REMOTE_POWER', 'LINK']) s = act(s, type);
-  for (const side of ['left', 'right']) s = act(s, 'STICK', { side, x: 1, y: 0 });
+  for (const side of ['left', 'right']) s = act(s, 'STICK', { side, x: side === 'right' ? 1 : 0, y: side === 'left' ? 1 : 0 });
   return act(s, 'STOP');
 };
 let passed = 0;
 function test(label, run) { run(); passed++; console.log('PASS', label); }
 test('시작부터 조종기와 IMU 작업을 하나의 도움말·남은 작업으로 안내', () => {
   const g = controllerCourseGuide(createControllerState(), createIMUState());
-  assert(g.current.id === 'aircraft' && !g.complete && g.remaining === 19, 'missing combined checklist');
+  assert(g.current.id === 'aircraft' && !g.complete && g.remaining === 23, 'missing combined checklist');
   assert(g.phases.some(p => p.tasks.some(t => t.id === 'imu-verify')), 'IMU missing from help');
 });
 test('조종기만 마치면 이어하기를 안내하며 전체 완료로 인정하지 않음', () => {
@@ -28,10 +28,10 @@ test('전원 차단·스틱 움직임 중 전환 차단과 정확한 복구 위�
     assert(!canEnterControllerIMU(c) && g.current.id.endsWith('-restore'), 'missing power check');
     assert(g.phases.some(p => p.tasks.some(t => t.id === g.current.id && !t.done)), 'power restore help missing');
   }
-  const moving = act(checked(), 'STICK', { side: 'left', x: 1, y: 0 });
+  const moving = act(checked(), 'STICK', { side: 'left', x: 0, y: 1 });
   assert(!canEnterControllerIMU(moving) && controllerCourseGuide(moving, createIMUState()).current.id === 'controller-imu-center', 'moving handoff');
 });
-test('IMU 측정만 마쳐도 미완료, 결과 확인 후에만 통합 교육 완료', () => {
+test('IMU 결과 확인 뒤 이동 단계로 이어지며 실제 이동·회전·정지 후 전체 완료', () => {
   const c = checked(); let imu = createIMUState();
   for (const type of ['SURFACE', 'POWER', 'LINK', 'START']) imu = imuTransition(imu, { type });
   for (const pose of IMU_POSES) {
@@ -41,8 +41,16 @@ test('IMU 측정만 마쳐도 미완료, 결과 확인 후에만 통합 교육 �
   assert(!controllerCourseGuide(c, imu, 'imu').complete, 'measurement alone completed course');
   imu = imuTransition(imu, { type: 'POSE', pose: 'level' }); imu = imuTransition(imu, { type: 'VERIFY' });
   const g = controllerCourseGuide(c, imu, 'imu');
-  assert(g.complete && g.remaining === 0 && g.current.id === 'controller-course-completed', 'combined completion missing');
+  assert(!g.complete && g.current.id === 'controller-flight-next', 'IMU ended course early');
   assert(!controllerCourseGuide(createControllerState(), imu, 'imu').complete, 'IMU bypassed controls');
+  let flight = act(c, 'BEGIN_FLIGHT', { calibration: imu });
+  assert(flight.flightReady && controllerCourseGuide(flight, imu).current.id === 'flight-move', 'movement handoff missing');
+  flight = act(flight, 'STICK', { side: 'left', x: 0, y: 1 }); flight = act(flight, 'TICK', { seconds: .1 });
+  flight = act(flight, 'CENTER'); flight = act(flight, 'STICK', { side: 'right', x: 1, y: 0 }); flight = act(flight, 'TICK', { seconds: .1 });
+  flight = act(flight, 'STOP');
+  const done = controllerCourseGuide(flight, imu);
+  assert(done.complete && done.remaining === 0 && done.current.id === 'controller-course-completed', 'movement did not complete course');
+  assert(!canEnterControllerIMU(flight), 'flight can regress to new calibration');
 });
 test('단계별 진행·도움말 조회가 입력 상태를 변경하지 않음', () => {
   const c = checked(), imu = createIMUState(), snapshot = JSON.stringify([c, imu]);

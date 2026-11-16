@@ -2,6 +2,8 @@ import * as THREE from '../vendor/three/three.module.min.js';
 import { SVGRenderer } from '../vendor/three/SVGRenderer.js';
 import { IMU_POSES, requiredIMUPose, imuGuide } from '../domain/imu.js';
 import { icon } from './shared.js';
+import { SCENE_COLORS } from './scene-theme.js';
+import { loadX500Preview } from './x500-model.js';
 
 const UP = new THREE.Vector3(0, 1, 0), X = new THREE.Vector3(1, 0, 0), Z = new THREE.Vector3(0, 0, 1);
 const orientations = IMU_POSES.map(p => ({ ...p, q: new THREE.Quaternion().setFromEuler(new THREE.Euler(...p.rotation)) }));
@@ -35,24 +37,19 @@ export class IMUInteraction {
   }
   send(action) { this.v.host?.dispatchEvent(new CustomEvent('imu-interaction', { bubbles: true, detail: action })); }
   buildTarget() {
-    this.targetScene = new THREE.Scene(); this.targetScene.background = new THREE.Color('#eef4eb');
-    this.targetCamera = new THREE.PerspectiveCamera(38, 210 / 120, .1, 50); this.targetCamera.position.set(11, 10, -13); this.targetCamera.lookAt(0, 0, 0);
+    this.targetScene = new THREE.Scene(); this.targetScene.background = new THREE.Color(SCENE_COLORS.background);
+    this.targetCamera = new THREE.PerspectiveCamera(38, 210 / 120, .1, 50); this.targetCamera.position.set(9, 8, -11); this.targetCamera.lookAt(0, 0, 0);
     this.targetRenderer = new SVGRenderer(); this.targetRenderer.setSize(210, 120); this.targetRenderer.domElement.setAttribute('aria-hidden', 'true');
     this.targetModel = new THREE.Group(); this.targetScene.add(this.targetModel);
     this.targetGeometry = []; this.targetMaterials = [];
-    const box = (size, position, color) => {
-      const g = new THREE.BoxGeometry(...size), m = new THREE.MeshBasicMaterial({ color });
-      this.targetGeometry.push(g); this.targetMaterials.push(m);
-      const mesh = new THREE.Mesh(g, m); mesh.position.set(...position); this.targetModel.add(mesh); return mesh;
-    };
-    box([1.7, .65, 3], [0, 0, 0], '#d9e1ce');
-    box([.7, .45, .5], [0, -.18, -1.7], '#285064');
-    box([.8, .04, .25], [0, .35, -.7], '#d49c4a');
-    for (const x of [-1, 1]) for (const z of [-1, 1]) {
-      const arm = box([3, .18, .22], [x * 1.4, -.15, z * 1.1], '#a2b69b'); arm.rotation.y = -x * z * .38;
-      box([1.7, .12, .25], [x * 2.6, .08, z * 1.65], '#41604a');
-      box([.2, .7, .2], [x * 2.6, -.45, z * 1.65], '#71896b');
-    }
+    this.targetRenderer.domElement.dataset.modelStatus='loading';
+    this.targetReady=loadX500Preview().then(({root,geometries,materials})=>{
+      if(this.disposed){geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());return;}
+      this.targetGeometry=geometries;this.targetMaterials=materials;
+      this.targetModel.add(root);this.targetRenderer.domElement.dataset.modelSource='px4-x500';
+      this.targetRenderer.domElement.dataset.modelStatus='ready';
+      this.targetRenderer.render(this.targetScene,this.targetCamera);
+    }).catch(()=>{if(!this.disposed)this.targetRenderer.domElement.dataset.modelStatus='error';});
   }
   sync(s) {
     this.s = s; this.active = true;
@@ -83,11 +80,12 @@ export class IMUInteraction {
   }
   apply() {
     if (!this.active) return;
+    if (!this.drag) this.q.copy(orientations.find(p => p.id === this.s.pose).q);
     this.v.drone.quaternion.copy(this.q);
     let minY = Infinity;
     for (const x of [this.bounds.min.x, this.bounds.max.x]) for (const y of [this.bounds.min.y, this.bounds.max.y]) for (const z of [this.bounds.min.z, this.bounds.max.z]) minY = Math.min(minY, new THREE.Vector3(x, y, z).applyQuaternion(this.q).y);
     this.v.drone.position.set(0, .12 - minY, 0); this.v.drone.updateMatrixWorld(true);
-    this.axis.visible = true; this.axis.position.copy(this.v.drone.localToWorld(new THREE.Vector3(0, 1.5, 0))); this.axis.quaternion.copy(this.q);
+    this.axis.visible = this.s.status === 'calibrating'; this.axis.position.copy(this.v.drone.localToWorld(new THREE.Vector3(0, this.v.portedDrone.bodyTop+.1, 0))); this.axis.quaternion.copy(this.q);
     this.v.canvas.dataset.imuPose = this.s.pose; this.v.canvas.dataset.imuDragging = String(Boolean(this.drag));
   }
   update() {
@@ -98,9 +96,12 @@ export class IMUInteraction {
       node.dataset.x = String((p.x + 1) * width / 2); node.dataset.y = String((1 - p.y) * height / 2);
       node.hidden = p.z > 1 || Math.abs(p.x) > .97 || Math.abs(p.y) > .97;
     };
-    position(this.layer.querySelector('[data-imu-body]'), new THREE.Vector3(0, .95, -.3));
-    position(this.layer.querySelector('.imu-body-caption'), new THREE.Vector3(0, .95, -.3));
-    const power = this.layer.querySelector('[data-action="imu-power"]'); position(power, new THREE.Vector3(0, 1.48, .72));
+    const bodyPoint=new THREE.Vector3(0,this.v.portedDrone.bodyTop,-.3);
+    const body = this.layer.querySelector('[data-imu-body]'), caption = this.layer.querySelector('.imu-body-caption');
+    position(body, bodyPoint.clone()); position(caption, bodyPoint.clone());
+    body.hidden ||= this.s.status === 'idle' && this.s.pose === 'level' || this.s.status === 'completed';
+    caption.hidden ||= body.hidden;
+    const power = this.layer.querySelector('[data-action="imu-power"]'); position(power, this.v.power.position.clone());
     power.hidden ||= this.s.pose !== 'level' || Boolean(this.drag);
   }
   down(event, force = false) {
@@ -161,6 +162,7 @@ export class IMUInteraction {
     this.v.canvas.setAttribute('aria-label', '3D 드론. 빈 곳을 드래그해 회전하고 휠로 확대합니다. 모터의 번호로 점검할 위치를 선택하세요.');
   }
   dispose() {
+    this.disposed=true;
     this.deactivate(); this.abort.abort(); this.axis.removeFromParent();
     this.axis.traverse(n => { n.geometry?.dispose(); n.material?.dispose(); });
     this.targetGeometry.forEach(g => g.dispose()); this.targetMaterials.forEach(m => m.dispose());

@@ -14,7 +14,17 @@ export function createIMUState({ batteryCharge = 100 } = {}) {
     surface: false, power: false, linked: false, batteryCharge, status: 'idle', pose: 'level',
     moving: false, stableMs: 0, samples: [], pauseReason: '' };
 }
-export const requiredIMUPose = s => IMU_POSES.find(p => !s.samples.includes(p.id)) || null;
+export function allowedIMUPoses(s) {
+  const next = IMU_POSES.find(p => !s.samples.includes(p.id));
+  if (!next) return [];
+  // Either side may come first; every physical face still counts only once.
+  return ['left', 'right'].includes(next.id)
+    ? IMU_POSES.filter(p => ['left', 'right'].includes(p.id) && !s.samples.includes(p.id)) : [next];
+}
+export const requiredIMUPose = s => {
+  const allowed = allowedIMUPoses(s);
+  return allowed.find(p => p.id === s.pose) || allowed[0] || null;
+};
 export const imuCanStart = s => s.surface && s.power && s.linked && s.batteryCharge >= 50;
 
 export function imuTransition(state, action) {
@@ -62,24 +72,36 @@ export function imuTransition(state, action) {
 export function imuGuide(s) {
   const task = (id, title, detail, targetLabel, selector, done = false) => ({ id, title, detail, targetLabel, target: { kind: 'imu', selector }, done });
   const prep = [
-    task('imu-surface', '작업대를 먼저 확인하세요', '3D 화면 아래의 작업대 확인 표시를 누르세요. 마르고 수평이며 흔들리지 않는 곳에서 진행합니다.', '작업대의 수평 확인 표시', '[data-action="imu-surface"]', s.surface),
+    task('imu-surface', '작업대를 먼저 확인하세요', '기체의 두 착륙 다리가 마르고 평평한 작업대에 고르게 닿았는지 살펴보세요. 확인했으면 아래 버튼을 누르세요.', '수평 작업대 확인', '[data-action="imu-surface"]', s.surface),
     task('imu-power', '기체 전원을 켜세요', '기체 위쪽의 전원 표시를 누르세요. 이 교육 기체의 배터리는 100%입니다.', '기체 위의 전원 버튼', '[data-action="imu-power"]', s.power),
-    task('imu-link', '센서 화면에 기체를 연결하세요', '작업대 안의 센서 패널에서 기체 연결을 누르세요. 실습용 가상 연결입니다.', '센서 패널 · 기체 연결', '[data-action="imu-link"]', s.linked),
-    task('imu-start', 'IMU 보정을 시작하세요', '보정 필요 상태를 확인하고 보정 시작을 누르세요. 이 과정에서는 모터가 회전하지 않습니다.', '센서 패널 · 보정 시작', '[data-action="imu-begin"]', s.status !== 'idle'),
+    task('imu-link', '기체의 자세 센서를 연결하세요', '조종기 입력 확인을 마쳤습니다. 이제 ‘자세 센서 연결’을 눌러 기체의 기울기를 읽을 준비를 하세요.', '자세 센서 연결', '[data-action="imu-link"]', s.linked),
+    task('imu-start', 'IMU 보정을 시작하세요', '‘여섯 자세 측정 시작’을 누르세요. 첫 자세는 다리가 아래인 상태입니다. 기체를 그대로 두면 3초 뒤 첫 측정이 끝납니다.', '여섯 자세 측정 시작', '[data-action="imu-begin"]', s.status !== 'idle'),
   ];
-  const poses = IMU_POSES.map((p, i) => task(`imu-pose-${p.id}`, `${i + 1}/6 · ${p.label}`, `${p.instruction} 기체 본체를 잡아 끌어 돌린 뒤 놓고, 3초 동안 움직이지 마세요. 오른쪽 작은 모형이 목표 자세입니다.`, '3D 기체 본체 · 끌어서 돌리기', '[data-imu-body]', s.samples.includes(p.id)));
+  const poses = IMU_POSES.map((p, i) => task(`imu-pose-${p.id}`, `${i + 1}/6 · ${p.label}`,
+    `${p.instruction} 자세 버튼을 누르거나 3D 기체를 끌어서 돌리세요. 맞는 자세에서 손을 떼면 3초 후 자동으로 기록됩니다.`,
+    '자세 버튼 또는 3D 기체', '[data-imu-body]', s.samples.includes(p.id)));
   const finish = [
-    task('imu-return', '기체를 다시 바르게 놓으세요', '여섯 자세의 측정을 마쳤습니다. 다리가 아래로 향하게 돌려 결과를 확인할 준비를 하세요.', '3D 기체 본체', '[data-imu-body]', s.samples.length === 6 && s.pose === 'level'),
+    task('imu-return', '기체를 다시 바르게 놓으세요', '여섯 자세를 모두 기록했습니다. ‘바르게 놓기’를 눌러 다리를 아래로 돌린 뒤 결과를 확인하세요.', '3D 기체 본체', '[data-imu-body]', s.samples.length === 6 && s.pose === 'level'),
     task('imu-verify', '보정 결과를 확인하세요', '센서 패널의 결과 확인을 누르고, 기울어진 기준선이 수평으로 바뀌는 모습을 비교하세요.', '센서 패널 · 결과 확인', '[data-action="imu-verify"]', s.status === 'completed'),
   ];
   const phases = [{ title: '준비와 연결', tasks: prep }, { title: '자세별 정지 측정', tasks: poses }, { title: '결과 확인', tasks: finish }];
   const all = phases.flatMap(p => p.tasks), complete = s.status === 'completed';
   const pending = all.filter(t => !t.done);
   let current = pending[0];
-  if (s.status === 'paused') current = task('imu-resume', '멈춘 보정을 다시 시작하세요', `${s.pauseReason} 보정 재개를 누른 뒤 현재 자세를 다시 3초간 유지하세요. 이전에 마친 자세는 유지됩니다.`, '센서 패널 · 보정 재개', '[data-action="imu-begin"]');
+  const target = requiredIMUPose(s);
+  if (s.status === 'calibrating' && current?.id.startsWith('imu-pose-') && ['left','right'].includes(target?.id)) {
+    const measured = ['left','right'].filter(id => s.samples.includes(id)).length;
+    current = { ...poses.find(t => t.id === `imu-pose-${target.id}`),
+      title: measured ? '반대쪽 면을 놓으세요' : '옆면 측정 · 순서 자유',
+      detail: measured ? `이번에는 ‘${target.label}’를 누르세요. 반대쪽 면을 아래로 놓고 3초간 기다리면 됩니다.` : '아래 두 버튼 중 편한 쪽을 누르세요. 그 면을 3초간 측정한 뒤 반대쪽도 한 번 측정합니다.' };
+  }
+  if (s.status === 'calibrating' && target?.id === s.pose) {
+    current = { ...current, detail: '기체가 목표 자세에 놓였습니다. 손을 떼고 기다리세요. 정지 측정 막대가 차면 다음 단계로 넘어갑니다.' };
+  }
+  if (s.status === 'paused') current = task('imu-resume', '멈춘 보정을 다시 시작하세요', `${s.pauseReason} ‘이어서 측정하기’를 누른 뒤 현재 자세를 다시 3초간 유지하세요. 이전에 마친 자세는 유지됩니다.`, '이어서 측정하기', '[data-action="imu-begin"]');
   if (complete) current = task('imu-completed', 'IMU 보정 교육을 마쳤습니다', '여섯 자세의 정지 측정과 결과 확인을 완료했습니다. 가상 센서의 기준선이 수평으로 복구되었습니다.', '가상 센서 결과', '[data-imu-panel]', true);
   const phaseIndex = complete || s.status === 'measured' ? 2 : ['calibrating', 'paused'].includes(s.status) ? 1 : 0;
-  // Resume belongs to the visible checklist as well as the blue task box.
+  // Resume belongs to the visible checklist as well as the current task box.
   if (s.status === 'paused') phases[1].tasks = [current, ...poses];
   return { current, phases, phaseIndex, complete, remaining: pending.length + (s.status === 'paused' ? 1 : 0),
     summary: `자세 측정 ${s.samples.length}/6 · ${complete ? '교육 완료' : '교육용 시뮬레이션'}`,

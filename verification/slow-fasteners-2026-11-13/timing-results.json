@@ -1,0 +1,41 @@
+{
+  "samples": [
+    {
+      "elapsed": 407,
+      "busy": true,
+      "commits": 0,
+      "angle": 0
+    },
+    {
+      "elapsed": 1211,
+      "busy": true,
+      "commits": 0,
+      "angle": 2.3071071049800054
+    },
+    {
+      "elapsed": 2375,
+      "busy": true,
+      "commits": 0,
+      "angle": 0.016135205324430142
+    },
+    {
+      "elapsed": 2478,
+      "busy": false,
+      "commits": 1,
+      "angle": 0
+    }
+  ],
+  "cancelled": {
+    "commits": 1,
+    "position": 0,
+    "rotation": 0,
+    "busy": false
+  },
+  "reduced_motion": {
+    "elapsed": 83,
+    "busy": false,
+    "commits": 2,
+    "angle": 0
+  },
+  "errors": []
+}

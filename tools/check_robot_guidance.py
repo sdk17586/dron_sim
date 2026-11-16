@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -22,7 +23,7 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             context.route('**/*', lambda route: route.continue_() if route.request.url.startswith('http://127.0.0.1:8000/') else (external.append(route.request.url), route.abort()))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>qaCsp.push(e.effectiveDirective));")
-            def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             def phase(): return page.locator('.robot-workflow [aria-current=step]').inner_text().splitlines()[-1]
             def perform_highlight():

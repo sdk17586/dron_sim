@@ -1,0 +1,256 @@
+.course-home { max-width: 1480px; }
+.course-home > nav { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.panda-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; margin:16px 0 22px; }
+.panda-heading h1 { font-size:clamp(22px,2.3vw,32px); margin:8px 0 0; }
+.panda-lesson-badge { font-size:12px; color:#a7c5d4; padding:10px 14px; border:1px solid #365165; border-radius:24px; }
+.panda-workspace { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:20px; align-items:start; }
+.panda-stage { position:relative; height:calc(100vh - 245px); min-height:520px; border:1px solid #304b60; border-radius:18px; overflow:hidden; background:#0c151f; }
+[data-panda-viewport] { position:absolute; inset:0; }
+.panda-3d-canvas { display:block; width:100%; height:100%; outline-offset:-5px; touch-action:none; }
+.panda-scene-badge { position:absolute; top:22px; left:24px; font-size:15px; font-weight:700; letter-spacing:.16em; pointer-events:none; }
+.panda-scene-badge span { margin-left:16px; letter-spacing:0; font-weight:400; font-size:12px; color:#9edbcf; }
+.panda-stations { position:absolute; top:62px; left:24px; display:flex; flex-wrap:wrap; gap:15px; font-size:11px; color:#8ecadc; pointer-events:none; }
+.panda-stations span+span { color:#efb878; }
+.panda-camera-help { position:absolute; bottom:16px; left:24px; color:#92acbf; font-size:11px; pointer-events:none; }
+.panda-panel { border:1px solid #304b60; border-radius:18px; background:linear-gradient(145deg,#142533,#0e1a25); padding:24px; min-width:0; }
+.panda-progress { margin:20px 0; color:#9bb5c7; font-size:12px; }
+.panda-progress progress { display:block; width:100%; height:5px; accent-color:#58d8c3; margin-top:9px; }
+.panda-current { min-height:118px; padding:14px 16px; border:1px solid transparent; border-radius:10px; }
+.panda-current h2 { font-size:21px; line-height:1.5; color:#e1edf5; margin:0 0 12px; }
+.panda-current p { color:#a6bccc; font-size:13px; line-height:1.8; margin-bottom:22px; }
+.panda-panel .button.primary { min-height:52px; font-size:15px; background:#53d2bd; color:#071b23; }
+.panda-panel .button.primary:disabled { opacity:.5; cursor:default; }
+.panda-stop-controls { display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
+.panda-stop-controls button { flex:1; min-height:42px; border:1px solid #6c4c4f; border-radius:8px; background:#302126; color:#ffc5b9; font-size:12px; padding:8px; }
+.panda-stop-controls [data-panda-command=resume] { border-color:#4d8f8b; background:#173c40; color:#b7f0df; }
+.panda-stop-controls [hidden] { display:none; }
+[data-panda-message] { color:#eabc78; font-size:12px; line-height:1.8; margin:12px 0; }
+.panda-status { display:grid; gap:10px; border-top:1px solid #304b60; border-bottom:1px solid #304b60; padding:15px 0; font-size:12px; }
+.panda-status span { display:flex; justify-content:space-between; color:#94aec1; }
+.panda-status strong { color:#b4e7df; }
+.panda-checklist { font-size:12px; color:#a8bfd0; margin:20px 0; }
+.panda-checklist summary { cursor:pointer; }
+.panda-checklist ol { padding-left:20px; line-height:2; margin:14px 0; }
+.panda-checklist [data-done=true] { color:#6fb8a6; }
+.panda-checklist [aria-current] { color:#e8f3fb; font-weight:700; }
+.panda-note { display:block; margin-top:18px; color:#7e9bb0; font-size:11px; line-height:1.8; }
+.panda-course[data-estop=true] .panda-stage { border-color:#c7755f; }
+.panda-course[data-step=complete] .panda-current h2 { color:#82e7bf; }
+@media(max-width:1050px) {
+  .course-home > nav { grid-template-columns:minmax(0,1fr); }
+  .course-home .course-option { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .course-home .course-equipment { height:280px; border-radius:16px; }
+  .course-home .course-option .course-card { min-height:280px; }
+  .panda-workspace { grid-template-columns:minmax(0,1fr); }
+  .panda-stage { height:60vh; min-height:400px; }
+}
+@media(max-width:600px) {
+  .course-home .course-option { display:flex; }
+  .course-home .course-equipment { height:250px; }
+  .course-home .course-option .course-card { min-height:196px; }
+  .panda-heading { align-items:start; flex-direction:column; gap:12px; }
+  .panda-lesson-badge { padding:7px 12px; font-size:11px; }
+  .panda-stage { height:410px; min-height:0; }
+  .panda-panel { padding:20px; }
+  .panda-scene-badge,.panda-stations { left:14px; }
+  .panda-camera-help { left:14px; font-size:10px; }
+}
+
+/* Reserve support mission: briefing, decisions, incident response and review. */
+.panda-course [hidden], .panda-mission-intro [hidden] { display:none !important; }
+.panda-mission-intro h2 { font-size:24px; line-height:1.5; margin:0 0 14px; color:#d7ecf4; }
+.panda-intro-objectives { padding-left:22px; color:#a9bece; line-height:1.9; font-size:13px; margin:0 0 20px; }
+.panda-briefing-fields { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.panda-briefing-fields label,.panda-phase-controls label { display:grid; gap:8px; font-size:12px; color:#a9c1d1; }
+.panda-briefing-fields input,.panda-phase-controls select { min-width:0; width:100%; min-height:42px; padding:9px; color:#dcebf4; background:#0a1823; border:1px solid #3b596e; border-radius:7px; }
+.panda-mission-brief { display:flex; align-items:center; gap:24px; padding:20px 24px; border:1px solid #365567; border-left:3px solid #63c9b5; border-radius:10px; background:#122431; margin-bottom:16px; }
+.panda-mission-number { color:#8fdeb9; font-size:11px; white-space:nowrap; letter-spacing:.05em; }
+.panda-mission-brief strong { color:#e0eff5; font-size:15px; }
+.panda-mission-brief p { font-size:12px; color:#9eb9c8; line-height:1.8; margin:7px 0 0; }
+.panda-role { margin-left:auto; flex-shrink:0; text-align:right; color:#8baebf; font-size:11px; line-height:1.9; }
+.panda-role b { color:#c1dde8; font-weight:500; }
+.panda-workflow { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; list-style:none; padding:0; margin:0 0 18px; }
+.panda-workflow li { display:flex; align-items:center; gap:10px; min-width:0; padding:13px 14px; border:1px solid #2c4559; border-radius:8px; color:#8ca9bb; background:#0e1b26; font-size:12px; }
+.panda-workflow li span { color:#70b8c4; font-size:11px; }
+.panda-workflow [aria-current] { border-color:#5ebfae; color:#b7f0dc; background:#163235; }
+.panda-workflow [data-done=true] { color:#9bbec4; border-color:#386256; }
+.panda-workspace { grid-template-columns:minmax(0,1fr) 370px; }
+.panda-stage { height:calc(100vh - 375px); min-height:540px; position:sticky; top:16px; }
+.panda-panel { padding:22px; }
+.panda-progress { margin:0 0 20px; }
+.panda-current { min-height:110px; }
+.panda-current p:last-child { margin-bottom:0; }
+.panda-current h2 { margin-top:9px; }
+.panda-phase-controls { display:grid; gap:10px; margin:0 0 18px; }
+.panda-phase-controls button,.panda-operation-grid button { display:block; width:100%; padding:12px 10px; text-align:left; line-height:1.6; border:1px solid #3d596d; border-radius:8px; background:#112333; color:#c9e1ed; font-size:12px; }
+.panda-phase-controls button span { margin-right:9px; color:#80b8c6; }
+.panda-phase-controls button[aria-pressed=true] { background:#193e3d; color:#b6efdb; border-color:#5bad99; }
+.panda-phase-controls button[aria-pressed=true]::after { content:' ✓'; }
+.panda-phase-controls button:hover,.panda-operation-grid button:hover { border-color:#78c6c0; }
+.panda-phase-controls fieldset { display:grid; gap:8px; padding:0; margin:0 0 10px; border:0; min-width:0; }
+.panda-phase-controls legend { font-size:12px; color:#a7c0d2; margin-bottom:10px; }
+.panda-id-tag { display:inline-block; background:#1f5571; border-radius:4px; padding:2px 6px; }
+.panda-id-tag.unknown { background:#4d4b36; }
+.panda-operation-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:18px; }
+.panda-operation-grid button { min-height:48px; text-align:center; padding:8px; }
+.panda-operation-grid button:disabled { opacity:.45; }
+.panda-phase-controls form { display:grid; gap:15px; min-width:0; }
+.panda-phase-controls select { font-size:12px; }
+.panda-incident-state { padding:12px; border-left:3px solid #ed9a73; background:#3d2a24; color:#ffd7b0; font-size:13px; }
+.panda-phase-controls [data-panda-independent] { display:grid; gap:8px; }
+.panda-stage-alert { position:absolute; z-index:3; left:18px; right:18px; bottom:60px; padding:16px 18px; border:1px solid #e99068; border-left-width:4px; border-radius:8px; background:#48291ff2; box-shadow:0 0 30px #d35b2225; }
+.panda-stage-alert strong { display:block; color:#ffd0ad; font-size:18px; margin-bottom:6px; }
+.panda-stage-alert span { color:#e1b7a1; font-size:12px; line-height:1.6; }
+.panda-course[data-phase=incident] .panda-stage { border-color:#d47d59; }
+.panda-scene-labels { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+.panda-scene-labels span { position:absolute; transform:translate(-50%,-100%); white-space:nowrap; font-size:10px; padding:5px 7px; color:#bae3ee; border:1px solid #467085; background:#102431e6; border-radius:5px; }
+.panda-scene-labels [data-station=unknown] { color:#e8cf8e; border-color:#82704c; }
+.panda-scene-labels [data-station=target] { color:#ffe0a8; border-color:#8c714a; }
+.panda-hint { margin-top:15px; padding:8px 0; border:0; background:none; color:#b9c6db; text-align:left; font-size:11px; text-decoration:underline; }
+.panda-hint-copy { padding:12px; margin:8px 0 14px; border:1px solid #526a67; border-radius:7px; font-size:12px; line-height:1.8; color:#c4decf; background:#182c2d; }
+.panda-after-action { padding:30px; margin-top:25px; border:1px solid #3f786b; border-radius:18px; background:linear-gradient(135deg,#142c30,#0e1c29); }
+.panda-review-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.panda-review-heading h2 { margin:8px 0 10px; font-size:25px; }
+.panda-review-heading p { font-size:12px; color:#a7c0d0; }
+.panda-score { display:flex; flex-direction:column; color:#b3e5d7; text-align:right; }
+.panda-score strong { font-size:46px; font-weight:700; }
+.panda-score span { font-size:11px; }
+.panda-rubric { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin:24px 0; }
+.panda-rubric > div { padding:15px; background:#0b1d28; border:1px solid #2c4e5c; border-radius:8px; }
+.panda-rubric span { display:block; font-size:12px; color:#a2becd; }
+.panda-rubric strong { display:block; margin:10px 0; font-size:23px; color:#bce9df; }
+.panda-rubric small { font-size:12px; margin-left:5px; color:#7fa3b7; }
+.panda-rubric progress { width:100%; height:4px; accent-color:#5bd3b7; }
+.panda-review-body { display:grid; grid-template-columns:1fr 1fr; gap:28px; color:#abc5d2; font-size:12px; line-height:1.9; }
+.panda-review-body h3 { font-size:14px; color:#d0e4eb; }
+.panda-review-body ul { padding-left:18px; }
+.panda-save-status { color:#a6dbc8; font-size:13px; margin:20px 0; }
+.panda-review-actions { display:flex; flex-wrap:wrap; gap:10px; }
+.panda-after-action > small { display:block; margin-top:20px; color:#83a3b5; font-size:11px; line-height:1.9; }
+@media(max-width:1050px) {
+  .panda-workspace { grid-template-columns:minmax(0,1fr); }
+  .panda-stage { position:relative; top:0; height:60vh; min-height:440px; }
+  .panda-panel { max-width:none; }
+}
+@media(max-width:650px) {
+  .panda-mission-brief { align-items:start; gap:12px; padding:16px; flex-wrap:wrap; }
+  .panda-role { text-align:left; margin:0; }
+  .panda-workflow { grid-template-columns:1fr 1fr; gap:7px; }
+  .panda-workflow li { padding:10px; font-size:11px; }
+  .panda-stage { min-height:0; height:420px; }
+  .panda-stage-alert { left:10px; right:10px; bottom:50px; padding:12px; }
+  .panda-stage-alert strong { font-size:14px; }
+  .panda-after-action { padding:20px; }
+  .panda-review-heading { flex-wrap:wrap; }
+  .panda-rubric { grid-template-columns:1fr 1fr; }
+  .panda-review-body { grid-template-columns:1fr; gap:10px; }
+  .panda-review-actions .button { width:100%; }
+  .panda-mission-intro h2 { font-size:21px; }
+}
+.reserve-record-score { display:block; margin-top:7px; color:#96c6ba; font-size:10px; line-height:1.7; }
+
+/* The arm guide keeps captions beside the scene so they cannot hide the gripper. */
+.showcase-launches { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.panda-guide-launch { display:block; margin-top:18px; padding:11px 14px; border:1px solid #497c87; border-radius:8px; background:#15303b; color:#b3e5e5; font-size:12px; text-align:left; }
+.panda-guide .showcase-chapters { position:static; margin:0 0 18px; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
+.panda-guide .showcase-chapters li { justify-content:center; }
+.panda-guide-layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px; align-items:stretch; }
+.panda-guide .showcase-stage { min-height:530px; height:calc(100dvh - 360px); max-height:800px; }
+.panda-guide-sidebar { display:flex; flex-direction:column; gap:18px; min-width:0; padding:22px; background:#0f2230; border:1px solid #34536b; border-radius:14px; }
+.panda-guide .showcase-narrative { position:static; width:auto; padding:0; border:0; background:none; box-shadow:none; }
+.panda-guide .showcase-narrative h2 { font-size:23px; line-height:1.5; }
+.panda-guide .showcase-narrative p { font-size:13px; line-height:1.9; }
+.panda-guide .showcase-status { position:static; display:grid; gap:16px; margin-top:auto; padding:18px 0 0; background:none; border:0; border-top:1px solid #34536b; border-radius:0; }
+.panda-guide .showcase-status strong { font-size:13px; }
+.panda-guide-mission { padding:15px; border-left:2px solid #65c8af; background:#14313a; }
+.panda-guide-mission span { display:block; color:#8dcdbf; font-size:10px; margin-bottom:8px; }
+.panda-guide-mission strong { display:block; color:#cfece6; font-size:13px; }
+.panda-guide-mission small { display:block; margin-top:9px; color:#94b9c8; font-size:11px; line-height:1.8; }
+.panda-guide-alert { position:absolute; left:18px; right:18px; bottom:25px; padding:15px 18px; background:#462c20ed; border:1px solid #d28f5f; border-left-width:3px; border-radius:8px; pointer-events:none; }
+.panda-guide-alert strong { display:block; font-size:18px; color:#ffcfaa; margin-bottom:6px; }
+.panda-guide-alert span { color:#e6bea4; font-size:12px; }
+.panda-guide[data-mission-phase=incident] .showcase-stage { border-color:#d28f5f; }
+.panda-guide .showcase-topline { inset:18px 18px auto; }
+@media(max-width:1050px) {
+  .showcase-launches { grid-template-columns:minmax(0,1fr); }
+  .panda-guide-layout { grid-template-columns:minmax(0,1fr); }
+  .panda-guide .showcase-stage { height:55dvh; min-height:440px; }
+  .panda-guide-sidebar { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); }
+  .panda-guide .showcase-status { grid-column:1 / -1; display:flex; justify-content:space-between; }
+}
+@media(max-width:650px) {
+  .panda-guide .showcase-chapters { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+  .panda-guide .showcase-chapters li { white-space:normal; justify-content:start; font-size:10px; }
+  .panda-guide .showcase-stage { height:430px; min-height:430px; }
+  .panda-guide-sidebar { display:flex; padding:16px; }
+  .panda-guide .showcase-narrative { min-height:0; }
+  .panda-guide .showcase-narrative h2 { font-size:20px; }
+  .panda-guide .showcase-status { font-size:10px; gap:10px; }
+  .panda-guide .showcase-status strong { font-size:11px; }
+  .panda-guide .showcase-topline { font-size:10px; inset:14px 10px auto; }
+  .panda-guide-alert { left:10px; right:10px; bottom:15px; padding:12px; }
+  .panda-guide-alert strong { font-size:14px; }
+  .panda-guide-alert span { font-size:10px; }
+}
+
+/* Short maintenance and fictional colour-matching game. */
+.panda-wire-course .panda-workspace{grid-template-columns:minmax(0,1fr) minmax(340px,410px)}
+.panda-wire-course .panda-stage{min-height:590px}
+.panda-game-stage-tag{position:absolute;bottom:48px;left:20px;color:#99b6c8;font-size:12px;letter-spacing:.08em;pointer-events:none}
+.panda-service-checks{list-style:none;display:flex;gap:8px;flex-wrap:wrap;padding:0;margin:16px 0;font-size:12px;color:#a3b9c9}
+.panda-service-checks li{padding:6px 9px;border:1px solid #344a59;border-radius:6px}
+.panda-service-checks li[data-done=true]{color:#64dfc4;border-color:#397d72;background:#123a36}
+.panda-colour-game{background:#09141e;border:1px solid #345365;border-radius:12px;padding:16px;margin-bottom:16px}
+.panda-game-instruments{display:flex;justify-content:space-between;gap:12px;align-items:start}
+.panda-game-instruments small{display:block;color:#9ab3c6;font-size:12px;margin-bottom:8px}
+.panda-game-instruments strong{font-size:22px;font-variant-numeric:tabular-nums}
+[data-panda-goal]{color:var(--wire)}[data-panda-goal][data-color=black]{color:#e3eaf2;background:#303b49;padding:4px 9px;border-radius:6px}
+.panda-clock{text-align:right}.panda-clock[data-urgent=true] strong{color:#ffb681}
+.panda-wire-help{font-size:13px;color:#b4c8d7}
+.panda-wire-options{display:grid;gap:10px}
+.panda-wire-options button{display:flex;gap:10px;align-items:center;background:#152330;border:1px solid #486174;padding:13px;border-radius:8px;color:#e7f0f7;text-align:left}
+.panda-wire-options button small{margin-left:auto;color:#9bb2c3}
+.panda-wire-options button[aria-pressed=true]{outline:2px solid #5ae3d1;outline-offset:1px;background:#173c42}
+.panda-wire-options button:disabled{opacity:.6}.panda-wire-options button[data-cut=true]{border-style:dashed}
+.wire-swatch{height:8px;width:44px;background:var(--wire);border:1px solid #c1cad17a;border-radius:5px;box-shadow:0 2px 0 #0005}
+.panda-wire-options button[data-cut=true] .wire-swatch{background:linear-gradient(to right,var(--wire) 40%,transparent 40%,transparent 60%,var(--wire) 60%)}
+.panda-game-feedback{font-size:13px;color:#ffd398;margin:12px 0 0}
+.panda-wire-course .panda-panel{gap:10px}.panda-wire-course .panda-current h2{font-size:24px}
+.panda-gripper-remote {
+  position:absolute; bottom:14px; left:14px; display:grid; grid-template-columns:auto 1fr;
+  align-items:center; gap:14px; max-width:calc(100% - 28px); padding:12px 16px;
+  border:1px solid #48697b; border-radius:14px; background:#101e2bf5; box-shadow:0 5px 20px #080d1690;
+}
+.panda-gripper-remote[hidden], [data-panel-action]:empty { display:none; }
+.panda-gripper-remote .joystick { width:82px; height:82px; }
+.panda-gripper-remote strong { font-size:14px; color:#e2f0f5; }
+.panda-gripper-remote p { margin:3px 0 5px; font-size:11px; color:#b8cddc; }
+.panda-gripper-remote output { display:block; color:#cee8dc; font-size:12px; }
+.panda-gripper-remote .button { min-height:36px; margin:8px 0 0; padding:6px 12px; font-size:13px; }
+.panda-course[data-phase=choose] :is(.panda-game-stage-tag,.panda-camera-help) { display:none; }
+.panda-scene-labels [data-aligned] { outline:2px solid var(--task); color:var(--task-text); }
+.panda-scene-labels small { font:inherit; }
+@media(max-width:1000px){.panda-wire-course .panda-workspace{grid-template-columns:1fr}.panda-wire-course .panda-stage{min-height:440px}}
+@media(max-width:480px){.panda-wire-course .panda-stage{min-height:330px}.panda-game-instruments strong{font-size:19px}.panda-game-stage-tag{font-size:10px;left:12px}.panda-wire-course .panda-workflow{font-size:11px}.panda-service-checks{font-size:11px}}
+@media(max-width:640px){
+  .panda-wire-course .panda-scene-labels small { display:none; }
+  .panda-course[data-phase=choose] .panda-stage { display:grid; grid-template-rows:minmax(0,1fr) auto; height:clamp(440px,68svh,560px); }
+  .panda-course[data-phase=choose] [data-panda-viewport] { position:relative; inset:auto; min-height:0; }
+  .panda-gripper-remote { position:static; gap:14px; padding:10px 14px; max-width:none; border:0; border-top:1px solid #48697b; border-radius:0; }
+  .panda-gripper-remote .joystick { width:74px; height:74px; }
+}
+
+[data-wire-color=red]{--wire:#ed6870}[data-wire-color=green]{--wire:#50d5a1}[data-wire-color=black]{--wire:#414b59}
+
+/* Panda uses the same immersive workbench and physical picking as drone/Go2. */
+.panda-maintenance-viewport{position:absolute;inset:0;width:100%;height:100%}
+.panda-maintenance [hidden]{display:none!important}
+.panda-service-status{margin:15px 0 0;border-top:1px solid #385062;padding-top:10px;font-size:11px}
+.panda-service-status>div{display:flex;justify-content:space-between;margin:5px 0;gap:12px}.panda-service-status dd{margin:0;color:#7ddccc}
+.panda-service-control-shortcuts{display:flex;gap:6px;margin-top:12px}.panda-service-control-shortcuts .button{flex:1;font-size:11px;padding:6px}
+[data-service-message]{color:#efc58d;font-size:12px;line-height:1.7}
+.panda-maintenance .scene-context{max-height:calc(100% - 125px);overflow:auto}
+.panda-maintenance .scene-camera-tools{display:flex;gap:7px}
+.panda-maintenance .spatial-hit:focus-visible{pointer-events:auto}
+.panda-maintenance .panda-service-context h2{font-size:17px}
+@media(max-width:800px){.panda-maintenance .immersive-stage{height:1100px;min-height:1100px}.panda-maintenance .scene-guide{width:calc(100% - 24px);left:12px}.panda-maintenance .scene-context{top:200px;right:12px;width:205px;max-height:370px}.panda-maintenance .scene-stock-choice{bottom:130px}.panda-maintenance .scene-instructions{bottom:52px;left:15px;text-align:left}}

@@ -74,12 +74,12 @@ export function maintenanceGuide(s, ui = {}) {
 export function controllerGuide(s) {
   const p = s.practice;
   const tasks = [
-    task('aircraft', '기체 전원을 켜세요', '드론 위 전원 아이콘을 누릅니다.', '드론의 기체 전원', { kind: 'controller-aircraft' }, p.aircraft),
-    task('remote', '조종기 전원을 켜세요', '조종기 오른쪽 위 둥근 전원 버튼을 누릅니다.', '조종기 전원 버튼', { kind: 'controller-remote' }, p.remote),
-    task('link', '가상 연결 상태를 확인하세요', '양쪽 전원을 켜고 스틱을 중앙에 둔 뒤 연결을 누릅니다.', '조종기 화면의 연결 버튼', { kind: 'controller-link' }, p.link),
-    task('left', '왼쪽 스틱을 움직여 보세요', '스틱을 끌거나, 스틱을 선택한 뒤 방향키를 누릅니다. 놓으면 중앙으로 돌아옵니다.', '왼쪽 조이스틱', { kind: 'controller-stick', side: 'left' }, p.left),
-    task('right', '오른쪽 스틱을 움직여 보세요', '오른쪽 스틱도 움직여 프로펠러의 회전 표시가 반응하는지 확인합니다.', '오른쪽 조이스틱', { kind: 'controller-stick', side: 'right' }, p.right),
-    task('stop', '회전 정지와 연결 해제를 확인하세요', '스틱을 놓은 뒤 회전 정지를 누르거나 Esc를 누릅니다.', '회전 정지 버튼 · Esc', { kind: 'controller-stop' }, p.stop),
+    task('aircraft', '기체 전원을 켜세요', '3D 드론 몸체 위의 전원 표시를 누르세요. 켜지면 조종기 화면에 ‘기체 전원 켜짐’이 표시됩니다.', '드론의 기체 전원', { kind: 'controller-aircraft' }, p.aircraft),
+    task('remote', '조종기 전원을 켜세요', '가상 조종기 위쪽의 ‘조종기 켜기’를 누르세요. 기체와 조종기의 전원이 모두 켜지면 연결할 수 있습니다.', '조종기 전원 버튼', { kind: 'controller-remote' }, p.remote),
+    task('link', '드론과 조종기를 연결하세요', '두 스틱에서 손을 떼고 ‘드론과 연결’을 누르세요. 화면에 ‘연결됨’이 뜨면 왼쪽 스틱부터 시험합니다.', '조종기 화면의 연결 버튼', { kind: 'controller-link' }, p.link),
+    task('left', '왼쪽 스틱 입력을 확인하세요', '왼쪽 둥근 손잡이를 위로 한 번 끌었다 놓으세요. 키보드로는 스틱을 선택한 뒤 ↑를 눌렀다 떼세요.', '왼쪽 앞뒤 이동 스틱 · ↑ ↓', { kind: 'controller-stick', side: 'left' }, p.left),
+    task('right', '오른쪽 스틱 입력을 확인하세요', '이번에는 오른쪽 손잡이를 오른쪽으로 끌었다 놓으세요. 키보드로는 스틱을 선택한 뒤 →를 눌렀다 떼세요.', '오른쪽 회전 스틱 · ← →', { kind: 'controller-stick', side: 'right' }, p.right),
+    task('stop', '동작 정지와 연결 해제를 확인하세요', '두 스틱에서 손을 떼고 조종기 아래의 ‘동작 정지’를 누르세요. 입력 시험이 끝나고 IMU 보정 버튼이 나타납니다.', '동작 정지 버튼 · Esc', { kind: 'controller-stop' }, p.stop),
   ];
   const complete = tasks.every(t => t.done);
   let current = complete ? task('controller-complete', '조종기 교육을 마쳤습니다', '전원·연결·좌우 스틱·정지 확인을 모두 수행했습니다. 다시 시작으로 반복할 수 있습니다.', '교육 선택 또는 다시 시작', { kind: 'course' }, true) : tasks.find(t => !t.done);

@@ -1,0 +1,77 @@
+{
+  "sizes": [
+    {
+      "width": 1366,
+      "height": 768,
+      "scene": {
+        "x": 16,
+        "y": 139,
+        "width": 1334,
+        "height": 613
+      },
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "scene": {
+        "x": 16,
+        "y": 139,
+        "width": 1888,
+        "height": 925
+      },
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "scene": {
+        "x": 16,
+        "y": 139,
+        "width": 2528,
+        "height": 1285
+      },
+      "scrollWidth": 2560,
+      "scrollHeight": 1440
+    },
+    {
+      "width": 3840,
+      "height": 2160,
+      "scene": {
+        "x": 16,
+        "y": 139,
+        "width": 3808,
+        "height": 2005
+      },
+      "scrollWidth": 3840,
+      "scrollHeight": 2160
+    },
+    {
+      "width": 1024,
+      "height": 600,
+      "scene": {
+        "x": 16,
+        "y": 139,
+        "width": 992,
+        "height": 525
+      },
+      "scrollWidth": 1024,
+      "scrollHeight": 680
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "scene": {
+        "x": 18,
+        "y": 175,
+        "width": 354,
+        "height": 633
+      },
+      "scrollWidth": 390,
+      "scrollHeight": 844
+    }
+  ],
+  "errors": []
+}

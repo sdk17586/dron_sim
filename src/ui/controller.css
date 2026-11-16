@@ -38,3 +38,35 @@
 @media (max-width: 1000px) { .controller-grid { grid-template-columns: minmax(0,1fr) 310px; gap: 20px; } .remote-body { padding-left: 15px; padding-right: 15px; } .joystick { width: 104px; height: 104px; } }
 @media (max-width: 800px) { .controller-grid { grid-template-columns: minmax(0,1fr); gap: 10px; } .controller-grid .drone-canvas { height: 360px; min-height: 320px; } .controller-panel { width: 100%; max-width: 400px; justify-self: center; } .controller-panel > .eyebrow { display: none; } .controller-panel h1 { font-size: 20px; } .remote-body { padding-left: 24px; padding-right: 24px; } .joysticks { justify-content: space-around; } .controller-panel > p { margin-bottom: 12px; } }
 .controller-panel [hidden] { display: none !important; }
+
+.drone-lesson.controller-grid { grid-template-columns: minmax(0,1fr) minmax(310px,380px); grid-template-rows: auto 1fr; grid-template-areas: "scene guide" "scene controls"; gap: 12px 24px; }
+.drone-lesson .lesson-guide { grid-area: guide; }
+.drone-lesson .workbench { grid-area: scene; }
+.drone-lesson .controller-panel { grid-area: controls; padding: 0; }
+.drone-lesson .controller-panel h1 { margin: 2px 0 10px; font-size: 17px; }
+.lesson-options { margin-top: 14px; color: #a8bfce; font-size: 12px; }
+.lesson-options summary { cursor: pointer; }
+.lesson-options .remaining-help { margin-left: 0; }
+.lesson-instruction-heading h2 { word-break: keep-all; overflow-wrap: anywhere; }
+.drone-lesson .remote-power { display: inline-flex; width: auto; height: 36px; gap: 7px; padding: 0 12px; border-radius: 8px; align-items: center; font-size: 12px; }
+.drone-lesson .remote-link-button { min-height: 38px; font-size: 13px; }
+.drone-lesson .link-hint { margin-top: 7px; color: #c1d0dc; font-size: 12px; line-height: 1.5; }
+.lesson-instruction .robot-workflow { grid-template-columns: repeat(3,minmax(0,1fr)); padding-bottom: 10px; margin-bottom: 12px; gap: 4px; }
+.lesson-instruction .robot-workflow li { font-size: 11px; gap: 4px; }
+.lesson-instruction .robot-workflow li > span { width: 20px; height: 20px; }
+.lesson-instruction-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 3px 0 5px; }
+.lesson-instruction-heading h2 { font-size: clamp(18px,1.5vw,22px); line-height: 1.4; letter-spacing: -.04em; }
+.lesson-instruction-heading .guide-locate { margin: 0; flex-shrink: 0; }
+.lesson-instruction > p { font-size: 14px; line-height: 1.7; color: #c1d2df; word-break: keep-all; overflow-wrap: anywhere; }
+.lesson-instruction { border: 1px solid #36556a; border-radius: 10px; background: #101f2d; padding: 14px 16px; }
+@media (max-width:800px) {
+  .drone-lesson.controller-grid { grid-template-columns: minmax(0,1fr); grid-template-rows: auto; grid-template-areas: "guide" "controls" "scene"; }
+  .drone-lesson:has([data-current-task^="aircraft"]) { grid-template-areas: "guide" "scene" "controls"; }
+  .drone-lesson .controller-panel { width: 100%; max-width: none; }
+}
+@media (min-width:801px) and (max-height:820px) {
+  .drone-lesson .remote-body { padding: 11px 16px; }
+  .drone-lesson .joysticks { padding-top: 10px; }
+  .drone-lesson .joystick { width: 84px; height: 84px; }
+  .drone-lesson .remote-top, .drone-lesson .remote-link { margin-bottom: 6px; }
+}

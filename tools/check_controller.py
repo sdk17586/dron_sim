@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -28,7 +29,7 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>window.qaCsp.push(e.effectiveDirective));")
             page.goto(args.url)
-            page.locator("[data-action=intro-drone]").click(force=True)
+            choose_course(page, 'intro-drone', force=True)
             scene = page.locator('.drone-3d-canvas[data-ready=true]'); scene.wait_for()
             page.locator('.controller-intro').click(force=True)
             page.locator('[data-action=controller-start]').click(force=True)
@@ -78,16 +79,16 @@ def main():
 
             right = page.locator('[data-stick=right]'); right.focus(); page.keyboard.down('ArrowRight')
             assert rotation() == 100; page.keyboard.down('ArrowUp'); assert rotation() == 100
-            page.keyboard.up('ArrowRight'); assert rotation() == 100
+            page.keyboard.up('ArrowRight'); assert rotation() == 0
             page.keyboard.up('ArrowUp'); assert rotation() == 0
-            passed('오른쪽 스틱·대각선 키 입력 반응, 모든 키를 놓으면 중앙 복귀')
+            passed('오른쪽 좌우 회전·대각선 중 위아래 입력 무시, 모든 키를 놓으면 중앙 복귀')
             left.focus(); page.keyboard.down('ArrowUp'); page.evaluate("window.dispatchEvent(new Event('blur'))")
             assert rotation() == 0; page.keyboard.up('ArrowUp')
             pad = start_drag('left')
             pad.dispatch_event('pointercancel', {'pointerId': 1}); page.mouse.up(); assert rotation() == 0
             passed('창 초점 이탈·포인터 취소 시 입력 초기화·회전 정지')
 
-            start_drag('right'); assert rotation() > 0; page.mouse.up()
+            start_drag('right', dx=.32, dy=0); assert rotation() > 0; page.mouse.up()
             action('remote-power'); assert not linked() and rotation() == 0
             action('remote-power'); assert not linked(); action('link'); assert linked()
             action('aircraft-power'); assert not linked() and rotation() == 0
@@ -95,14 +96,16 @@ def main():
             passed('어느 쪽 전원을 꺼도 정지·연결 해제, 다시 켠 후 명시적으로 재연결')
 
             open_settings(); page.locator('[data-input=view-mode]').select_option('2d')
+            assert page.locator('.drone-svg[data-model-source=px4-x500-schematic]').count() == 1
+            page.screenshot(path=str(output / 'x500-schematic.png'), full_page=True)
             page.locator('.more-menu > summary').click(force=True)
-            right = page.locator('[data-stick=right]'); right.focus(); page.keyboard.down('ArrowDown')
+            right = page.locator('[data-stick=right]'); right.focus(); page.keyboard.down('ArrowLeft')
             flat = page.locator('[data-flat-rotor-preview]')
             assert rotation() == 100 and flat.get_attribute('hidden') is None
             assert page.locator('.static-propeller[visibility=hidden]').count() == 8
             page.wait_for_timeout(80)
             assert int(flat.get_attribute('data-frames')) > 0
-            page.keyboard.up('ArrowDown'); assert rotation() == 0
+            page.keyboard.up('ArrowLeft'); assert rotation() == 0
             assert page.locator('.static-propeller[visibility=visible]').count() == 8
             open_settings(); page.locator('[data-input=view-mode]').select_option('3d'); scene.wait_for()
             page.locator('.more-menu > summary').click(force=True)
@@ -124,8 +127,8 @@ def main():
             page.wait_for_timeout(100)
             assert layer.locator('.rotor-motion').first.get_attribute('transform') == 'rotate(0)'
             page.emulate_media(reduced_motion='no-preference')
-            page.keyboard.up('ArrowUp'); page.keyboard.down('ArrowUp'); page.wait_for_timeout(100)
-            assert layer.locator('.rotor-motion').first.get_attribute('transform') != 'rotate(0)'
+            page.keyboard.up('ArrowUp'); page.keyboard.down('ArrowUp')
+            page.wait_for_function('()=>document.querySelector(".rotor-preview-layer .rotor-motion")?.getAttribute("transform") !== "rotate(0)"',timeout=3000)
             page.keyboard.up('ArrowUp'); assert rotation() == 0
             passed('동작 줄이기 환경에서는 정지 도식·수치, 일반 환경에서는 회전 반응')
 
@@ -153,12 +156,13 @@ def main():
             page.once('dialog', cancel_switch)
             page.locator('.course-selector [data-action=controller]').click(force=True)
             assert page.locator('.controller-panel').count() == 0
-            assert page.locator('[data-piece]').count() > 0
+            page.locator('.immersive-stage .drone-3d-canvas[data-workshop=true]').wait_for()
+            assert page.locator('[data-spatial-id=drone-battery]').count()==1
             passed('정비 복귀 시 회전 제거·원래 배터리, 교육 전환 취소 시 정비 유지')
 
             assert not errors and not external and not page.evaluate('window.qaCsp'), {'errors': errors, 'external': external, 'csp': page.evaluate('window.qaCsp')}
             passed('JavaScript 오류·외부 요청·보안 정책 위반 없음')
-            results = {'date': '2026-11-06', 'passed': len(report), 'checks': report,
+            results = {'date': '2026-11-13', 'passed': len(report), 'checks': report,
                 'motionSamples': [before, after], 'widths': widths, 'pageErrors': errors,
                 'externalRequests': external, 'cspViolations': page.evaluate('window.qaCsp'),
                 'realHardwareConnection': False, 'flightModel': False,

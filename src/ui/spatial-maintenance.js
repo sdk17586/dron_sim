@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { Workshop3D } from './workshop3d.js';
 import { PROFILE } from '../content/aircraft-profiles.js';
+import { SCENARIO } from '../content/scenarios.js';
 import { KITS, readyForMaintenance, physicalIssues } from '../domain/state.js';
 import { installedBattery } from '../domain/battery.js';
 import { placePart } from '../domain/placement.js';
@@ -10,14 +11,24 @@ import { escapeHTML as e, button, icon } from './shared.js';
 import { renderTaskGuide } from './learning.js';
 
 const point = (object,x=0,y=0,z=0) => () => object.localToWorld(new THREE.Vector3(x,y,z));
+const poseOf=object=>({position:object.getWorldPosition(new THREE.Vector3()),quaternion:object.getWorldQuaternion(new THREE.Quaternion()),scale:object.getWorldScale(new THREE.Vector3())});
+
+function looseBlade(original, damaged) {
+  const model = original.group.clone(true);
+  model.visible = true;
+  model.getObjectByName(original.good.name).visible = !damaged;
+  model.getObjectByName(original.damaged.name).visible = damaged;
+  model.rotation.set(0,0,0);
+  return model;
+}
 
 export function configureDroneWorkshop(v,s,ui) {
   const w = v.workshop ||= new Workshop3D(v);
   w.reset(Boolean(ui.immersiveMode && s?.status === 'active'), (piece,target) => placePart(s,piece,target).feedback.kind === 'success');
   if (!w.active) return;
   const guide = maintenanceGuide(s,ui), target = guide.current?.target || {}, pack = installedBattery(s);
-  w.bind('drone-power',v.power,{label:s.power?'기체 전원 끄기':'기체 전원 차단 확인',action:{action:s.power?'power':'confirm-power'},press:new THREE.Vector3(0,-.04,0),anchor:point(v.drone,0,1.47,.72),radius:.22,current:target.kind==='power'});
-  w.bind('drone-battery',v.battery,{label:pack?`기체 배터리 ${pack.charge}% · 집어서 수거함으로`:'빈 배터리 장착부',anchor:point(v.drone,0,1,1.8),radius:.38,
+  w.bind('drone-power',v.power,{label:s.power?'기체 전원 끄기':'기체 전원 차단 확인',action:{action:s.power?'power':'confirm-power'},press:new THREE.Vector3(0,-.04,0),anchor:point(v.power),radius:.22,current:target.kind==='power'});
+  w.bind('drone-battery',v.battery,{label:pack?`기체 배터리 ${pack.charge}% · 집어서 수거함으로`:'빈 배터리 장착부',anchor:point(v.battery,0,.2,.25),radius:.38,
     piece:pack?{kind:'battery',batteryId:pack.id}:null,drop:{kind:'battery-slot'},current:target.kind==='battery'});
   for (const p of PROFILE.motors) {
     const model = v.motors.get(p.id), m = s.motors[p.id];
@@ -25,10 +36,11 @@ export function configureDroneWorkshop(v,s,ui) {
     if (!readyForMaintenance(s) || !ui.zoomed || ui.selected!==p.id || !m.inspected) continue;
     for (const i of [0,1]) {
       const blade=m.blades[i], screw=m.screws[i], b=model.blades[i].group, bolt=model.screws[i];
-      w.bind(`blade-${p.id}-${i}`,b,{label:`${i+1}번 ${blade.present?'장착 날개 · 집어서 분리':'새 날개 장착 자리'}`,anchor:point(b,-.8,.08,0),radius:.28,priority:2,
+      w.bind(`blade-${p.id}-${i}`,b,{label:`${i+1}번 ${blade.present?'장착 날개 · 집어서 분리':'새 날개 장착 자리'}`,anchor:()=>b.localToWorld(model.bladeAnchors[i].clone()),radius:.28,priority:2,
+        pullAxis:()=>new THREE.Vector3(0,1,0).transformDirection(b.matrixWorld),seat:()=>poseOf(b),
         piece:blade.present?{kind:'mounted-blade',motorId:p.id,index:i,partId:blade.id}:null,drop:{kind:'blade',motorId:p.id,index:i},current:target.kind==='old-blade' && target.index===i});
-      w.bind(`screw-${p.id}-${i}`,bolt,{label:`${i+1}번 ${screw.present?screw.secured?'나사 · 드라이버로 풀기':'나사 · 드라이버로 조이기':'새 나사 장착 자리'}`,anchor:point(bolt,-.15,.43,0),radius:.12,priority:5,
-        drop:{kind:'screw',motorId:p.id,index:i},turn:bolt,turnOffset:new THREE.Vector3(0,screw.source==='new'?-.1:.14,0)});
+      w.bind(`screw-${p.id}-${i}`,bolt,{label:`${i+1}번 ${screw.present?screw.secured?'나사 · 드라이버로 풀기':'나사 · 드라이버로 조이기':'새 나사 장착 자리'}`,anchor:()=>bolt.localToWorld(model.screwAnchors[i].clone()),radius:.12,priority:5,
+        drop:{kind:'screw',motorId:p.id,index:i},turn:bolt,turnPivot:new THREE.Vector3(-.15,0,0)});
     }
   }
   if (readyForMaintenance(s)) {
@@ -36,14 +48,21 @@ export function configureDroneWorkshop(v,s,ui) {
     for (const i of [0,1]) {
       if (!s.used.includes(`${ui.kitId}-blade-${i}`)) {
         const source=PROFILE.motors.find(p=>p.marked===ui.kitId.startsWith('A'));
-        const original=v.motors.get(source.id).blades[i], model=original.group.clone(true);
-        // A spare must stay visible even when its source blade has been removed.
-        model.visible=true;
-        model.children[original.group.children.indexOf(original.good)].visible=true;
-        model.children[original.group.children.indexOf(original.damaged)].visible=false;
-        model.children[original.group.children.indexOf(original.crack)].visible=false;
-        model.rotation.set(0,0,0);model.scale.setScalar(.65);
-        w.stock(`new-blade-${i}`,'blade',-1.9+i*1.05,{model,label:`${ui.kitId} 날개 ${i+1}`,piece:{kind:'blade',index:i,kitId:ui.kitId},current:target.kind==='new-blade'&&target.index===i});
+        const original = v.motors.get(source.id).blades[i];
+        const model = looseBlade(original, false);
+        const bounds = original.good.geometry.boundingBox;
+        const center = bounds.getCenter(new THREE.Vector3());
+        // The imported pivot is at the motor, above and to one side of the blade.
+        // Keep that pivot for installation, but rest the loose blade in its own slot.
+        const scale = .45;
+        w.stock(`new-blade-${i}`, 'blade', -1.9+i*1.05, {
+          model, label:`${ui.kitId} 날개 ${i+1}`, piece:{kind:'blade',index:i,kitId:ui.kitId},
+          anchor:point(model,center.x,center.y,center.z), current:target.kind==='new-blade'&&target.index===i
+        });
+        model.scale.setScalar(scale);
+        model.rotation.y = Math.PI/4;
+        const contact = new THREE.Vector3(center.x,bounds.min.y,center.z).applyQuaternion(model.quaternion);
+        model.position.addScaledVector(contact,-scale);
       }
       if (!s.used.includes(`${ui.kitId}-screw-${i}`)) w.stock(`new-screw-${i}`,'screw',.25+i*.8,{label:`새 나사 ${i+1}`,piece:{kind:'screw',index:i,kitId:ui.kitId},current:target.kind==='new-screw'&&target.index===i});
     }
@@ -55,19 +74,38 @@ export function configureDroneWorkshop(v,s,ui) {
   }
   const tray=w.stock('drone-discard','tray',3.6,{label:'분리 부품 수거함',drop:{kind:'discard'},radius:.6});
   for (const [i,part] of s.discarded.slice(-6).entries()) {
-    const art=w.art(String(part).includes('screw')?'screw':'blade','#6e786d'); art.scale.setScalar(.32); art.position.set((i%3-1)*.3,.18,Math.floor(i/3)*.25-.12); tray.object.add(art);
+    const blade = part.match(/^(.+)-blade-([01])$/);
+    if (blade) {
+      const [,set,index] = blade;
+      const source = set.startsWith('original-') ? set.slice('original-'.length)
+        : PROFILE.motors.find(p=>p.marked===set.startsWith('A')).id;
+      const art = looseBlade(v.motors.get(source).blades[index],set===`original-${SCENARIO.target}` && index==='0');
+      art.scale.setScalar(.44);
+      art.position.set(.51,.34,-.32+i*.12);tray.object.add(art);
+    } else {
+      const art=w.art('screw'); art.scale.setScalar(.32);
+      art.position.set((i%3-1)*.3,.18,Math.floor(i/3)*.25-.12); tray.object.add(art);
+    }
   }
   w.update();
 }
 
 export function configureRobotWorkshop(v,s,ui) {
   const w=v.workshop ||= new Workshop3D(v);
+  if(ui.robotControllerMode){
+    w.reset(!ui.previewMode);w.bench.visible=false;
+    if(!w.active)return;
+    w.bind('robot-body-power',v.powerButton,{label:`로봇 본체 전원 ${s.power?'끄기':'켜기'}`,caption:`본체 전원 · ${s.power?'켜짐':'꺼짐'}`,
+      action:{action:'robot-controller-power'},press:new THREE.Vector3(0,-.01,0),anchor:point(v.powerButton),
+      radius:Math.max(.10,v.camera.position.distanceTo(v.controls.target)*.018),priority:8,current:!s.power});
+    w.update();return;
+  }
   w.reset(Boolean(ui.immersiveMode && s.status==='active'),(piece,target)=>placeRobotPart(s,piece,target).feedback.kind==='success');
   if (!w.active) return;
   const guide=robotGuide({...s,moduleChoice:ui.robotModule},ui.robotSelected), id=guide.current?.id || '';
-  w.bind('robot-estop',v.stop,{label:s.estop?'본체 비상 정지 해제':'본체 비상 정지 누르기',action:{action:'robot-estop'},press:new THREE.Vector3(0,v.portedRig?-.012:-.05,0),radius:v.portedRig?.09:.2,current:['robot-estop','robot-release-stop','robot-final-stop'].includes(id)});
-  w.bind('robot-power',v.powerButton,{label:s.power?'본체 주 전원 끄기':'본체 주 전원 켜기',action:{action:'robot-power'},press:new THREE.Vector3(0,v.portedRig?-.01:-.03,0),radius:v.portedRig?.085:.15,current:['robot-power-off','robot-test-power','robot-final-power'].includes(id)});
-  w.bind('robot-battery',v.battery,{label:s.battery?'본체 배터리 · 집어서 분리':'빈 배터리 장착부',anchor:v.portedRig?point(v.battery,0,.18,0):point(v.body,0,2.55,.96),radius:.4,
+  w.bind('robot-estop',v.stop,{label:s.estop?'본체 비상 정지 해제':'본체 비상 정지 누르기',action:{action:'robot-estop'},press:new THREE.Vector3(0,-.012,0),radius:.09,current:['robot-estop','robot-release-stop','robot-final-stop'].includes(id)});
+  w.bind('robot-power',v.powerButton,{label:s.power?'본체 주 전원 끄기':'본체 주 전원 켜기',caption:'본체 주 전원',action:{action:'robot-power'},priority:8,press:new THREE.Vector3(0,-.01,0),radius:.085,current:['robot-power-off','robot-test-power','robot-final-power'].includes(id)});
+  w.bind('robot-battery',v.battery,{label:s.battery?'본체 배터리 · 집어서 분리':'빈 배터리 장착부',anchor:point(v.battery,0,.18,0),radius:.4,
     piece:s.battery?{kind:'robot-battery'}:null,drop:{kind:'robot-battery-slot'},current:id==='robot-battery-out'});
   if (!s.supported) {
     w.stock('robot-stand','stand',-2,{label:'정비 받침대',piece:{kind:'robot-support'},current:id==='robot-support'});
@@ -75,28 +113,28 @@ export function configureRobotWorkshop(v,s,ui) {
   }
   for (const p of ROBOT_LEGS) {
     const m=v.legs.get(p.id), l=s.legs[p.id];
-    w.bind(`leg-${p.id}`,m.knee,{label:`${p.short}번 ${p.name} 관절 · 가까이 보기`,caption:p.short,action:{action:'robot-select-leg',leg:p.id},anchor:m.service?()=>m.service.anchor():point(m.knee,p.x*.35,0,0),radius:.35,
+    w.bind(`leg-${p.id}`,m.knee,{label:`${p.short}번 ${p.name} 관절 · 가까이 보기`,caption:p.short,action:{action:'robot-select-leg',leg:p.id},anchor:()=>m.service.anchor(),radius:.35,
       current:id.startsWith('robot-inspect-') && guide.current.legId===p.id && (!ui.robotZoomed || ui.robotSelected!==p.id || !l.inspected)});
-    if (!robotDiagnosed(s) || ui.robotSelected!==p.id || l.verdict!=='replace' || (m.service && !ui.robotZoomed)) continue;
-    w.bind(`module-${p.id}`,m.cartridge,{label:l.present?'관절 모듈 · 집어서 분리':'빈 관절 모듈 장착부',anchor:m.service?()=>m.service.anchor():point(m.knee,p.x*.2,0,0),radius:m.service?.14:.28,priority:2,
-      ...(m.service?{pullAxis:()=>m.service.axis(),seat:()=>m.service.seat()}:{}),
+    if (!robotDiagnosed(s) || ui.robotSelected!==p.id || l.verdict!=='replace' || !ui.robotZoomed) continue;
+    w.bind(`module-${p.id}`,m.cartridge,{label:l.present?'관절 모듈 · 집어서 분리':'빈 관절 모듈 장착부',anchor:()=>m.service.anchor(),radius:.14,priority:2,
+      pullAxis:()=>m.service.axis(),seat:()=>m.service.seat(),
       piece:l.present&&l.source==='original'?{kind:'robot-mounted-module',legId:p.id}:null,drop:{kind:'robot-module-slot',legId:p.id},current:id.startsWith('robot-remove-')});
-    w.bind(`connector-${p.id}`,m.connector,{label:l.connected?'관절 커넥터 분리':'관절 커넥터 연결',action:{action:'robot-connector'},press:new THREE.Vector3(p.x*(l.connected ? 1 : -1)*(m.service?.075:.2),0,0),radius:m.service?.055:.12,cueRadius:m.service?.075:undefined,priority:5,current:id.startsWith('robot-disconnect-')||id.startsWith('robot-connect-')});
-    for (const i of [0,1]) if (l.bolts[i] || l.source==='new') w.bind(`bolt-${p.id}-${i}`,m.bolts[i],{label:`관절 볼트 ${i+1} · 공구로 ${l.source==='new'?'체결':'분리'}`,anchor:v.portedRig?point(m.bolts[i]):point(m.knee,p.x*.43,.22,(i===0?-1:1)*.16),radius:.1,priority:6,
-      drop:{kind:'robot-bolt',legId:p.id,index:i},turn:m.bolts[i],toolAxis:m.service?()=>m.service.axis():new THREE.Vector3(p.x,0,0),turnOffset:new THREE.Vector3(p.x*(l.source==='new'?-1:1)*(m.service?.033:.14),0,0),...(m.service?{radius:.045,cueRadius:.065}:{} )});
+    w.bind(`connector-${p.id}`,m.connector,{label:l.connected?'관절 커넥터 분리':'관절 커넥터 연결',action:{action:'robot-connector'},press:new THREE.Vector3(p.x*(l.connected ? 1 : -1)*(.075),0,0),radius:.055,priority:5,current:id.startsWith('robot-disconnect-')||id.startsWith('robot-connect-')});
+    for (const i of [0,1]) if (l.bolts[i] || l.source==='new') w.bind(`bolt-${p.id}-${i}`,m.bolts[i],{label:`관절 볼트 ${i+1} · 공구로 ${l.source==='new'?'체결':'분리'}`,anchor:point(m.bolts[i]),radius:.045,priority:6,
+      drop:{kind:'robot-bolt',legId:p.id,index:i},turn:m.bolts[i],toolAxis:()=>m.service.axis()});
   }
   if (robotDiagnosed(s)&&!robotAssembled(s)) {
     w.stock('robot-driver','driver',-3,{label:'육각 공구',piece:{kind:'robot-driver'},current:id.startsWith('robot-unbolt-')||id.startsWith('robot-fasten-')});
     if (s.spareAvailable) {
-      const model=v.portedRig?.spareModule();
-      w.stock('robot-spare','module',-.8,{...(model?{model,anchor:point(model,0,.02,0)}:{}),label:`새 모듈 ${ui.robotModule}`,piece:{kind:'robot-module',moduleId:ui.robotModule},current:id.startsWith('robot-install-')&&ui.robotModule==='QJ-01'});
+      const model=v.portedRig.spareModule();
+      w.stock('robot-spare','module',-.8,{model,anchor:point(model,0,.02,0),label:`새 모듈 ${ui.robotModule}`,piece:{kind:'robot-module',moduleId:ui.robotModule},current:id.startsWith('robot-install-')&&ui.robotModule==='QJ-01'});
     }
   }
   if (!s.battery) w.stock('robot-stored-battery','battery',1.2,{label:'분리한 배터리',piece:{kind:'robot-stored-battery'},current:id==='robot-battery-in'});
   const tray=w.stock('robot-discard','tray',3,{label:'분리 부품 수거함',drop:{kind:'robot-discard'}});
   const fault=s.legs[s.targetLeg];
   for(const i of [0,1]) if(fault.source==='new'||!fault.bolts[i]){const bolt=w.art('screw');bolt.scale.setScalar(.5);bolt.position.set(i===0?-.4:.4,.15,.2);tray.object.add(bolt);}
-  if (!fault.present || fault.source==='new') { const module=v.portedRig?.spareModule({damaged:true}) || w.art('module','#8e8e76');module.scale.multiplyScalar(.6);module.position.set(0,.18,0);tray.object.add(module); }
+  if (!fault.present || fault.source==='new') { const module=v.portedRig.spareModule({damaged:true});module.scale.multiplyScalar(.6);module.position.set(0,.18,0);tray.object.add(module); }
   w.update();
 }
 
@@ -106,7 +144,7 @@ export function renderSpatialScene(kind,s,ui) {
   const judging=ready && inspected.inspected && !inspected.verdict && (robot?ui.robotZoomed:ui.zoomed);
   const final=robot?robotAssembled(s)&&robotDiagnosed(s):ready&&!physicalIssues(s).length&&Object.values(s.motors).every(m=>m.verdict);
   let context='';
-  if (judging) context=`<span class="eyebrow">가까이에서 관찰</span><h2>${robot?'관절 덮개':'프로펠러'}의 상태는 어떤가요?</h2><p>3D 모델의 균열·변형을 직접 살펴보세요.</p><div class="two-buttons">${button('정상',robot?'robot-healthy':'answer-healthy','button')}${button('교체 필요',robot?'robot-replace':'answer-replace','button')}</div>`;
+  if (judging) context=`<span class="eyebrow">가까이에서 관찰</span><h2>${robot?'관절 덮개':'프로펠러'}의 상태는 어떤가요?</h2><p>${robot?'덮개 가장자리가 들리거나 안쪽 씰이 드러난 곳이 있는지 살펴보세요.':'두 날개의 끝 모양을 비교해 보세요. 깨진 단면이나 비틀린 부분이 있는지 살펴보세요.'}</p><div class="two-buttons">${button('정상',robot?'robot-healthy':'answer-healthy','button')}${button('교체 필요',robot?'robot-replace':'answer-replace','button')}</div>`;
   else if (final && robot) context=`<h2>교체 후 작동 확인</h2><p class="robot-test-status" role="status">${s.testing?'관절 시험 중…':s.tested?'네 다리 가상 시험 완료 ✓':'받침대를 유지하고 배터리·전원·비상 정지를 확인하세요.'}</p>${button(s.testing?'시험 중…':'관절 시험','robot-test','button full',robotCanTest(s)&&!s.testing&&!s.tested?'':'disabled')}${button('정비 완료','robot-complete','button primary full',s.tested&&s.estop&&!s.power?'':'disabled')}`;
   else if (final) context=`<h2>마지막으로 확인하세요</h2><div class="final-checks">${[['marks','기체·부품 표식 일치'],['count','날개·나사 누락 없음'],['fastening','모든 나사 체결 완료']].map(([key,label])=>`<label class="final-check-label"><input type="checkbox" data-input="final-check" data-check="${key}" ${s.checks[key]?'checked':''}>${label}</label>`).join('')}</div>${button('정비 완료','final','button primary full',Object.values(s.checks).every(Boolean)?'':'disabled')}`;
   const stock=robot?robotDiagnosed(s)&&!robotAssembled(s):ready;

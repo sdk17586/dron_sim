@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -26,7 +27,7 @@ def main():
             page.on('pageerror', lambda error: errors.append(str(error)))
             context.route('**/*', lambda r: r.continue_() if r.request.url.startswith(base + '/') else (external.append(r.request.url), r.abort()))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>qaCsp.push(e.effectiveDirective));localStorage.setItem('aerolab.voice.v1','false');")
-            def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def panel(): return page.locator('[data-imu-panel]')
             def status(): return panel().get_attribute('data-status')
             def pose(): return panel().get_attribute('data-pose')
@@ -43,9 +44,14 @@ def main():
                 click('imu-surface'); click('imu-link'); click('imu-begin')
             def enter_imu():
                 assert page.locator('[data-action="controller-imu-next"]').is_hidden()
-                click('controller-aircraft-power'); click('controller-remote-power'); click('controller-link')
+                link = page.locator('[data-action=controller-link]')
+                assert link.is_disabled() and '기체' in page.locator('[data-link-hint]').inner_text()
+                click('controller-aircraft-power')
+                assert link.is_disabled() and '조종기를 켜면' in page.locator('[data-link-hint]').inner_text()
+                click('controller-remote-power'); assert link.is_enabled()
+                click('controller-link')
                 for side in ['left', 'right']:
-                    stick = page.locator(f'[data-stick="{side}"]'); stick.focus(); stick.press('ArrowUp')
+                    stick = page.locator(f'[data-stick="{side}"]'); stick.focus(); stick.press('ArrowUp' if side == 'left' else 'ArrowRight')
                 click('controller-stop')
                 assert task() == 'controller-imu-next' and not page.locator('.guide-complete').count()
                 assert not page.locator('#course-completion').evaluate('(e)=>e.open')
@@ -53,9 +59,12 @@ def main():
                 assert page.locator('#learning-help [data-task-id="imu-verify"]').count() == 1
                 click('close-help'); click('controller-imu-next')
                 assert page.locator('[data-imu-body]').count() == 1
+                target = page.locator('[data-imu-target-view] svg[data-model-source=px4-x500][data-model-status=ready]')
+                target.wait_for(state='attached')
+                assert target.locator('path').count() > 20
                 assert page.locator('[data-action="controller"]').get_attribute('aria-pressed') == 'true'
             page.goto(base + ('/?compatible3d=1' if args.compatible else '/'))
-            assert page.locator('.course-home .course-card').count() == 2
+            assert page.locator('.course-home [data-action=drone-education]').is_visible()
             assert not page.locator('#drone-viewport').count()
             click('intro-drone'); click('controller')
             assert page.locator('h1').inner_text() == '조종기 교육'
@@ -64,12 +73,25 @@ def main():
             assert not panel().count() and not page.locator('[data-imu-body]').count()
             click('controller-start')
             page.wait_for_function('()=>document.querySelector(".drone-3d-canvas[data-ready=true]")', polling=40)
+            instruction = page.locator('.lesson-instruction[data-current-task]')
+            power = page.locator('[data-action=controller-aircraft-power].guide-source')
+            power.wait_for(state='visible')
+            assert instruction.locator('.guide-caption').inner_text() == '지금 할 일'
+            for preference in ['reduce', 'no-preference']:
+                page.emulate_media(reduced_motion=preference)
+                for target, pulse in [(instruction, 'task-panel-pulse'), (power, 'task-target-pulse')]:
+                    animation, shadow = target.evaluate('(e) => [getComputedStyle(e).animationName, getComputedStyle(e).boxShadow]')
+                    assert animation == ('none' if preference == 'reduce' else pulse) and shadow != 'none'
             page.clock.pause_at('2026-11-12T02:00:00Z')
             enter_imu()
             assert task() == 'imu-surface' and page.locator('header [data-action="controller-restart"]').is_visible()
-            assert page.locator('[data-action="imu-link"]').is_disabled()
+            assert instruction.evaluate('(e) => getComputedStyle(e).animationName') == 'task-panel-pulse'
+            assert panel().locator('[data-action="imu-surface"]').is_visible()
+            assert panel().locator('[data-action="imu-link"]').is_hidden()
             passed('별도 IMU 메뉴 제거·통합 소개·조종기 작동 확인 후 이어하기·조기 완료 방지·통합 도움말')
             prepare(); assert status() == 'calibrating'
+            assert '손을 떼고 기다리세요' in panel().locator('.lesson-instruction').inner_text()
+            page.screenshot(path=str(output / 'x500-pose-guide.png'), full_page=True)
             page.clock.run_for(500)
             body = page.locator('[data-imu-body]'); box = body.bounding_box()
             page.mouse.move(box['x'] + 17, box['y'] + 17); page.mouse.down()
@@ -80,15 +102,23 @@ def main():
             assert task() == 'imu-pose-left'
             passed('직접 기체 집기·회전 중 측정 초기화·바른 자세 3초 정지 후 첫 측정')
             key('ArrowRight'); assert pose() == 'right'
-            page.clock.run_for(3300); assert samples() == 1
-            key('ArrowLeft'); key('ArrowLeft'); assert pose() == 'left'; wait_samples(2)
-            passed('다른 자세를 유지해도 다음 단계 미완료·방향키로 실제 자세 변경')
+            assert '순서 자유' in page.locator('#current-task-title').inner_text()
+            page.clock.run_for(3100); assert samples() == 2
+            assert page.locator('[data-imu-sample=right]').get_attribute('data-done') == 'true'
+            assert '1/2' in page.locator('[data-imu-target-label]').inner_text()
+            page.clock.run_for(3300); assert samples() == 2
+            assert '이미 측정' in page.locator('[data-imu-message]').inner_text()
+            capture('right-first')
+            key('ArrowLeft'); key('ArrowLeft'); assert pose() == 'left'; wait_samples(3)
+            assert page.locator('[data-imu-sample=left]').get_attribute('data-done') == 'true'
+            assert '2/2' in page.locator('[data-imu-side-progress]').inner_text()
+            passed('오른쪽 먼저 측정 가능·같은 옆면 중복 차단·반대쪽 새로 3초 측정·왼쪽/오른쪽 완료 표시')
             # Native drag on the body handle turns the aircraft 180 degrees from left to right.
             box = page.locator('[data-imu-body]').bounding_box()
             page.mouse.move(box['x'] + 17, box['y'] + 17); page.mouse.down()
             page.mouse.move(box['x'] + 237, box['y'] + 17, steps=12); page.mouse.up()
             assert pose() == 'right'; wait_samples(3); capture('right')
-            passed('마우스 드래그 자세 변경·목표 모형·세 자세 측정 누적')
+            passed('마우스 드래그 자세 변경·목표 모형·이미 마친 옆면 재측정해도 세 자세 유지')
             key('ArrowLeft'); key('ArrowUp'); assert pose() == 'nose-up'
             page.clock.run_for(500); click('open-help')
             assert status() == 'paused' and page.locator('#learning-help').evaluate('(e)=>e.open')
@@ -106,14 +136,21 @@ def main():
             key('ArrowUp'); key('ArrowUp'); assert pose() == 'level' and task() == 'imu-verify'
             click('imu-verify'); assert status() == 'completed'
             completion = page.locator('#course-completion')
-            assert completion.evaluate('(e)=>e.open') and completion.locator('h2').inner_text() == '교육을 마쳤습니다!'
-            assert 'IMU 보정' in completion.inner_text()
-            completion.locator('[data-dismiss-completion]').click(force=True)
-            assert page.locator('.guide-complete').count() == 1 and page.locator('.imu-comparison').is_visible()
-            assert '남은 작업' not in page.locator('.remaining-help').inner_text()
+            assert not completion.evaluate('(e)=>e.open')
+            assert page.locator('.guide-complete').count() == 0 and page.locator('.imu-comparison').is_visible()
+            assert page.locator('[data-action=imu-flight-next]').is_enabled()
             assert page.evaluate('()=>localStorage.getItem("aerolab.results.v1")') is None
             capture('complete')
-            passed('여섯 자세 후 결과 확인·큰 중앙 완료 창·확인 후 결과 유지·기존 CSV 기록 분리')
+            passed('여섯 자세 후 결과 확인·보정 결과 유지·기체 이동 단계 안내, 전체 교육 조기 완료 방지')
+            click('imu-flight-next')
+            assert page.locator('.controller-panel h1').inner_text() == '기체 이동 연습'
+            for side, direction in [('left','ArrowUp'), ('right','ArrowRight')]:
+                page.locator(f'[data-stick={side}]').focus();page.keyboard.down(direction);page.clock.run_for(400);page.keyboard.up(direction)
+            click('controller-stop')
+            assert completion.evaluate('(e)=>e.open') and '이동 연습' in completion.inner_text()
+            completion.locator('[data-dismiss-completion]').click(force=True)
+            assert page.locator('.guide-complete').count() == 1
+            passed('IMU 다음 이동·회전·정지를 실제 수행해야 전체 완료 창 표시')
             click('controller-restart')
             assert page.locator('.controller-panel').count() == 1 and not panel().count()
             assert task() == 'aircraft' and page.locator('[data-action="controller-remote-power"]').get_attribute('aria-pressed') == 'false'
@@ -143,10 +180,22 @@ def main():
                     node = page.locator(selector); assert node.is_visible(), (width, selector)
                     rect = node.bounding_box(); assert rect['x'] >= 0 and rect['x'] + rect['width'] <= width + 1
                 if width <= 800:
-                    assert page.locator('#task-guide-host').bounding_box()['y'] + page.locator('#task-guide-host').bounding_box()['height'] <= panel().bounding_box()['y']
-                    assert panel().bounding_box()['y'] + panel().bounding_box()['height'] <= page.locator('#drone-viewport').bounding_box()['y']
+                    assert panel().locator('#task-guide-host').count() == 1
+                    resume = panel().locator('[data-action=imu-begin]').bounding_box()
+                    drone_view = page.locator('#drone-viewport').bounding_box()
+                    assert resume['y'] + resume['height'] <= drone_view['y'] < resume['y'] + resume['height'] + 32
             passed('1920·1366·390px 화면에서 기체 조작·센서 패널·재개 버튼 접근과 가로 넘침 없음')
-            click('home'); assert page.locator('.course-home .course-card').count() == 2
+            click('imu-begin')
+            for index, face in enumerate(['level','left','right','nose-up','nose-down','inverted'], 1):
+                choice = panel().locator(f'[data-pose-choice="{face}"]')
+                choice.click()
+                assert pose() == face and samples() == index - 1
+                assert page.locator('.drone-3d-canvas').get_attribute('data-imu-pose') == face
+                wait_samples(index)
+            panel().locator('[data-pose-choice=level]').click()
+            click('imu-verify'); assert status() == 'completed'
+            passed('모바일 자세 버튼으로 여섯 방향 변경·3초 자동 측정·바른 자세 복귀와 결과 확인')
+            click('home'); assert page.locator('.course-home [data-action=drone-education]').is_visible()
             click('intro-drone'); assert not page.locator('[data-imu-body]').count()
             assert page.locator('.drone-3d-canvas').get_attribute('data-rotor-demand') == '0'
             assert not errors and not external and not page.evaluate('()=>qaCsp'), (errors, external, page.evaluate('()=>qaCsp'))

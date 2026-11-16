@@ -84,7 +84,7 @@ test('조종기 미연결 입력·조기 정지는 교육 수행으로 기록하
 test('조종기 전원·연결·좌우 스틱·정지 확인과 재시작을 구분', () => {
   let s = createControllerState();
   for (const type of ['AIRCRAFT_POWER', 'REMOTE_POWER', 'LINK']) s = controllerTransition(s, { type });
-  for (const side of ['left', 'right']) s = controllerTransition(s, { type: 'STICK', side, x: 1, y: 0 });
+  for (const side of ['left', 'right']) s = controllerTransition(s, { type: 'STICK', side, x: side === 'right' ? 1 : 0, y: side === 'left' ? 1 : 0 });
   assert(controllerGuide(s).current.id === 'stop' && !controllerGuide(s).complete, 'stop check skipped');
   s = controllerTransition(s, { type: 'STOP' }); assert(controllerGuide(s).complete, 'controller not finished');
   s = controllerTransition(s, { type: 'RESET' }); assert(controllerGuide(s).remaining === 6, 'restart retained completion');

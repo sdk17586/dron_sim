@@ -1,6 +1,6 @@
 import * as THREE from '../vendor/three/three.module.min.js';
 import { OrbitControls } from '../vendor/three/OrbitControls.js';
-import { createRenderer3D, showRenderBackend } from './renderer3d.js';
+import { createRenderer3D, showRenderBackend, watchRendererContext, disposeRenderer3D } from './renderer3d.js';
 import { renderRepairPoints } from './parts.js';
 import { PROFILE } from '../content/aircraft-profiles.js';
 import { SCENARIO } from '../content/scenarios.js';
@@ -10,8 +10,10 @@ import { motorStatus, motorStatusLabel } from './motor-status.js';
 import { configureDroneWorkshop } from './spatial-maintenance.js';
 import { configureIMU } from './imu3d.js';
 import { addStudioFinish } from './presentation3d.js';
-
-const pointFor = p => new THREE.Vector3((p.x - 380) / 72, 1.04, (p.y - 294) / 76);
+import { loadX500 } from './x500-model.js';
+import { loadModelAsset, renderModelStatus } from './model-asset.js';
+import { SCENE_COLORS } from './scene-theme.js';
+import { DRONE_MOVE_LIMIT } from '../domain/controller.js';
 
 function roundedGeometry(width, depth, height, radius = .16) {
   const x = -width / 2, z = -depth / 2, s = new THREE.Shape();
@@ -22,22 +24,6 @@ function roundedGeometry(width, depth, height, radius = .16) {
   s.lineTo(x, z + radius); s.quadraticCurveTo(x, z, x + radius, z);
   const geometry = new THREE.ExtrudeGeometry(s, { depth: height, bevelEnabled: true,
     bevelSegments: 2, bevelSize: .045, bevelThickness: .04, curveSegments: 5, steps: 1 });
-  geometry.rotateX(-Math.PI / 2);
-  return geometry;
-}
-
-function propellerGeometry(damaged) {
-  const s = new THREE.Shape();
-  s.moveTo(.1, -.08);
-  s.bezierCurveTo(-.25, -.17, -.9, -.24, -1.46, -.14);
-  if (damaged) {
-    s.lineTo(-1.43, -.07); s.lineTo(-1.22, -.08); s.lineTo(-1.34, .005);
-    s.lineTo(-1.21, .045); s.lineTo(-1.46, .09);
-  } else s.quadraticCurveTo(-1.57, -.04, -1.46, .09);
-  s.bezierCurveTo(-.95, .23, -.35, .16, .1, .08);
-  s.quadraticCurveTo(.19, 0, .1, -.08);
-  const geometry = new THREE.ExtrudeGeometry(s, { depth: .035, bevelEnabled: true,
-    bevelSegments: 1, bevelSize: .012, bevelThickness: .008, curveSegments: 8, steps: 1 });
   geometry.rotateX(-Math.PI / 2);
   return geometry;
 }
@@ -65,7 +51,7 @@ export class DroneViewport {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color('#f1f4ec');
+    this.scene.background = new THREE.Color(SCENE_COLORS.background);
     this.camera = new THREE.PerspectiveCamera(39, 1, .1, 80);
     this.camera.position.set(8.5, 8, -10);
     this.controls = new OrbitControls(this.camera, this.canvas);
@@ -80,12 +66,13 @@ export class DroneViewport {
     this.controls.addEventListener('change', () => this.render());
     const svg = this.canvas.tagName.toLowerCase() === 'svg';
     const lightScale = svg ? .17 : 1;
-    this.scene.add(new THREE.HemisphereLight(0xffffff, 0x7b8a70, 2.8 * lightScale));
+    this.scene.add(new THREE.HemisphereLight('#f0f6ff', SCENE_COLORS.groundLight, 2.8 * lightScale));
     if (svg) this.scene.add(new THREE.AmbientLight(0xffffff, .4));
     const key = new THREE.DirectionalLight(0xfffcf0, 3.4 * lightScale); key.position.set(-4, 9, -5); this.scene.add(key);
     const fill = new THREE.DirectionalLight(0xcbded5, 1.5 * lightScale); fill.position.set(5, 4, 6); this.scene.add(fill);
     this.drone = new THREE.Group(); this.scene.add(this.drone);
-    this.buildModel();
+    this.buildStage();
+    loadModelAsset(this, loadX500);
     this.studio = addStudioFinish(this, { shadow: false });
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
@@ -128,7 +115,7 @@ export class DroneViewport {
       this.camera.position.copy(this.controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
       this.controls.update(); this.render();
     });
-    this.canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); this.onUnavailable?.(); });
+    this.releaseContextWatch = watchRendererContext(this, () => this.onUnavailable?.());
     this.resizeObserver = new ResizeObserver(() => this.resize());
   }
 
@@ -143,92 +130,59 @@ export class DroneViewport {
   box(width, height, depth, material, parent, position) { return this.mesh(new THREE.BoxGeometry(width, height, depth), material, parent, position); }
   cylinder(radius, height, material, parent, position) { return this.mesh(new THREE.CylinderGeometry(radius, radius, height, 24), material, parent, position); }
 
-  buildModel() {
-    const shell = this.material('shell', '#d6dbcf'), edge = this.material('edge', '#9eac98');
-    const dark = this.material('dark', '#293c33'), rubber = this.material('rubber', '#21372b', { roughness: .94 });
+  buildTeachingParts() {
+    const edge = this.material('edge', '#9eac98'), dark = this.material('dark', '#293c33');
     const metal = this.material('metal', '#aab6a5', { metalness: .72, roughness: .33 });
     const bronze = this.material('bronze', '#c69e63', { metalness: .5 });
-    this.mesh(roundedGeometry(1.9, 3.25, .5, .4), shell, this.drone, [0, .68, 0]);
-    this.mesh(roundedGeometry(1.48, 2.7, .18, .32), this.material('top', '#e4e7dc'), this.drone, [0, 1.2, .03]);
-    this.mesh(roundedGeometry(1.72, 2.95, .2, .3), edge, this.drone, [0, .46, .07]);
-    for (const z of [-1.08, -.93, .88, 1.03]) this.box(.85, .015, .025, edge, this.drone, [0, 1.41, z]);
-    for (const x of [-.48, .48]) this.box(.13, .36, .25, rubber, this.drone, [x, .22, 1.02]);
-    this.box(1.04, .43, .34, dark, this.drone, [0, .82, 1.63]);
     this.battery = new THREE.Group(); this.drone.add(this.battery);
     this.mesh(roundedGeometry(.92, .65, .31, .08), edge, this.battery);
     for (let i = 0; i < 4; i++) this.box(.08, .015, .025, bronze, this.battery, [i * .14 - .21, .36, 0]);
-    this.box(1.08, .025, .15, dark, this.drone, [0, 1.44, -.25]);
     this.materials['battery-led'] = new THREE.MeshBasicMaterial({ color: batteryColor(20) });
-    this.batteryLED = this.box(1, .028, .09, this.materials['battery-led'], this.drone, [0, 1.458, -.25]);
-    this.power = this.cylinder(.075, .018, dark, this.drone, [0, 1.42, .72]);
-    const powerGlyph=this.mesh(new THREE.TorusGeometry(.045,.007,4,18),metal,this.drone,[0,1.435,.72]);powerGlyph.rotation.x=-Math.PI/2;
-    this.box(.01,.008,.045,metal,this.drone,[0,1.44,.69]);
-    this.powerLight = this.cylinder(.022, .02, this.material('power-on', '#b3c58c', { emissive: '#667745' }), this.drone, [0, 1.44, .72]);
-    this.box(.75, .08, .34, metal, this.drone, [0, .68, -1.73]);
-    const gimbal = this.mesh(roundedGeometry(.77, .48, .4, .1), dark, this.drone, [0, .39, -1.87]);
-    gimbal.rotation.z = -.03;
-    const lensRing = this.cylinder(.235, .13, metal, this.drone, [0, .63, -2.08]); lensRing.rotation.x = Math.PI / 2;
-    const lens = this.cylinder(.176, .145, this.material('lens', '#183940', { metalness: .75, roughness: .15 }), this.drone, [0, .63, -2.14]); lens.rotation.x = Math.PI / 2;
-    const glass = this.cylinder(.102, .15, this.material('glass', '#294e55', { metalness: .4, roughness: .12 }), this.drone, [0, .63, -2.17]); glass.rotation.x = Math.PI / 2;
-    if (this.canvas.tagName.toLowerCase() !== 'svg') {
-    const decal = document.createElement('canvas'); decal.width = 512; decal.height = 128;
-    const ink = decal.getContext('2d');
-    ink.fillStyle = '#5e725b'; ink.font = '500 38px sans-serif'; ink.textAlign = 'center'; ink.fillText('MINI 2 SE', 256, 58);
-    ink.font = '16px sans-serif'; ink.fillText('TRAINING MODEL', 256, 96);
-    this.decalTexture = new THREE.CanvasTexture(decal); this.decalTexture.colorSpace = THREE.SRGBColorSpace;
-    this.decalMaterial = new THREE.MeshBasicMaterial({ map: this.decalTexture, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-    const decalMesh = this.mesh(new THREE.PlaneGeometry(1.08, .27), this.decalMaterial, this.drone, [0, 1.425, -.15]); decalMesh.rotation.x = -Math.PI / 2;
-    }
-    const bladeGeometry = propellerGeometry(false), damagedGeometry = propellerGeometry(true);
-    const propMaterial = this.material('prop', '#34483a', { metalness: .22, roughness: .53 });
+    this.batteryLED = this.box(1, .028, .09, this.materials['battery-led'], this.drone);
+    this.power = this.cylinder(.075, .018, dark, this.drone);
+    this.powerLight = this.cylinder(.022, .02, this.material('power-on', '#b3c58c', { emissive: '#667745' }), this.drone);
     for (const profile of PROFILE.motors) {
-      const point = pointFor(profile);
-      const armStart = new THREE.Vector3(Math.sign(point.x) * .67, .85, Math.sign(point.z) * .86);
-      const end = point.clone().setY(.9), delta = end.clone().sub(armStart);
-      const arm = this.box(.34, .25, delta.length(), shell, this.drone, armStart.clone().add(end).multiplyScalar(.5).toArray());
-      arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), delta.normalize());
-      const armSeam = this.box(.36, .27, .1, edge, this.drone, armStart.toArray()); armSeam.quaternion.copy(arm.quaternion);
-      const group = new THREE.Group(); group.position.copy(point); group.userData.motorId = profile.id; this.drone.add(group);
-      this.cylinder(.32, .35, dark, group, [0, -.01, 0]);
-      this.cylinder(.285, .19, metal, group, [0, .14, 0]);
-      this.cylinder(.23, .05, edge, group, [0, .26, 0]);
-      for (let n = 0; n < 10; n++) {
-        const angle = n / 10 * Math.PI * 2;
-        const vent = this.box(.035, .1, .025, bronze, group, [Math.cos(angle) * .327, .045, Math.sin(angle) * .327]); vent.rotation.y = -angle;
-      }
-      this.box(.16, .65, .21, edge, group, [0, -.5, .02]);
-      this.box(.25, .08, .31, rubber, group, [0, -.85, .02]);
-      if (profile.marked) for (const z of [-.12, -.04]) this.box(.25, .025, .025, bronze, group, [0, .275, z]);
-      const ring = this.mesh(new THREE.TorusGeometry(.5, .019, 6, 48), this.material('ring', '#7c9c5e', { emissive: '#314c22', emissiveIntensity: .2 }), group, [0, -.22, 0]); ring.rotation.x = -Math.PI / 2;
+      const group = new THREE.Group(); group.userData.motorId = profile.id; this.drone.add(group);
       const blades = [], screws = [];
       for (let i = 0; i < 2; i++) {
-        const blade = new THREE.Group(); blade.rotation.y = i * Math.PI + (point.x < 0 ? -.43 : .43); blade.position.y = .29; group.add(blade);
-        const good = this.mesh(bladeGeometry, propMaterial, blade), damaged = this.mesh(damagedGeometry, propMaterial, blade);
+        const blade = new THREE.Group(); blade.rotation.y = i * Math.PI; blade.position.y = .29; group.add(blade);
         if (profile.marked) for (const x of [-.34, -.4]) this.box(.025, .02, .21, bronze, blade, [x, .057, 0]);
-        const crack = this.box(.032, .015, .19, this.material('crack', '#b78558'), blade, [-1.3, .06, -.005]); crack.rotation.y = .4;
-        blades.push({ group: blade, good, damaged, crack });
+        blades.push({ group: blade });
         const screwGroup = new THREE.Group(); screwGroup.rotation.y = blade.rotation.y; group.add(screwGroup);
         this.cylinder(.085, .06, metal, screwGroup, [-.15, .386, 0]);
         this.box(.11, .009, .02, dark, screwGroup, [-.15, .419, 0]);
         this.box(.02, .009, .11, dark, screwGroup, [-.15, .419, 0]);
         screws.push(screwGroup);
       }
-      this.motors.set(profile.id, { group, ring, blades, screws });
+      this.motors.set(profile.id, { group, blades, screws });
     }
-    const grid = new THREE.GridHelper(18, 36, '#c8d1be', '#dde4d5'); grid.position.y = -.09;
-    grid.material.transparent = true; grid.material.opacity = .5; grid.material.depthWrite = false; this.scene.add(grid);
+  }
+
+  buildStage() {
+    const grid = new THREE.GridHelper(18, 36, SCENE_COLORS.gridMajor, SCENE_COLORS.gridMinor); grid.position.y = -.09;
+    if(this.canvas.dataset.renderBackend==='svg')grid.material.color.set(SCENE_COLORS.gridMinor);
+    grid.material.transparent = true; grid.material.opacity = .65; grid.material.depthWrite = false; this.scene.add(grid);
     this.geometries.add(grid.geometry); this.gridMaterial = grid.material;
+    const extent = DRONE_MOVE_LIMIT + 4.5;
+    const boundaryGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-extent, -.06, -extent), new THREE.Vector3(extent, -.06, -extent),
+      new THREE.Vector3(extent, -.06, extent), new THREE.Vector3(-extent, -.06, extent),
+    ]);
+    this.materials['flight-boundary'] = new THREE.LineBasicMaterial({ color: '#4b9d9b' });
+    this.driveBoundary = new THREE.LineLoop(boundaryGeometry, this.materials['flight-boundary']);
+    this.geometries.add(boundaryGeometry); this.driveBoundary.visible = false; this.scene.add(this.driveBoundary);
+    this.shadowGroup = new THREE.Group(); this.scene.add(this.shadowGroup);
     // A static soft contact shadow avoids a continuously updated shadow map.
     if (this.canvas.tagName.toLowerCase() !== 'svg') {
     const shade = document.createElement('canvas'); shade.width = shade.height = 128;
     const paint = shade.getContext('2d'), gradient = paint.createRadialGradient(64, 64, 10, 64, 64, 64);
-    gradient.addColorStop(0, 'rgba(30,55,35,.22)'); gradient.addColorStop(1, 'rgba(30,55,35,0)');
+    gradient.addColorStop(0, 'rgba(0,3,8,.65)'); gradient.addColorStop(1, 'rgba(0,3,8,0)');
     paint.fillStyle = gradient; paint.fillRect(0, 0, 128, 128);
     this.shadowTexture = new THREE.CanvasTexture(shade);
     this.shadowMaterial = new THREE.MeshBasicMaterial({ map: this.shadowTexture, transparent: true, depthWrite: false });
-    const shadow = this.mesh(new THREE.PlaneGeometry(7.8, 6.8), this.shadowMaterial, this.scene, [0, -.07, .1]); shadow.rotation.x = -Math.PI / 2;
+    const shadow = this.mesh(new THREE.PlaneGeometry(7.8, 6.8), this.shadowMaterial, this.shadowGroup, [0, -.07, .1]); shadow.rotation.x = -Math.PI / 2;
     }
-    const front = this.mesh(new THREE.ConeGeometry(.12, .34, 3), this.material('front', '#8a9f76'), this.scene, [0, -.05, -3.1]); front.rotation.x = -Math.PI / 2;
+    this.frontMarker = this.mesh(new THREE.ConeGeometry(.12, .34, 3), this.material('front', '#8a9f76'), this.scene, [0, -.05, -3.1]); this.frontMarker.rotation.x = -Math.PI / 2;
   }
 
   attach(host) {
@@ -255,7 +209,7 @@ export class DroneViewport {
     this.canvas.dataset.renderer = 'threejs';
     this.controls.enabled = true; this.resize(false);
   }
-  detach() { this.imuInteraction?.deactivate(); this.workshop?.detach(); this.resizeObserver.disconnect(); this.host = null; this.controls.enabled = false; this.canvas.remove(); if (this.rotorLayer) applyRotorMotion(this.rotorLayer, 0); this.rotorLayer?.remove(); }
+  detach() { cancelAnimationFrame(this.poseFrame); this.poseFrame = null; this.travel?.cancel(); this.imuInteraction?.deactivate(); this.workshop?.detach(); this.resizeObserver.disconnect(); this.host = null; this.controls.enabled = false; this.canvas.remove(); if (this.rotorLayer) applyRotorMotion(this.rotorLayer, 0); this.rotorLayer?.remove(); }
   resize(draw = true) {
     if (!this.host?.isConnected) return;
     const width = Math.max(1, this.host.clientWidth), height = Math.max(1, this.host.clientHeight);
@@ -268,12 +222,12 @@ export class DroneViewport {
     this.syncing = true;
     this.state = state;
     this.ui = ui;
+    if (this.canvas.dataset.modelStatus !== 'ready') { this.syncing = false; this.render(); return; }
     if (!ui.controllerMode) this.previewLevel = 0;
     applyRotorMotion(this.rotorLayer, this.previewLevel);
     this.repairLayer.innerHTML = ui.immersiveMode || ui.imuMode ? '' : renderRepairPoints(state, ui);
     for (const p of PROFILE.motors) {
       const model = this.motors.get(p.id), motor = state?.motors[p.id];
-      model.ring.visible = !ui.controllerMode && !ui.previewMode && ui.selected === p.id;
       this.labels.get(p.id).hidden = Boolean(ui.controllerMode || ui.previewMode);
       this.labels.get(p.id)?.setAttribute('aria-pressed', String(ui.selected === p.id));
       const label = this.labels.get(p.id), status = ui.controllerMode ? '' : motorStatus(state, p.id);
@@ -283,25 +237,27 @@ export class DroneViewport {
       for (let i = 0; i < 2; i++) {
         const blade = motor?.blades[i], damaged = blade ? blade.condition === 'damaged' : p.id === SCENARIO.target && i === 0;
         model.blades[i].group.visible = !this.previewLevel && (blade?.present ?? true);
-        model.blades[i].good.visible = !damaged; model.blades[i].damaged.visible = damaged; model.blades[i].crack.visible = damaged;
+        model.blades[i].good.visible = !damaged; model.blades[i].damaged.visible = damaged;
         model.blades[i].group.position.y = ui.exploded ? 1 : .29;
         model.screws[i].visible = motor?.screws[i].present ?? true;
         model.screws[i].position.y = ui.exploded ? 1.2 : 0;
-        model.screws[i].rotation.set(motor?.screws[i].secured === false ? .17 : 0,model.blades[i].group.rotation.y,0);
+        model.screws[i].rotation.set(0,model.blades[i].group.rotation.y,0);
       }
     }
     this.battery.visible = state?.battery ?? true;
-    this.battery.position.set(0, .68, 1.6);
+    this.battery.position.copy(this.x500BatteryPosition);
     this.setBatteryIndicator(state ? installedBattery(state) : createBatteryPacks()[0], false);
     this.powerLight.visible = state?.power ?? false;
-    const key = `${Boolean(ui.imuMode)}:${ui.zoomed}:${ui.zoomed ? ui.selected : ''}:${ui.topView}`;
+    const key = `${Boolean(ui.imuMode)}:${Boolean(ui.controllerMode)}:${ui.zoomed}:${ui.zoomed ? ui.selected : ''}:${ui.topView}`;
     if (this.cameraKey !== key) {
       this.cameraKey = key;
-      const target = ui.imuMode ? new THREE.Vector3(0, 4.1, 0) : ui.zoomed ? pointFor(PROFILE.motors.find(m => m.id === ui.selected)) : new THREE.Vector3(0, .7, 0);
+      const target = ui.imuMode ? new THREE.Vector3(0, 4.1, 0) : ui.zoomed ? this.motors.get(ui.selected).group.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3(0, 2.7, 0);
       const ratio = this.camera.aspect < 1 ? 1.25 : 1;
       const offset = ui.topView ? new THREE.Vector3(0, ui.zoomed ? 4.8 : 11.5 * ratio, .001)
         : ui.zoomed ? new THREE.Vector3(2.6, 3.8, -3.4) : new THREE.Vector3(8.5 * ratio, 8 * ratio, -10 * ratio);
       if (ui.imuMode) offset.set(8 * ratio, 7 * ratio, -16 * ratio);
+      if (ui.controllerMode) offset.set(12 * ratio, 11 * ratio, -16 * ratio);
+      this.controls.maxDistance = ui.controllerMode ? 32 : 23;
       this.controls.target.copy(target); this.camera.position.copy(target).add(offset); this.controls.update();
     }
     this.canvas.dataset.selectedMotor = ui.selected;
@@ -310,8 +266,33 @@ export class DroneViewport {
     this.canvas.dataset.exploded = String(ui.exploded);
     this.canvas.dataset.rotorDemand = String(Math.round(this.previewLevel * 100));
     configureDroneWorkshop(this,state,ui);
+    if (ui.imuMode && !this.imuInteraction?.active) {
+      this.drone.position.set(0, 0, 0); this.drone.quaternion.identity(); this.drone.updateMatrixWorld(true);
+    }
     configureIMU(this, ui.imuMode ? ui.imuState : null);
+    this.setControllerPose(ui.controllerMode ? ui.controllerState : null, false);
     this.syncing = false; this.render();
+  }
+  setControllerPose(state, draw = true) {
+    if (this.canvas.dataset.modelStatus !== 'ready') return;
+    const active = Boolean(this.ui?.controllerMode), pose = active && state?.pose ? state.pose : { x: 0, z: 0, yaw: 0 };
+    this.driveBoundary.visible = active && Boolean(state?.flightReady);
+    if (!this.ui?.imuMode) {
+      this.drone.position.set(pose.x, active && state?.flightReady && state.aircraftPower ? .7 : 0, pose.z);
+      this.drone.rotation.set(0, pose.yaw, 0);
+    }
+    this.shadowGroup.position.set(pose.x, 0, pose.z); this.shadowGroup.rotation.y = pose.yaw;
+    this.frontMarker.position.set(0, -.05, active ? -5 : -3.1).applyAxisAngle(new THREE.Vector3(0, 1, 0), pose.yaw);
+    this.frontMarker.position.x += pose.x; this.frontMarker.position.z += pose.z;
+    this.frontMarker.rotation.set(-Math.PI / 2, 0, pose.yaw);
+    Object.assign(this.canvas.dataset, { moveX: pose.x.toFixed(4), moveZ: pose.z.toFixed(4), moveYaw: pose.yaw.toFixed(4),
+      moving: String(active && Boolean(state?.moving)), moveBoundary: String(active && Boolean(state?.boundary)) });
+    if (draw) {
+      if (active && this.renderer.isWebGLRenderer) {
+        // Coalesce input ticks into display frames instead of queuing GPU renders.
+        this.poseFrame ||= requestAnimationFrame(() => { this.poseFrame = null; this.render(); });
+      } else this.render();
+    }
   }
   setRotorPreview(level) {
     const next = this.ui?.controllerMode ? Math.max(0, Math.min(1, level)) : 0;
@@ -324,10 +305,12 @@ export class DroneViewport {
     }
   }
   setBatteryIndicator(pack, draw = true) {
+    if (this.canvas.dataset.modelStatus !== 'ready') return;
     const ratio = chargeFraction(pack?.charge ?? 0);
     this.batteryLED.visible = Boolean(pack && ratio > 0);
     this.batteryLED.scale.x = Math.max(.00001, ratio);
     this.batteryLED.position.x = -.5 + ratio * .5;
+    this.batteryLED.position.y=this.x500LEDPosition.y;this.batteryLED.position.z=this.x500LEDPosition.z;
     this.batteryLED.material.color.set(batteryColor(pack?.charge ?? 0));
     this.canvas.dataset.batteryId = pack?.id || '';
     this.canvas.dataset.batteryLevel = pack ? String(pack.charge) : '';
@@ -338,18 +321,23 @@ export class DroneViewport {
   render() {
     if (!this.host?.isConnected || this.syncing) return;
     this.workshop?.update();
-    this.imuInteraction?.update();
     this.renderer.render(this.scene, this.camera);
+    this.imuInteraction?.update();
+    const ready = renderModelStatus(this, 'X500', 'drone-asset-note', loadX500);
+    this.labelLayer.hidden = this.repairLayer.hidden = !ready;
+    this.rotorLayer.style.display = ready ? '' : 'none';
+    if (!ready) return;
     const width = this.host.clientWidth, height = this.host.clientHeight;
     this.rotorLayer.setAttribute('viewBox', `0 0 ${width} ${height}`);
     for (const p of PROFILE.motors) {
-      const center = pointFor(p).add(new THREE.Vector3(0, .38, 0));
+      const center = this.motors.get(p.id).group.localToWorld(new THREE.Vector3(0, .03, 0));
       const project = v => { const q = v.project(this.camera); return [(q.x + 1) * .5 * width, (-q.y + 1) * .5 * height]; };
-      const c = project(center.clone()), x = project(center.clone().add(new THREE.Vector3(1, 0, 0))), z = project(center.clone().add(new THREE.Vector3(0, 0, 1)));
+      const rotorScale=1.7;
+      const c = project(center.clone()), x = project(center.clone().add(new THREE.Vector3(rotorScale, 0, 0))), z = project(center.clone().add(new THREE.Vector3(0, 0, rotorScale)));
       this.rotorLayer.querySelector(`[data-preview-motor="${p.id}"]`).setAttribute('transform', `matrix(${x[0]-c[0]} ${x[1]-c[1]} ${z[0]-c[0]} ${z[1]-c[1]} ${c[0]} ${c[1]})`);
     }
     for (const p of PROFILE.motors) {
-      const position = pointFor(p).add(new THREE.Vector3(0, .83, .05)).project(this.camera);
+      const position = this.motors.get(p.id).group.localToWorld(new THREE.Vector3(0, .83, .05)).project(this.camera);
       const label = this.labels.get(p.id); if (!label) continue;
       label.style.left = `${(position.x + 1) * .5 * width}px`;
       label.style.top = `${(-position.y + 1) * .5 * height}px`;
@@ -358,15 +346,15 @@ export class DroneViewport {
     for (const node of this.repairLayer.querySelectorAll('[data-anchor]')) {
       const anchor = node.dataset.anchor;
       let position;
-      if (anchor === 'power') position = new THREE.Vector3(0, 1.48, .72);
-      else if (anchor === 'battery') position = new THREE.Vector3(0, .9, 1.9);
-      else if (anchor === 'battery-led') position = new THREE.Vector3(0, 1.56, -.25);
+      if (anchor === 'power') position = this.power.getWorldPosition(new THREE.Vector3());
+      else if (anchor === 'battery') position = this.battery.localToWorld(new THREE.Vector3(0,.2,.3));
+      else if (anchor === 'battery-led') position = this.batteryLED.getWorldPosition(new THREE.Vector3());
       else {
         const index = Number(anchor.at(-1)), model = this.motors.get(this.ui.selected);
         if (anchor.startsWith('blade')) {
-          position = model.blades[index].group.localToWorld(new THREE.Vector3(-.82, .08, 0));
+          position = model.blades[index].group.localToWorld(model.bladeAnchors[index].clone());
         } else {
-          position = model.screws[index].localToWorld(new THREE.Vector3(-.045, .48, 0));
+          position = model.screws[index].localToWorld(model.screwAnchors[index].clone());
         }
       }
       position.project(this.camera);
@@ -375,16 +363,20 @@ export class DroneViewport {
       node.style.top = `${(-position.y + 1) * .5 * height + (anchor.startsWith('screw') ? -20 : 0)}px`;
       node.hidden = position.z > 1 || Math.abs(position.x) > .98 || Math.abs(position.y) > .98;
     }
-    this.canvas.dataset.ready = 'true';
     this.canvas.dataset.drawCalls = String(this.renderer.info?.render?.calls ?? 0);
     this.canvas.dataset.triangles = String(this.renderer.info?.render?.triangles ?? this.renderer.info?.render?.faces ?? 0);
   }
   dispose() {
+    if (this.disposed) return;
+    this.disposed=true;
+    this.releaseContextWatch?.();
+    this.travel?.dispose();
     this.studio?.dispose();
     this.imuInteraction?.dispose();
     this.workshop?.dispose();
-    this.detach(); this.controls.dispose(); this.renderer.dispose?.();
+    this.detach(); this.controls.dispose(); disposeRenderer3D(this.renderer);
     this.geometries.forEach(g => g.dispose()); Object.values(this.materials).forEach(m => m.dispose());
-    this.decalMaterial?.dispose(); this.decalTexture?.dispose(); this.shadowTexture?.dispose(); this.shadowMaterial?.dispose(); this.gridMaterial.dispose();
+    this.assetTextures?.forEach(t=>t.dispose());
+    this.shadowTexture?.dispose(); this.shadowMaterial?.dispose(); this.gridMaterial.dispose();
   }
 }

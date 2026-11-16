@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -21,7 +22,7 @@ def main():
             errors = []; page.on('pageerror', lambda error: errors.append(str(error)))
             page.clock.install(time='2026-11-12T01:00:00Z')
             page.goto(base + ('/?compatible3d=1' if args.compatible else '/'))
-            def click(action): page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def opened(): return page.locator('#course-completion').evaluate('(e)=>e.open')
             def task(): return page.locator('[data-current-task]').get_attribute('data-current-task')
             click('robot'); click('robot-controller'); click('robot-controller-start')

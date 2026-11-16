@@ -36,7 +36,7 @@ test('작은 중앙 흔들림은 회전하지 않으며 입력 크기에 따라 
 });
 test('기체·조종기 어느 쪽을 꺼도 즉시 정지·연결 해제, 다시 켜도 자동 연결 안 함', () => {
   for (const power of ['AIRCRAFT_POWER', 'REMOTE_POWER']) {
-    const moving = act(connected(), 'STICK', { side: 'left', x: 1, y: 0 });
+    const moving = act(connected(), 'STICK', { side: 'left', x: 0, y: 1 });
     const off = act(moving, power), on = act(off, power);
     assert(!off.connected && rotationDemand(off) === 0 && !on.connected && rotationDemand(on) === 0, 'power retained motion');
   }

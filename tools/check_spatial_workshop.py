@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from browser_courses import choose_course
 from playwright.sync_api import sync_playwright
 
 
@@ -22,7 +23,7 @@ def main(argv=None):
             page.on('pageerror',lambda err:errors.append(str(err)))
             context.route('**/*',lambda r:r.continue_() if r.request.url.startswith(base+'/') else (external.append(r.request.url),r.abort()))
             page.add_init_script("window.qaCsp=[];document.addEventListener('securitypolicyviolation',e=>qaCsp.push(e.effectiveDirective));")
-            def click(action):page.locator(f'[data-action="{action}"]').first.click(force=True)
+            def click(action): choose_course(page, action, force=True)
             def task():return page.locator('[data-current-task]').get_attribute('data-current-task')
             def acknowledge_completion(course):
                 dialog=page.locator('#course-completion')
@@ -51,6 +52,15 @@ def main(argv=None):
             page.goto(base+('/?compatible3d=1' if args.compatible else '/'));click('robot');page.locator('#robot-start-form button').click(force=True)
             canvas().wait_for()
             if args.webgl: assert canvas().get_attribute('data-render-backend')=='webgl'
+            for preference, animation in [('reduce', 'none'), ('no-preference', 'task-target-pulse')]:
+                page.emulate_media(reduced_motion=preference)
+                page.wait_for_function('''animation => {
+                    const ring = document.querySelector('[data-spatial-id="robot-estop"] + .spatial-task-cue');
+                    if (!ring || ring.hidden) return false;
+                    const style = getComputedStyle(ring);
+                    return style.animationName === animation && style.borderTopWidth === '3px'
+                        && style.borderColor === 'rgb(92, 247, 131)' && style.width === '34px';
+                }''', arg=animation)
             capture('robot-workbench')
             assert page.locator('.robot-controls,.robot-dock,.robot-joint-detail,.robot-battery').count()==0
             assert page.locator('.immersive-stage [data-current-task]').count()==1
@@ -133,7 +143,7 @@ def main(argv=None):
             click('controller');click('controller-start')
             click('controller-aircraft-power');click('controller-remote-power');click('controller-link')
             for side in ['left','right']:
-                page.locator(f'[data-stick="{side}"]').focus();page.keyboard.press('ArrowUp')
+                page.locator(f'[data-stick="{side}"]').focus();page.keyboard.press('ArrowUp' if side=='left' else 'ArrowRight')
             click('controller-stop');click('controller-imu-next')
             page.wait_for_function('()=>document.querySelector("[data-imu-body]")',polling=40)
             page.locator('[data-imu-body]').focus();page.keyboard.press('ArrowLeft')
@@ -157,7 +167,7 @@ def main(argv=None):
             passed('세 화면 크기·도움말·재시작 유지, JavaScript 오류·외부 요청·CSP 위반 없음')
             unavailable=context.new_page();unavailable.set_default_timeout(12000)
             unavailable.route('**/src/ui/drone3d.js',lambda route:route.abort())
-            unavailable.goto(base+('/?compatible3d=1' if args.compatible else '/'));unavailable.locator('[data-action=intro-drone]').click(force=True)
+            unavailable.goto(base+('/?compatible3d=1' if args.compatible else '/'));choose_course(unavailable, 'intro-drone', force=True)
             unavailable.wait_for_function('()=>document.querySelector(".aircraft-flat") || !document.querySelector(".three-loading")',polling=40)
             unavailable.locator('#start-form button[type=submit]').click(force=True)
             unavailable.locator('.scene-load-error').wait_for()

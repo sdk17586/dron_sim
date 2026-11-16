@@ -1,35 +1,39 @@
-.imu-stage { min-height: 700px; height: clamp(700px,calc(100vh - 195px),940px); }
-.imu-stage > .drone-viewport { top: 175px; bottom: 45px; right: 285px; left: 0; width: auto; height: auto; }
-.imu-stage .scene-guide { width: min(650px,calc(100% - 300px)); }
-.imu-panel { position: absolute; top: 16px; right: 16px; width: 250px; z-index: 3; padding: 16px; background: #fcfef8f5; border: 1px solid #cad9c5; border-radius: 12px; color: #36523c; box-shadow: 0 8px 30px #20372610; }
-.imu-panel-heading { display: flex; flex-direction: column; gap: 5px; font-size: 11px; }
-.imu-panel-heading strong { font-size: 19px; color: #96672c; }
-.imu-panel[data-status="completed"] .imu-panel-heading strong { color: #27734c; }
-.imu-battery { font-size: 10px; margin-top: 8px; color: #6a7e63; }
-.imu-target { margin: 10px 0; text-align: center; background: #eef4eb; border-radius: 8px; padding-bottom: 10px; }
-.imu-target [data-imu-target-view] { width: 100%; height: 120px; }
-.imu-target svg { width: 100%; height: 120px; }
-.imu-target strong,.imu-target small { display: block; font-size: 12px; }
-.imu-target small { font-size: 9px; margin-top: 4px; color: #6a7e63; }
-.imu-samples { display: flex; justify-content: space-between; margin: 14px 0; gap: 5px; }
-.imu-samples span { display: grid; place-items: center; width: 27px; height: 27px; border: 1px solid #ccd8c5; border-radius: 50%; font-size: 11px; }
-.imu-samples [data-done="true"] { color: white; background: #3b7550; border-color: #3b7550; }
-.imu-samples [data-current="true"] { border: 2px solid #2563eb; color: #2563eb; }
-.imu-dwell { display: block; font-size: 11px; }
-.imu-dwell output { float: right; color: #2563eb; }
-.imu-dwell progress { width: 100%; height: 8px; margin-top: 6px; accent-color: #2563eb; }
-.imu-measure-message { font-size: 11px; line-height: 1.7; min-height: 36px; margin: 8px 0; }
-.imu-panel-actions .button { min-height: 38px; padding: 8px; font-size: 12px; }
-.imu-simulation-note { display: block; color: #6c8065; font-size: 9px; margin-top: 12px; }
-.imu-surface { position: absolute; bottom: 60px; left: 20px; padding: 9px 13px; display: flex; align-items: center; gap: 8px; background: #f8fcf0ee; border: 1px solid #b8cdb0; color: #466444; border-radius: 8px; z-index: 2; font-size: 11px; }
-.imu-surface:disabled { opacity: .7; }
+/* The current instruction and its controls share one panel beside the aircraft. */
+.imu-stage { --panel-width: clamp(345px,30vw,430px); display: flex; justify-content: flex-end; }
+.imu-scene { position: absolute; inset: 0 var(--panel-width) 0 0; }
+.imu-scene > .drone-viewport { height: 100%; width: 100%; }
+.imu-stage .imu-panel { width: var(--panel-width); overflow-y: auto; padding: clamp(16px,2vw,28px); border-left: 1px solid #344b5c; }
+.imu-panel-actions { display: grid; gap: 8px; margin-top: 16px; }
+.imu-panel-actions .button { min-height: 44px; margin: 0; font-size: 14px; }
+.imu-pose-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.imu-pose-buttons:empty, .imu-pose-buttons:not(:has(button:not([hidden]))) { display: none; }
+.imu-pose-buttons .button { flex: 1 1 auto; }
+.imu-panel .imu-pose-buttons .button:enabled { background: #184842; border-color: #57a998; color: #c5fbee; }
+.imu-pose-buttons .button:disabled { opacity: .7; }
+.imu-target { display: flex; align-items: center; gap: 12px; padding: 6px 12px; margin-top: 16px; border: 1px solid #2d4658; border-radius: 8px; }
+.imu-target [data-imu-target-view] { width: 40%; flex: none; }
+.imu-target svg { display: block; width: 100%; height: auto; }
+.imu-target strong, .imu-target small { display: block; }
+.imu-target strong { font-size: 14px; line-height: 1.5; margin: 3px 0; }
+.imu-target small { font-size: 11px; }
+.imu-telemetry, .imu-record-title { display: flex; align-items: center; gap: 12px; }
+.imu-telemetry { margin-top: 18px; padding-top: 12px; border-top: 1px solid #344b5c; color: #adbfcd; flex-wrap: wrap; font-size: 11px; }
+.imu-record { margin-top: 18px; }
+.imu-record-title { justify-content: space-between; font-size: 12px; }
+.imu-samples { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; margin-top: 8px; }
+.imu-samples span { display: flex; align-items: center; gap: 5px; padding: 5px 7px; border: 1px solid; border-radius: 5px; font-size: 11px; }
+.imu-samples b { font-variant-numeric: tabular-nums; }
+.imu-measure-message { margin-top: 12px; font-size: 13px; line-height: 1.6; }
+.imu-dwell { display: block; font-size: 13px; margin-top: 12px; }
+.imu-dwell output { float: right; font-variant-numeric: tabular-nums; }
+.imu-dwell progress { width: 100%; height: 9px; margin-top: 5px; accent-color: #59d8c2; }
 .imu-control-layer { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .imu-body-handle,.imu-power-point { position: absolute; transform: translate(-50%,-50%); pointer-events: auto; border: 1px solid #9bb78e; border-radius: 50%; background: #f7fcefdd; color: #3b603f; width: 34px; height: 34px; padding: 5px; display: grid; place-items: center; }
 .imu-body-handle { border: 2px solid #698765; width: 34px; height: 34px; cursor: grab; background: #fcfff4aa; touch-action: none; }
 .imu-body-handle:active { cursor: grabbing; }
 .imu-body-handle svg,.imu-power-point svg { width: 20px; height: 20px; }
 .imu-body-caption { position: absolute; transform: translate(-50%,22px); background: #fbfff3dd; color: #426542; padding: 3px 7px; font-size: 10px; border-radius: 4px; white-space: nowrap; }
-.imu-stage [data-imu-active="true"] { border-color: #2563eb; color: #2563eb; animation: spatial-task-pulse 2s ease-in-out infinite; }
+.imu-stage [data-imu-active="true"] { border: 3px solid var(--task); color: var(--task); box-shadow: var(--task-shadow); animation: task-target-pulse var(--task-cycle) ease-in-out infinite; }
 .imu-stage [data-imu-dragging="true"] { cursor: grabbing; }
 .imu-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 15px 0; }
 .imu-comparison > div { padding: 12px 5px; text-align: center; border: 1px solid #d2dfcc; border-radius: 6px; background: #f1f7ef; }
@@ -38,14 +42,13 @@
 .imu-horizon:after { content: ''; position: absolute; width: 85%; height: 3px; left: 7.5%; top: 50%; background: #3c7650; }
 .imu-horizon.tilted:after { background: #b87937; transform: rotate(-14deg); }
 .imu-stage [hidden] { display: none !important; }
-@media (max-width:800px) {
-  .imu-stage { min-height: 0; height: auto; display: grid; grid-template-columns: minmax(0,1fr); padding: 12px; }
-  .imu-stage .scene-guide { position: relative; top: auto; left: auto; width: 100%; grid-row: 1; }
-  .imu-panel { position: relative; top: auto; right: auto; width: 100%; max-width: 400px; margin: 12px auto; grid-row: 2; }
-  .imu-stage > .drone-viewport { position: relative; inset: auto; width: 100%; height: 420px; grid-row: 3; }
-  .imu-surface { position: relative; bottom: auto; left: auto; margin: 12px 0; grid-row: 4; }
-  .imu-stage .scene-camera-tools { position: relative; left: auto; bottom: auto; grid-row: 5; }
-  .imu-stage .scene-instructions { position: relative; inset: auto; margin-top: 10px; text-align: left; grid-row: 6; }
-  .imu-target [data-imu-target-view],.imu-target svg { height: 95px; }
+@media (min-width:801px) {
+  .minimal-shell:has(main > .spatial-workbench .imu-stage) { min-height: 580px; }
 }
-@media (prefers-reduced-motion:reduce) { .imu-stage [data-imu-active="true"] { animation: none; box-shadow: 0 0 0 3px #3b82f633; } }
+@media (max-width:800px) {
+  .imu-stage { height: auto; min-height: 0; display: block; }
+  .imu-stage .imu-panel { width: 100%; border: 0; overflow: visible; }
+  .imu-scene { position: relative; inset: auto; height: clamp(180px,25vh,260px); margin: 12px -6px; border: 1px solid #2d4658; border-radius: 8px; overflow: hidden; }
+  .imu-scene .scene-camera-tools { bottom: 6px; left: 6px; }
+}
+@media (prefers-reduced-motion:reduce) { .imu-stage [data-imu-active="true"] { animation: none; } }

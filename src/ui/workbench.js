@@ -26,14 +26,14 @@ function rotor(motor, p, selected) {
   </g>`;
 }
 
-export function droneSVG(state, selected, zoomed = false) {
+export function droneSVG(state, selected, zoomed = false, controllerMode = false) {
   const selectedProfile = motorProfile(selected);
   const battery = state ? installedBattery(state) : createBatteryPacks()[0];
-  const viewBox = zoomed && selectedProfile ? `${selectedProfile.x - 150} ${selectedProfile.y - 110} 300 220` : '0 0 760 590';
-  return `<svg class="drone-svg ${zoomed ? 'is-zoomed' : ''}" viewBox="${viewBox}" role="img" aria-label="전방이 위쪽인 드론 정비 도식. 아래 모터 선택 버튼으로 확대 점검할 수 있습니다.">
+  const viewBox = controllerMode ? '-90 -126 940 840' : zoomed && selectedProfile ? `${selectedProfile.x - 150} ${selectedProfile.y - 110} 300 220` : '0 0 760 590';
+  return `<svg class="drone-svg ${zoomed ? 'is-zoomed' : ''}" data-model-source="px4-x500-schematic" viewBox="${viewBox}" role="img" aria-label="전방이 위쪽인 X500 드론 정비 도식. 아래 모터 선택 버튼으로 확대 점검할 수 있습니다.">
     <defs>
-      <linearGradient id="bodyMetal" x1="0" x2="1" y1="0" y2=".6"><stop stop-color="#eef1e9"/><stop offset=".45" stop-color="#c5cdc1"/><stop offset="1" stop-color="#9ca99d"/></linearGradient>
-      <linearGradient id="armMetal" x1="0" x2="1"><stop stop-color="#99a99b"/><stop offset=".5" stop-color="#d4dbcf"/><stop offset="1" stop-color="#829487"/></linearGradient>
+      <linearGradient id="bodyMetal" x1="0" x2="1" y1="0" y2=".6"><stop stop-color="#405563"/><stop offset=".45" stop-color="#263843"/><stop offset="1" stop-color="#14212b"/></linearGradient>
+      <linearGradient id="armMetal" x1="0" x2="1"><stop stop-color="#17232c"/><stop offset=".5" stop-color="#425562"/><stop offset="1" stop-color="#17232c"/></linearGradient>
       <linearGradient id="bladeMetal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#596a61"/><stop offset="1" stop-color="#243c32"/></linearGradient>
       <radialGradient id="motorMetal"><stop stop-color="#cbd1c9"/><stop offset=".7" stop-color="#7e9083"/><stop offset="1" stop-color="#3c5045"/></radialGradient>
       <filter id="droneShadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="15" stdDeviation="12" flood-color="#253d30" flood-opacity=".14"/></filter>
@@ -43,34 +43,36 @@ export function droneSVG(state, selected, zoomed = false) {
       <path d="m373 40 7-12 7 12" stroke="#748c78" stroke-width="2"/>
     </g>
     <text x="380" y="18" text-anchor="middle" fill="#7c8d7d" font-size="11" letter-spacing="3">FRONT</text>
-    <g filter="url(#droneShadow)">
-      <path d="m332 221-145-80-13 27 148 108m106-55 145-80 13 27-148 108M327 355l-146 64 9 28 154-53m89-39 146 64-9 28-154-53" fill="url(#armMetal)" stroke="#879a87" stroke-width="2"/>
-      <path d="m316 199 16-37q48-18 96 0l16 37 12 158-22 63q-54 23-108 0l-22-63Z" fill="url(#bodyMetal)" stroke="#8b9c89" stroke-width="2"/>
-      <path d="m340 187 7-14h66l7 14 8 139-17 38h-62l-17-38Z" fill="#d7ddcf" stroke="#afbaa7"/>
-      <path d="M346 202h68m-70 6h72m-72 6h72M346 333h68m-66 7h64" stroke="#b3bfaa" stroke-width="2"/>
-      <rect x="355" y="137" width="50" height="39" rx="12" fill="#7b8d7c" stroke="#5d735f" stroke-width="2"/>
-      <rect x="362" y="136" width="36" height="28" rx="8" fill="#293e32"/><circle cx="380" cy="147" r="9" fill="#142c25" stroke="#9cac96" stroke-width="2"/>
-      <circle cx="380" cy="147" r="5" fill="#45676b"/>
-      <rect x="347" y="367" width="66" height="27" rx="6" fill="${state?.battery === false ? '#6e826d' : '#a8b69d'}" stroke="#879a80"/>
-      ${state?.battery === false ? '<path d="M357 381h46" stroke="#3f5844" stroke-width="3" stroke-dasharray="6 4"/>' : '<path d="M359 377h42m-42 6h42" stroke="#cad2bd" stroke-width="2"/>'}
-      <circle cx="380" cy="400" r="5" fill="${state?.power ? '#d4b16a' : '#859b7f'}"/>
+    <g data-controller-airframe><g filter="url(#droneShadow)">
+      <path d="M290 215v185m180-185v185" stroke="#536b7a" stroke-width="10" stroke-linecap="round"/>
+      <path d="M180 156 578 433M580 156 182 433" stroke="#15212b" stroke-width="25"/>
+      <path d="M180 156 578 433M580 156 182 433" stroke="url(#armMetal)" stroke-width="19"/>
+      <path d="m327 212-17 23v154l18 20h104l18-20V235l-17-23Z" fill="url(#bodyMetal)" stroke="#6b8393" stroke-width="2"/>
+      <path d="M325 239v140m110-140v140M343 223h74M343 398h74" stroke="#718998" stroke-width="4" stroke-dasharray="12 7"/>
+      <rect x="356" y="177" width="48" height="36" rx="3" fill="#1c2d38" stroke="#6b8393"/>
+      <path d="M363 185h34m-34 7h34m-34 7h34" stroke="#68818f" stroke-width="3"/>
+      <rect x="338" y="244" width="84" height="145" rx="8" fill="${state?.battery === false ? '#182730' : '#354955'}" stroke="#8299a5"/>
+      ${state?.battery === false ? '<path d="M350 380h60" stroke="#8299a5" stroke-width="3" stroke-dasharray="6 4"/>' : '<path d="M341 293h78m-78 60h78" stroke="#14212b" stroke-width="8"/>'}
+      <circle cx="380" cy="400" r="5" fill="${state?.power ? '#d4b16a' : '#6e8c9e'}"/>
       <rect x="349" y="310" width="62" height="7" rx="2" fill="#344333"/>
       <rect data-battery-led-fill x="349" y="310" width="${62 * chargeFraction(battery?.charge ?? 0)}" height="7" rx="2" fill="${batteryColor(battery?.charge ?? 0)}"/>
-      <text x="380" y="264" text-anchor="middle" fill="#667b65" font-size="12" font-weight="600" letter-spacing="4">MINI 2 SE</text>
-      <text x="380" y="286" text-anchor="middle" fill="#899b80" font-size="8" letter-spacing="2">TRAINING MODEL</text>
+      <text x="380" y="268" text-anchor="middle" fill="#d4e1e9" font-size="14" font-weight="600" letter-spacing="4">X500</text>
+      <text x="380" y="283" text-anchor="middle" fill="#a9c0cd" font-size="7" letter-spacing="1">TRAINING SCHEMATIC</text>
       ${PROFILE.motors.map(p => rotor(state?.motors[p.id], p, selected === p.id)).join('')}
     </g>
     ${!zoomed ? PROFILE.motors.map(p => `<g fill="#7b8d78" font-size="11"><path d="M${p.x} ${p.y + 40}v23" stroke="#9bad95"/><text x="${p.x}" y="${p.y + 80}" text-anchor="middle">${p.short} / ${p.name}</text></g>`).join('') : ''}
     <g data-flat-rotor-preview hidden aria-hidden="true">${rotorPreviewMarkup(true)}</g>
+    </g>
   </svg>`;
 }
 
 export function renderWorkbench(s, ui) {
   const flatPoints = ui.viewMode === '2d' ? `<div class="flat-points">${ui.controllerMode || ui.previewMode ? '' : PROFILE.motors.map(p => button(p.short, 'select-motor', 'three-motor-label', `data-motor="${p.id}" data-anchor="motor:${p.id}" data-inspection="${motorStatus(s, p.id)}" title="${p.short}번 ${p.name} · ${motorStatusLabel(motorStatus(s, p.id))}" aria-label="${p.name} 모터 선택${motorStatus(s, p.id) ? ' · ' + motorStatusLabel(motorStatus(s, p.id)) : ''}" aria-pressed="${ui.selected === p.id}"`)).join('')}${renderRepairPoints(s, ui)}</div>` : '';
   return `<section class="workbench" aria-label="드론 정비 작업대">
-    <div class="drone-canvas ${ui.viewMode === '3d' ? 'three-stage' : 'flat-stage'}">${ui.viewMode === '3d' ? '<div id="drone-viewport" class="drone-viewport"><span class="three-loading">드론을 준비하고 있습니다…</span></div>' : droneSVG(s, ui.selected, ui.zoomed)}${flatPoints}
-      <div class="canvas-tools">${button(icon('reset'), 'view-all', 'camera-home', 'aria-label="기체 전체 보기" title="기체 전체 보기 · Esc"')}</div>
-      <span class="canvas-help">${ui.viewMode === '3d' ? '빈 곳을 끌어 회전 · 휠로 확대' : ui.controllerMode ? '조종기로 회전 반응 확인' : '번호를 눌러 모터 선택'}</span><span class="model-note">${ui.controllerMode ? '작동 확인용 교육 기체 · 비행 없음' : '교육용 모델'}</span></div>
+    <div class="drone-canvas ${ui.viewMode === '3d' ? 'three-stage' : 'flat-stage'}">${ui.viewMode === '3d' ? '<div id="drone-viewport" class="drone-viewport"><span class="three-loading">드론을 준비하고 있습니다…</span></div>' : droneSVG(s, ui.selected, ui.zoomed, ui.controllerMode)}${flatPoints}
+      ${ui.controllerMode ? '<output class="drone-motion-status" data-drone-motion aria-live="off">정지</output>' : ''}
+      <div class="canvas-tools">${button(icon('reset'), 'view-all', 'camera-home', 'aria-label="기체 전체 보기" title="기체 전체 보기 · Esc"')}${ui.controllerMode && ui.controllerState?.flightReady ? button('위치 초기화', 'controller-position-reset', 'controller-position-reset') : ''}</div>
+      <span class="canvas-help">${ui.viewMode === '3d' ? '빈 곳을 끌어 시점 회전 · 휠로 확대' : ui.controllerMode ? '왼쪽 ↑↓ 이동 · 오른쪽 ←→ 회전' : '번호를 눌러 모터 선택'}</span><span class="model-note">${ui.controllerMode ? ui.controllerState?.flightReady ? '앞뒤 이동 · 제자리 회전 연습' : 'IMU 보정 후 기체 이동 가능' : '교육용 모델'}</span></div>
     ${ui.rendererError ? `<p class="renderer-notice">${e(ui.rendererError)}</p>` : ''}${ui.controllerMode || ui.previewMode ? '' : renderPartsDock(s, ui)}</section>`;
 }
 
